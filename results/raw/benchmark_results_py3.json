@@ -1,5 +1,5 @@
 {
-  "export_timestamp": "2026-03-29T19:37:11.111465",
+  "export_timestamp": "2026-03-29T23:32:08.071413",
   "python_version": "3.13.7",
   "results": [
     {
@@ -9,14 +9,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 0.7304526999996597,
+      "mean_time": 0.8710482000024058,
       "std_time": 0,
-      "min_time": 0.7304526999996597,
-      "max_time": 0.7304526999996597,
+      "min_time": 0.8710482000024058,
+      "max_time": 0.8710482000024058,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.7304526999996597
+        0.8710482000024058
       ],
       "python_version": "3.13.7"
     },
@@ -27,14 +27,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 0.12999130000025616,
+      "mean_time": 0.1979177999892272,
       "std_time": 0,
-      "min_time": 0.12999130000025616,
-      "max_time": 0.12999130000025616,
+      "min_time": 0.1979177999892272,
+      "max_time": 0.1979177999892272,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.12999130000025616
+        0.1979177999892272
       ],
       "python_version": "3.13.7"
     },
@@ -45,14 +45,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 0.2562216999995144,
+      "mean_time": 0.32636310000088997,
       "std_time": 0,
-      "min_time": 0.2562216999995144,
-      "max_time": 0.2562216999995144,
+      "min_time": 0.32636310000088997,
+      "max_time": 0.32636310000088997,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.2562216999995144
+        0.32636310000088997
       ],
       "python_version": "3.13.7"
     },
@@ -63,14 +63,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 0.28271329999915906,
+      "mean_time": 0.41532170001300983,
       "std_time": 0,
-      "min_time": 0.28271329999915906,
-      "max_time": 0.28271329999915906,
+      "min_time": 0.41532170001300983,
+      "max_time": 0.41532170001300983,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.28271329999915906
+        0.41532170001300983
       ],
       "python_version": "3.13.7"
     },
@@ -81,14 +81,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 1.4753959999998187,
+      "mean_time": 1.9252763999975286,
       "std_time": 0,
-      "min_time": 1.4753959999998187,
-      "max_time": 1.4753959999998187,
+      "min_time": 1.9252763999975286,
+      "max_time": 1.9252763999975286,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        1.4753959999998187
+        1.9252763999975286
       ],
       "python_version": "3.13.7"
     },
@@ -99,14 +99,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 1.0486614999990707,
+      "mean_time": 1.2712801999878138,
       "std_time": 0,
-      "min_time": 1.0486614999990707,
-      "max_time": 1.0486614999990707,
+      "min_time": 1.2712801999878138,
+      "max_time": 1.2712801999878138,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        1.0486614999990707
+        1.2712801999878138
       ],
       "python_version": "3.13.7"
     },
@@ -117,14 +117,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 1.1947452000003977,
+      "mean_time": 1.3884712000144646,
       "std_time": 0,
-      "min_time": 1.1947452000003977,
-      "max_time": 1.1947452000003977,
+      "min_time": 1.3884712000144646,
+      "max_time": 1.3884712000144646,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        1.1947452000003977
+        1.3884712000144646
       ],
       "python_version": "3.13.7"
     },
@@ -135,14 +135,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 0.40959099999963655,
+      "mean_time": 0.6326435999944806,
       "std_time": 0,
-      "min_time": 0.40959099999963655,
-      "max_time": 0.40959099999963655,
+      "min_time": 0.6326435999944806,
+      "max_time": 0.6326435999944806,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.40959099999963655
+        0.6326435999944806
       ],
       "python_version": "3.13.7"
     },
@@ -153,14 +153,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 0.28779469999972207,
+      "mean_time": 0.4136614000017289,
       "std_time": 0,
-      "min_time": 0.28779469999972207,
-      "max_time": 0.28779469999972207,
+      "min_time": 0.4136614000017289,
+      "max_time": 0.4136614000017289,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.28779469999972207
+        0.4136614000017289
       ],
       "python_version": "3.13.7"
     },
@@ -171,14 +171,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 0.48635920000015176,
+      "mean_time": 0.7373363000224344,
       "std_time": 0,
-      "min_time": 0.48635920000015176,
-      "max_time": 0.48635920000015176,
+      "min_time": 0.7373363000224344,
+      "max_time": 0.7373363000224344,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.48635920000015176
+        0.7373363000224344
       ],
       "python_version": "3.13.7"
     },
@@ -189,14 +189,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 0.6943276000001788,
+      "mean_time": 0.7934072999923956,
       "std_time": 0,
-      "min_time": 0.6943276000001788,
-      "max_time": 0.6943276000001788,
+      "min_time": 0.7934072999923956,
+      "max_time": 0.7934072999923956,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.6943276000001788
+        0.7934072999923956
       ],
       "python_version": "3.13.7"
     },
@@ -207,14 +207,14 @@
       "total_runs": 1,
       "successful_runs": 1,
       "failed_runs": 0,
-      "mean_time": 9.491787699998895,
+      "mean_time": 9.613787799986312,
       "std_time": 0,
-      "min_time": 9.491787699998895,
-      "max_time": 9.491787699998895,
+      "min_time": 9.613787799986312,
+      "max_time": 9.613787799986312,
       "cv_percent": 0.0,
       "avg_memory_mb": 0.0,
       "all_times": [
-        9.491787699998895
+        9.613787799986312
       ],
       "python_version": "3.13.7"
     }

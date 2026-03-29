@@ -12,10 +12,10 @@ import sys
 # ============================================================================
 
 # Number of runs for each test (excluding warmup)
-TEST_RUNS = 3
+TEST_RUNS = 1
 
 # Warmup runs (not counted in results)
-WARMUP_RUNS = 1
+WARMUP_RUNS = 0
 
 # ============================================================================
 # Data Scale Configuration
@@ -61,16 +61,36 @@ RASTER_CONFIG_SMALL = {
     'clip_ratio': 0.5,
 }
 
-# Medium Scale (original small, for script validation)
+# Standard Scale (between small and medium, for moderate testing)
+VECTOR_CONFIG_STANDARD = {
+    'fishnet_rows': 500,
+    'fishnet_cols': 500,  # 500×500=250,000 polygons
+    'random_points': 50000,
+    'buffer_points': 50000,
+    'intersect_features_a': 300000,
+    'intersect_features_b': 300000,
+    'spatial_join_points': 200000,
+    'spatial_join_polygons': 5000,
+    'calculate_field_records': 300000,
+}
+
+RASTER_CONFIG_STANDARD = {
+    'constant_raster_size': 5000,  # pixels (square)
+    'resample_source_size': 5000,
+    'resample_target_size': 2500,
+    'clip_ratio': 0.5,
+}
+
+# Medium Scale (original - 1M records for intensive testing)
 VECTOR_CONFIG_MEDIUM = {
     'fishnet_rows': 1000,
-    'fishnet_cols': 1000,
+    'fishnet_cols': 1000,  # 1000×1000=1,000,000 polygons
     'random_points': 100000,
     'buffer_points': 100000,
     'intersect_features_a': 1000000,
     'intersect_features_b': 1000000,
     'spatial_join_points': 500000,
-    'spatial_join_polygons': 10000,
+    'spatial_join_polygons': 10000,  # Use independent grid, not full fishnet
     'calculate_field_records': 1000000,
 }
 
@@ -102,8 +122,11 @@ RASTER_CONFIG_LARGE = {
 }
 
 # Select configuration to use
-# Options: 'tiny', 'small', 'medium', 'large'
-DATA_SCALE = 'medium'
+# Options: 'tiny', 'small', 'standard', 'medium', 'large'
+DATA_SCALE = 'small'
+
+# All available scales
+ALL_SCALES = ['tiny', 'small', 'standard', 'medium', 'large']
 
 if DATA_SCALE == 'tiny':
     VECTOR_CONFIG = VECTOR_CONFIG_TINY
@@ -111,12 +134,37 @@ if DATA_SCALE == 'tiny':
 elif DATA_SCALE == 'small':
     VECTOR_CONFIG = VECTOR_CONFIG_SMALL
     RASTER_CONFIG = RASTER_CONFIG_SMALL
+elif DATA_SCALE == 'standard':
+    VECTOR_CONFIG = VECTOR_CONFIG_STANDARD
+    RASTER_CONFIG = RASTER_CONFIG_STANDARD
 elif DATA_SCALE == 'large':
     VECTOR_CONFIG = VECTOR_CONFIG_LARGE
     RASTER_CONFIG = RASTER_CONFIG_LARGE
 else:  # medium (default)
     VECTOR_CONFIG = VECTOR_CONFIG_MEDIUM
     RASTER_CONFIG = RASTER_CONFIG_MEDIUM
+
+# ============================================================================
+# Multiprocess Configuration
+# ============================================================================
+
+# Multiprocess benchmark settings
+MULTIPROCESS_CONFIG = {
+    'enabled': False,  # Enable multiprocess benchmarks
+    'num_workers': 4,  # Number of worker processes
+    'scales': ['standard', 'medium', 'large'],  # Scales to run multiprocess tests
+}
+
+# Get multiprocess settings with defaults
+def get_multiprocess_workers():
+    return MULTIPROCESS_CONFIG.get('num_workers', 4)
+
+def is_multiprocess_enabled(scale=None):
+    if not MULTIPROCESS_CONFIG.get('enabled', False):
+        return False
+    if scale is None:
+        scale = DATA_SCALE
+    return scale in MULTIPROCESS_CONFIG.get('scales', [])
 
 # ============================================================================
 # Path Configuration
@@ -146,8 +194,10 @@ for dir_path in [RESULTS_DIR, RAW_RESULTS_DIR, TABLES_DIR, FIGURES_DIR]:
 # Spatial reference (WGS 84)
 SPATIAL_REFERENCE = 4326
 
-# Default geodatabase name
-DEFAULT_GDB_NAME = 'benchmark_data.gdb'
+# Default geodatabase name - includes scale to avoid regeneration
+# Format: benchmark_data_{scale}.gdb (e.g., benchmark_data_tiny.gdb)
+# This allows reusing test data across runs if scale matches
+DEFAULT_GDB_NAME = 'benchmark_data_{}.gdb'.format(DATA_SCALE)
 
 # Scratch workspace
 SCRATCH_WORKSPACE = os.path.join(DATA_DIR, 'scratch')

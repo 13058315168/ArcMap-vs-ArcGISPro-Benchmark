@@ -20,38 +20,38 @@ def test_imports():
     
     try:
         from config import settings
-        print("  ✓ config.settings")
+        print("  [OK] config.settings")
     except Exception as e:
         errors.append(("config.settings", str(e)))
-        print("  ✗ config.settings: {}".format(e))
+        print("  [ERROR] config.settings: {}".format(e))
     
     try:
         from utils.timer import Timer, MemoryMonitor, BenchmarkTimer
-        print("  ✓ utils.timer")
+        print("  [OK] utils.timer")
     except Exception as e:
         errors.append(("utils.timer", str(e)))
-        print("  ✗ utils.timer: {}".format(e))
+        print("  [ERROR] utils.timer: {}".format(e))
     
     try:
         from utils.arcgis_env import ArcGISEnvironment
-        print("  ✓ utils.arcgis_env")
+        print("  [OK] utils.arcgis_env")
     except Exception as e:
         errors.append(("utils.arcgis_env", str(e)))
-        print("  ✗ utils.arcgis_env: {}".format(e))
+        print("  [ERROR] utils.arcgis_env: {}".format(e))
     
     try:
         from utils.result_exporter import ResultExporter
-        print("  ✓ utils.result_exporter")
+        print("  [OK] utils.result_exporter")
     except Exception as e:
         errors.append(("utils.result_exporter", str(e)))
-        print("  ✗ utils.result_exporter: {}".format(e))
+        print("  [ERROR] utils.result_exporter: {}".format(e))
     
     try:
         from benchmarks.base_benchmark import BaseBenchmark
-        print("  ✓ benchmarks.base_benchmark")
+        print("  [OK] benchmarks.base_benchmark")
     except Exception as e:
         errors.append(("benchmarks.base_benchmark", str(e)))
-        print("  ✗ benchmarks.base_benchmark: {}".format(e))
+        print("  [ERROR] benchmarks.base_benchmark: {}".format(e))
     
     return len(errors) == 0, errors
 
@@ -62,12 +62,12 @@ def test_arcpy():
     
     try:
         import arcpy
-        print("  ✓ arcpy is available")
+        print("  [OK] arcpy is available")
         print("  Product: {}".format(arcpy.GetInstallInfo()['ProductName']))
         print("  Version: {}".format(arcpy.GetInstallInfo()['Version']))
         return True
     except ImportError:
-        print("  ✗ arcpy is NOT available")
+        print("  [ERROR] arcpy is NOT available")
         print("  Please run this script with an ArcGIS Python interpreter")
         return False
 
@@ -88,9 +88,9 @@ def test_directories():
     all_exist = True
     for name, path in dirs_to_check:
         if os.path.exists(path):
-            print("  ✓ {}: {}".format(name, path))
+            print("  [OK] {}: {}".format(name, path))
         else:
-            print("  ✗ {}: {} (will be created)".format(name, path))
+            print("  [ERROR] {}: {} (will be created)".format(name, path))
             all_exist = False
     
     return all_exist
@@ -108,13 +108,13 @@ def test_timer():
             time.sleep(0.1)
         
         if t.elapsed and t.elapsed > 0.05:
-            print("  ✓ Timer working (elapsed: {:.4f}s)".format(t.elapsed))
+            print("  [OK] Timer working (elapsed: {:.4f}s)".format(t.elapsed))
             return True
         else:
-            print("  ✗ Timer not working correctly")
+            print("  [ERROR] Timer not working correctly")
             return False
     except Exception as e:
-        print("  ✗ Timer error: {}".format(e))
+        print("  [ERROR] Timer error: {}".format(e))
         return False
 
 
@@ -132,13 +132,13 @@ def test_memory_monitor():
         mm.stop()
         
         if mm.peak_memory_mb > 0:
-            print("  ✓ Memory monitor working (peak: {:.2f} MB)".format(mm.peak_memory_mb))
+            print("  [OK] Memory monitor working (peak: {:.2f} MB)".format(mm.peak_memory_mb))
             return True
         else:
             print("  ⚠ Memory monitor may not be working (no data collected)")
             return True  # Not a critical error
     except Exception as e:
-        print("  ✗ Memory monitor error: {}".format(e))
+        print("  [ERROR] Memory monitor error: {}".format(e))
         return False
 
 
@@ -170,7 +170,7 @@ def main():
     
     for test_name, passed in results.items():
         status = "PASS" if passed else "FAIL"
-        symbol = "✓" if passed else "✗"
+        symbol = "[OK]" if passed else "[ERR]"
         print("  {} {}: {}".format(symbol, test_name.upper(), status))
     
     all_passed = all(results.values())

@@ -64,38 +64,51 @@ class BaseBenchmark(object):
         if warmup_runs is None:
             warmup_runs = settings.WARMUP_RUNS
         
-        print("\n" + "=" * 60)
-        print("Running Benchmark: {}".format(self.name))
-        print("Category: {}".format(self.category))
-        print("=" * 60)
+        # 显示 Python 版本
+        py_version = "Py{}.{}".format(sys.version_info[0], sys.version_info[1])
+        
+        print("\n  [{}] 初始化测试: {}".format(py_version, self.name))
+        print("  类别: {}".format(self.category))
         
         # Setup
+        print("  执行 setup()...")
         self.setup()
+        print("  [OK] setup() 完成")
         
         try:
             # Warmup runs
             if warmup_runs > 0:
-                print("\nWarmup runs ({} iterations)...".format(warmup_runs))
+                print("  预热运行 ({} 次)...".format(warmup_runs))
                 for i in range(warmup_runs):
-                    print("  Warmup {}/{}...".format(i + 1, warmup_runs))
+                    print("    预热 {}/{}...".format(i + 1, warmup_runs))
                     result = self._run_single_iteration()
                     self.warmup_results.append(result)
+                    if result.get('success'):
+                        print("      耗时: {:.4f}秒".format(result.get('elapsed_seconds', 0)))
+                    else:
+                        print("      失败: {}".format(result.get('error', 'Unknown error')))
             
             # Actual benchmark runs
-            print("\nBenchmark runs ({} iterations)...".format(num_runs))
+            print("  正式测试运行 ({} 次)...".format(num_runs))
             for i in range(num_runs):
-                print("  Run {}/{}...".format(i + 1, num_runs))
+                print("    运行 {}/{}...".format(i + 1, num_runs))
                 result = self._run_single_iteration()
                 self.results.append(result)
                 
                 if result.get('success'):
-                    print("    Time: {:.4f}s".format(result.get('elapsed_seconds', 0)))
+                    elapsed = result.get('elapsed_seconds', 0)
+                    memory_info = ""
+                    if 'memory_mb' in result and result['memory_mb'].get('peak_mb'):
+                        memory_info = " [内存峰值: {:.1f}MB]".format(result['memory_mb']['peak_mb'])
+                    print("      [OK] 耗时: {:.4f}秒{}".format(elapsed, memory_info))
                 else:
-                    print("    FAILED: {}".format(result.get('error', 'Unknown error')))
+                    print("      [FAILED] {}".format(result.get('error', 'Unknown error')))
         
         finally:
             # Teardown
+            print("  执行 teardown()...")
             self.teardown()
+            print("  [OK] teardown() 完成")
         
         # Calculate statistics
         return self.get_statistics()
@@ -108,10 +121,13 @@ class BaseBenchmark(object):
                 result = self.run_single()
                 result['success'] = True
             except Exception as e:
+                import traceback
+                error_detail = traceback.format_exc()
                 result = {
                     'success': False,
                     'error': str(e),
-                    'error_type': type(e).__name__
+                    'error_type': type(e).__name__,
+                    'traceback': error_detail
                 }
         
         # Combine timing results with benchmark result

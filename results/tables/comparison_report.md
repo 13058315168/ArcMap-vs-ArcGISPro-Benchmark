@@ -1,48 +1,52 @@
-# ArcGIS Python 2.7 vs Python 3.x Performance Comparison
+# ArcGIS Python 2.7 vs Python 3.x 性能对比报告
 
-*Generated on 2026-03-29 19:37:13*
+*生成时间：2026年03月29日 23:32:08*
 
-## Summary Statistics
+## 统计摘要
 
-| Metric | Value |
-|--------|-------|
-| Total Tests | 12 |
-| Python 3.x Faster | 4 (33.3%) |
-| Python 2.7 Faster | 7 (58.3%) |
-| Equal Performance | 1 (8.3%) |
-| Average Speedup | 0.88x |
-| Median Speedup | 0.87x |
-| Max Speedup | 1.46x |
-| Min Speedup | 0.12x |
+| 指标 | 数值 |
+|------|------|
+| 测试项目总数 | 12 |
+| Python 3.x 更快 | 3 (25.0%) |
+| Python 2.7 更快 | 8 (66.7%) |
+| 性能相当 | 1 (8.3%) |
+| 平均加速比 | 0.83x |
+| 中位数加速比 | 0.86x |
+| 最大加速比 | 1.48x |
+| 最小加速比 | 0.12x |
 
-## Detailed Results
+## 详细对比结果
 
-| Test | Category | Python 2.7 (s) | Python 3.x (s) | Speedup | Faster |
-|------|----------|----------------|----------------|---------|--------|
-| M1_PolygonToRaster | mixed | 0.8910 ± 0.0000 | 0.6943 ± 0.0000 | 1.28x | Python 3.x |
-| M2_RasterToPoint | mixed | 13.8439 ± 0.0000 | 9.4918 ± 0.0000 | 1.46x | Python 3.x |
-| R1_CreateConstantRaster | raster | 0.1390 ± 0.0000 | 1.1947 ± 0.0000 | 0.12x | Python 2.7 |
-| R2_Resample | raster | 0.2250 ± 0.0000 | 0.4096 ± 0.0000 | 0.55x | Python 2.7 |
-| R3_Clip | raster | 0.2876 ± 0.0000 | 0.2878 ± 0.0000 | 1.00x | Equal |
-| R4_RasterCalculator | raster | 0.4235 ± 0.0000 | 0.4864 ± 0.0000 | 0.87x | Python 2.7 |
-| V1_CreateFishnet | vector | 0.5695 ± 0.0000 | 0.7305 ± 0.0000 | 0.78x | Python 2.7 |
-| V2_CreateRandomPoints | vector | 0.0830 ± 0.0000 | 0.1300 ± 0.0000 | 0.64x | Python 2.7 |
-| V3_Buffer | vector | 0.1687 ± 0.0000 | 0.2562 ± 0.0000 | 0.66x | Python 2.7 |
-| V4_Intersect | vector | 0.3546 ± 0.0000 | 0.2827 ± 0.0000 | 1.25x | Python 3.x |
-| V5_SpatialJoin | vector | 1.2703 ± 0.0000 | 1.4754 ± 0.0000 | 0.86x | Python 2.7 |
-| V6_CalculateField | vector | 1.1532 ± 0.0000 | 1.0487 ± 0.0000 | 1.10x | Python 3.x |
+| 测试项目 | 类别 | Python 2.7 (秒) | Python 3.x (秒) | 加速比 | 更快 |
+|----------|------|-----------------|-----------------|--------|------|
+| M1_PolygonToRaster | mixed | 1.1641 ± 0.0000 | 0.7934 ± 0.0000 | 1.47x | Python 3.x 更快 |
+| M2_RasterToPoint | mixed | 14.1896 ± 0.0000 | 9.6138 ± 0.0000 | 1.48x | Python 3.x 更快 |
+| R1_CreateConstantRaster | raster | 0.1670 ± 0.0000 | 1.3885 ± 0.0000 | 0.12x | Python 2.7 更快 |
+| R2_Resample | raster | 0.2915 ± 0.0000 | 0.6326 ± 0.0000 | 0.46x | Python 2.7 更快 |
+| R3_Clip | raster | 0.3568 ± 0.0000 | 0.4137 ± 0.0000 | 0.86x | Python 2.7 更快 |
+| R4_RasterCalculator | raster | 0.5216 ± 0.0000 | 0.7373 ± 0.0000 | 0.71x | Python 2.7 更快 |
+| V1_CreateFishnet | vector | 0.7907 ± 0.0000 | 0.8710 ± 0.0000 | 0.91x | Python 2.7 更快 |
+| V2_CreateRandomPoints | vector | 0.1117 ± 0.0000 | 0.1979 ± 0.0000 | 0.56x | Python 2.7 更快 |
+| V3_Buffer | vector | 0.2012 ± 0.0000 | 0.3264 ± 0.0000 | 0.62x | Python 2.7 更快 |
+| V4_Intersect | vector | 0.4224 ± 0.0000 | 0.4153 ± 0.0000 | 1.02x | 性能相当 |
+| V5_SpatialJoin | vector | 1.2332 ± 0.0000 | 1.9253 ± 0.0000 | 0.64x | Python 2.7 更快 |
+| V6_CalculateField | vector | 1.3757 ± 0.0000 | 1.2713 ± 0.0000 | 1.08x | Python 3.x 更快 |
 
-## Notes
+## 说明
 
-- **Times**: Mean ± Standard Deviation (in seconds)
-- **Speedup**: Ratio of Python 2.7 time to Python 3.x time
-  - Speedup > 1: Python 3.x is faster
-  - Speedup < 1: Python 2.7 is faster
-  - Speedup = 1: Equal performance
-- **Faster**: Which Python version performed better
+- **时间格式**: 平均值 ± 标准差（单位：秒）
+- **加速比**: Python 2.7 执行时间 / Python 3.x 执行时间
+  - 加速比 > 1：Python 3.x 更快
+  - 加速比 < 1：Python 2.7 更快
+  - 加速比 ≈ 1：两者性能相当（差异 < 5%）
+- **更快**: 表示性能更优的 Python 版本
 
-## Interpretation
+## 分析结论
 
-Based on the benchmark results:
-- On average, **Python 2.7 is 1.14x faster** than Python 3.x
-- Python 3.x was faster in 4 out of 12 tests (33.3%)
+根据基准测试结果：
+- 总体趋势：**Python 2.7 比 Python 3.x 快 1.21 倍**
+  - Python 2.7 性能提升 20.9%
+- Python 3.x 在 3 / 12 个测试项目中更快（占比 25.0%）
+
+---
+*报告由 ArcGIS Python 性能对比测试工具自动生成*

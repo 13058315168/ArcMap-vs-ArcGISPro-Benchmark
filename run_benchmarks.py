@@ -22,6 +22,7 @@ from utils.result_exporter import ResultExporter
 from benchmarks.vector_benchmarks import VectorBenchmarks
 from benchmarks.raster_benchmarks import RasterBenchmarks
 from benchmarks.mixed_benchmarks import MixedBenchmarks
+from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
 
 
 def check_arcpy():
@@ -85,6 +86,19 @@ Examples:
         help='Generate test data before running benchmarks'
     )
     
+    parser.add_argument(
+        '--multiprocess',
+        action='store_true',
+        help='Run multiprocess comparison benchmarks'
+    )
+    
+    parser.add_argument(
+        '--mp-workers',
+        type=int,
+        default=4,
+        help='Number of worker processes for multiprocess tests (default: 4)'
+    )
+    
     # Python 2/3 compatibility for argparse
     if len(sys.argv) == 1:
         return parser.parse_args([])
@@ -129,33 +143,45 @@ def run_benchmarks(benchmarks, num_runs, warmup_runs):
     """Run all benchmarks"""
     results = []
     
+    # 显示 Python 版本信息
+    py_version = "Python {}.{}.{}".format(
+        sys.version_info[0], sys.version_info[1], sys.version_info[2]
+    )
+    py_type = "ArcGIS Desktop (Python 2)" if sys.version_info[0] == 2 else "ArcGIS Pro (Python 3)"
+    
     print("\n" + "=" * 70)
-    print("Starting Benchmark Suite")
+    print("开始执行基准测试 - {} ({})".format(py_version, py_type))
     print("=" * 70)
-    print("Total benchmarks: {}".format(len(benchmarks)))
-    print("Runs per benchmark: {} (+ {} warmup)".format(num_runs, warmup_runs))
+    print("测试项目总数: {}".format(len(benchmarks)))
+    print("每项测试循环: {} 次正式 + {} 次预热".format(num_runs, warmup_runs))
     print("=" * 70)
     
     for i, benchmark in enumerate(benchmarks, 1):
-        print("\n[{}/{}] Running: {}".format(i, len(benchmarks), benchmark.name))
+        print("\n" + "-" * 70)
+        print("[{}/{}] 正在执行: {} (类别: {})".format(
+            i, len(benchmarks), benchmark.name, benchmark.category
+        ))
+        print("-" * 70)
         
         try:
             stats = benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs)
             results.append(stats)
             
             if stats.get('success'):
-                print("  Status: SUCCESS")
-                print("  Mean time: {:.4f}s (±{:.4f}s)".format(
-                    stats.get('mean_time', 0),
-                    stats.get('std_time', 0)
+                print("\n  [OK] 测试完成: {}".format(benchmark.name))
+                print("    平均耗时: {:.4f}秒".format(stats.get('mean_time', 0)))
+                print("    标准差: ±{:.4f}秒".format(stats.get('std_time', 0)))
+                print("    最快: {:.4f}秒 | 最慢: {:.4f}秒".format(
+                    stats.get('min_time', 0),
+                    stats.get('max_time', 0)
                 ))
             else:
-                print("  Status: FAILED")
-                print("  Error: {}".format(stats.get('error', 'Unknown')))
+                print("\n  [FAILED] 测试失败: {}".format(benchmark.name))
+                print("    错误: {}".format(stats.get('error', 'Unknown')))
         
         except Exception as e:
-            print("  Status: ERROR")
-            print("  Exception: {}".format(str(e)))
+            print("\n  [ERROR] 执行异常: {}".format(benchmark.name))
+            print("    异常信息: {}".format(str(e)))
             results.append({
                 'test_name': benchmark.name,
                 'success': False,
@@ -199,6 +225,87 @@ def save_results(results, output_dir):
         'markdown': md_file,
         'csv': csv_file
     }
+
+
+def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers):
+    """Run multiprocess comparison benchmarks"""
+    print("\n" + "=" * 70)
+    print("Running Multiprocess Comparison Benchmarks")
+    print("Workers: {}".format(num_workers))
+    print("=" * 70)
+    
+    from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
+    
+    mp_benchmarks = get_multiprocess_benchmarks()
+    mp_results = []
+    
+    for i, benchmark in enumerate(mp_benchmarks, 1):
+        print("\n" + "-" * 70)
+        print("[{}/{}] Running multiprocess comparison: {}".format(
+            i, len(mp_benchmarks), benchmark.name
+        ))
+        print("-" * 70)
+        
+        # Run single process version
+        print("\n  [1/2] Single process version...")
+        try:
+            benchmark.setup()
+            stats_single = benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs, 
+                                         use_multiprocess=False)
+            benchmark.teardown()
+            
+            if stats_single.get('success'):
+                print("    [OK] Single process: {:.4f}s".format(stats_single.get('mean_time', 0)))
+            else:
+                print("    [FAILED] Single process: {}".format(stats_single.get('error', 'Unknown')))
+        except Exception as e:
+            print("    [ERROR] Single process: {}".format(str(e)))
+            stats_single = {
+                'test_name': benchmark.name + '_single',
+                'success': False,
+                'error': str(e)
+            }
+        
+        mp_results.append(stats_single)
+        
+        # Run multiprocess version
+        print("\n  [2/2] Multiprocess version ({} workers)...".format(num_workers))
+        try:
+            benchmark.setup()
+            stats_mp = benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs,
+                                     use_multiprocess=True)
+            benchmark.teardown()
+            
+            if stats_mp.get('success'):
+                print("    [OK] Multiprocess: {:.4f}s".format(stats_mp.get('mean_time', 0)))
+                
+                # Calculate speedup
+                if stats_single.get('success'):
+                    speedup = stats_single['mean_time'] / stats_mp['mean_time'] \
+                              if stats_mp['mean_time'] > 0 else 0
+                    efficiency = speedup / num_workers * 100 if num_workers > 0 else 0
+                    print("    Speedup: {:.2f}x (Efficiency: {:.1f}%)".format(speedup, efficiency))
+            else:
+                print("    [FAILED] Multiprocess: {}".format(stats_mp.get('error', 'Unknown')))
+        except Exception as e:
+            print("    [ERROR] Multiprocess: {}".format(str(e)))
+            stats_mp = {
+                'test_name': benchmark.name + '_multiprocess',
+                'success': False,
+                'error': str(e)
+            }
+        
+        # Add multiprocess metadata
+        stats_mp['execution_mode'] = 'multiprocess'
+        stats_mp['num_workers'] = num_workers
+        if stats_single.get('success') and stats_mp.get('success'):
+            stats_mp['speedup_vs_single'] = stats_single['mean_time'] / stats_mp['mean_time'] \
+                                            if stats_mp['mean_time'] > 0 else 0
+            stats_mp['parallel_efficiency'] = stats_mp['speedup_vs_single'] / num_workers * 100
+        
+        mp_results.append(stats_mp)
+    
+    return mp_results
 
 
 def print_summary(results):
@@ -278,6 +385,12 @@ def main():
     # Run benchmarks
     results = run_benchmarks(benchmarks, num_runs, warmup_runs)
     
+    # Run multiprocess benchmarks if requested
+    mp_results = []
+    if args.multiprocess:
+        mp_results = run_multiprocess_benchmarks(num_runs, warmup_runs, args.mp_workers)
+        results.extend(mp_results)
+    
     # Print summary
     print_summary(results)
     
@@ -288,9 +401,14 @@ def main():
     print("\n" + "=" * 70)
     print("Benchmark Complete")
     print("=" * 70)
-    print("\nNext steps:")
-    print("1. Run this script with the other Python version")
-    print("2. Run analyze_results.py to generate comparison tables")
+    
+    if args.multiprocess:
+        print("\nMultiprocess comparison completed!")
+        print("Check the results for single vs multiprocess speedup data.")
+    else:
+        print("\nNext steps:")
+        print("1. Run this script with the other Python version")
+        print("2. Run analyze_results.py to generate comparison tables")
     
     return 0
 

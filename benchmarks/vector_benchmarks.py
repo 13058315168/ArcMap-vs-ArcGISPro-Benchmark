@@ -242,7 +242,9 @@ class V5_SpatialJoin(BaseBenchmark):
         gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
         self.target_features = os.path.join(gdb_path, "spatial_join_points")
         self.join_features = os.path.join(gdb_path, "spatial_join_polygons")
-        self.output_fc = os.path.join(settings.DATA_DIR, "V5_spatial_join_output.shp")
+        # Use version-specific output to avoid lock conflicts between Py2/Py3
+        py_version = "py2" if sys.version_info[0] < 3 else "py3"
+        self.output_fc = os.path.join(settings.DATA_DIR, "V5_spatial_join_output_{}.shp".format(py_version))
     
     def teardown(self):
         if self.output_fc and arcpy.Exists(self.output_fc):
