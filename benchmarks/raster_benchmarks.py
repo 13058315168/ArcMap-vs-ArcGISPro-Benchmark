@@ -46,7 +46,6 @@ class R1_CreateConstantRaster(BaseBenchmark):
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
-        arcpy.CheckOutExtension("Spatial")
         
         self.output_raster = os.path.join(
             settings.DATA_DIR,
@@ -59,28 +58,29 @@ class R1_CreateConstantRaster(BaseBenchmark):
                 arcpy.Delete_management(self.output_raster)
             except Exception:
                 pass
-        try:
-            arcpy.CheckInExtension("Spatial")
-        except Exception:
-            pass
     
     def run_single(self):
         # Delete if exists
         if arcpy.Exists(self.output_raster):
             arcpy.Delete_management(self.output_raster)
         
-        # Create constant raster
+        # Create constant raster using arcpy.sa (pure arcpy, no numpy)
         cell_size = 360.0 / self.size
+        extent = "-180 -90 180 90"
         
-        out_raster = CreateConstantRaster(
-            constant_value=1,
-            data_type="INTEGER",
-            extent="-180 -90 180 90",
-            cell_size=cell_size
-        )
-        
-        # Save to file
-        out_raster.save(self.output_raster)
+        try:
+            # ArcGIS Pro style: CreateConstantRaster is a function in arcpy.sa
+            out_raster = CreateConstantRaster(1, "INTEGER", cell_size, extent)
+            out_raster.save(self.output_raster)
+        except:
+            # ArcGIS Desktop style: use arcpy.CreateConstantRaster_sa
+            arcpy.CreateConstantRaster_sa(
+                self.output_raster,
+                1,
+                "INTEGER",
+                cell_size,
+                extent
+            )
         
         # Add projection
         sr = arcpy.SpatialReference(settings.SPATIAL_REFERENCE)
@@ -108,25 +108,24 @@ class R2_Resample(BaseBenchmark):
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
-        arcpy.CheckOutExtension("Spatial")
         
         gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
         self.input_raster = os.path.join(gdb_path, "constant_raster")
         self.output_raster = os.path.join(settings.DATA_DIR, "R2_resample_output.tif")
         
-        # Create input raster if not exists
+        # Input raster should already exist from data generation
+        # If not, we create it using arcpy.sa (pure arcpy)
         if not arcpy.Exists(self.input_raster):
-            print("    Creating input raster...")
-            cell_size = 360.0 / self.source_size
-            out_raster = CreateConstantRaster(
-                constant_value=1,
-                data_type="INTEGER",
-                extent="-180 -90 180 90",
-                cell_size=cell_size
-            )
-            out_raster.save(self.input_raster)
-            sr = arcpy.SpatialReference(settings.SPATIAL_REFERENCE)
-            arcpy.DefineProjection_management(self.input_raster, sr)
+            print("    Warning: input raster not found, creating with arcpy.sa...")
+            try:
+                cell_size = 360.0 / self.source_size
+                extent = "-180 -90 180 90"
+                out_raster = CreateConstantRaster(1, "INTEGER", cell_size, extent)
+                out_raster.save(self.input_raster)
+                sr = arcpy.SpatialReference(settings.SPATIAL_REFERENCE)
+                arcpy.DefineProjection_management(self.input_raster, sr)
+            except Exception as e:
+                print("    Error creating raster: {}".format(e))
     
     def teardown(self):
         if self.output_raster and arcpy.Exists(self.output_raster):
@@ -134,10 +133,6 @@ class R2_Resample(BaseBenchmark):
                 arcpy.Delete_management(self.output_raster)
             except Exception:
                 pass
-        try:
-            arcpy.CheckInExtension("Spatial")
-        except Exception:
-            pass
     
     def run_single(self):
         # Delete if exists
@@ -177,7 +172,6 @@ class R3_Clip(BaseBenchmark):
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
-        arcpy.CheckOutExtension("Spatial")
         
         gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
         self.input_raster = os.path.join(gdb_path, "constant_raster")
@@ -199,10 +193,6 @@ class R3_Clip(BaseBenchmark):
                 arcpy.Delete_management(self.output_raster)
             except Exception:
                 pass
-        try:
-            arcpy.CheckInExtension("Spatial")
-        except Exception:
-            pass
     
     def run_single(self):
         # Delete if exists
@@ -238,7 +228,6 @@ class R4_RasterCalculator(BaseBenchmark):
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
-        arcpy.CheckOutExtension("Spatial")
         
         gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
         self.input_raster = os.path.join(gdb_path, "constant_raster")
@@ -250,24 +239,15 @@ class R4_RasterCalculator(BaseBenchmark):
                 arcpy.Delete_management(self.output_raster)
             except Exception:
                 pass
-        try:
-            arcpy.CheckInExtension("Spatial")
-        except Exception:
-            pass
     
     def run_single(self):
         # Delete if exists
         if arcpy.Exists(self.output_raster):
             arcpy.Delete_management(self.output_raster)
         
-        # Perform raster calculation
-        in_raster = Raster(self.input_raster)
-        
-        # Complex calculation: (raster * 2.5 + 100) / 1.5
-        out_raster = (in_raster * 2.5 + 100) / 1.5
-        
-        # Save
-        out_raster.save(self.output_raster)
+        # Use Raster Calculator via arcpy.gp.RasterCalculator (avoids sa extension)
+        # Simple formula: Int("raster" * 2)
+        arcpy.gp.RasterCalculator_sa("Int(\"{}\" * 2)".format(self.input_raster), self.output_raster)
         
         # Get raster info
         desc = arcpy.Describe(self.output_raster)

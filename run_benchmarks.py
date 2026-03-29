@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Main script to run ArcGIS Performance Benchmarks
+"""Main script to run ArcGIS Performance Benchmarks
 Compatible with Python 2.7 and 3.x
 
 Usage:
-    Python 2.7: C:\Python27\ArcGIS10.8\python.exe run_benchmarks.py [--category vector|raster|mixed|all]
-    Python 3.x: "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py [--category vector|raster|mixed|all]
+    Python 2.7: C:\\Python27\\ArcGIS10.8\\python.exe run_benchmarks.py [--category vector|raster|mixed|all]
+    Python 3.x: "C:\\Program Files\\ArcGIS\\Pro\\bin\\Python\\envs\\arcgispro-py3\\python.exe" run_benchmarks.py [--category vector|raster|mixed|all]
 """
 from __future__ import print_function, division, absolute_import
 import sys

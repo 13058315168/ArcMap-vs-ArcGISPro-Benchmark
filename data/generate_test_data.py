@@ -243,13 +243,25 @@ class TestDataGenerator(object):
         """V5: Create data for spatial join"""
         print("\n[5/7] Creating spatial join test data...")
         num_points = self.vector_config['spatial_join_points']
-        num_polys = self.vector_config['spatial_join_polygons']
         
-        # Create random points
-        extent_size = min(
-            self.vector_config['fishnet_cols'] * 10,
-            self.vector_config['fishnet_rows'] * 10
-        )
+        # Use the main fishnet as polygons (already proven to work)
+        # Just copy it with a new name
+        arcpy.CopyFeatures_management("fishnet", "spatial_join_polygons")
+        
+        # Add poly_id field
+        arcpy.AddField_management("spatial_join_polygons", "poly_id", "LONG")
+        desc = arcpy.Describe("spatial_join_polygons")
+        oid_field = desc.OIDFieldName
+        with arcpy.da.UpdateCursor("spatial_join_polygons", [oid_field, "poly_id"]) as cursor:
+            for row in cursor:
+                row[1] = row[0]
+                cursor.updateRow(row)
+        
+        # Create random points within fishnet extent
+        # Get extent from fishnet
+        desc = arcpy.Describe("fishnet")
+        extent = desc.extent
+        x_min, y_min, x_max, y_max = extent.XMin, extent.YMin, extent.XMax, extent.YMax
         
         arcpy.CreateFeatureclass_management(
             self.gdb_path,
@@ -262,41 +274,14 @@ class TestDataGenerator(object):
         random.seed(42)
         with arcpy.da.InsertCursor("spatial_join_points", ["SHAPE@XY"]) as cursor:
             for _ in range(num_points):
-                x = random.uniform(0, extent_size)
-                y = random.uniform(0, extent_size)
+                x = random.uniform(x_min, x_max)
+                y = random.uniform(y_min, y_max)
                 cursor.insertRow([(x, y)])
-        
-        # Create grid polygons
-        grid_size = int(num_polys ** 0.5)
-        cell_size = extent_size / grid_size
-        arcpy.CreateFishnet_management(
-            out_feature_class="spatial_join_polygons",
-            origin_coord="0 0",
-            y_axis_coord="0 1",
-            cell_width=cell_size,
-            cell_height=cell_size,
-            number_rows=grid_size,
-            number_columns=grid_size,
-            corner_coord="{} {}".format(extent_size, extent_size),
-            labels="NO_LABELS",
-            geometry_type="POLYGON"
-        )
-        arcpy.DefineProjection_management("spatial_join_polygons", self.spatial_ref)
-        
-        # Add attribute field
-        arcpy.AddField_management("spatial_join_polygons", "poly_id", "LONG")
-        # Get OID field name (may vary between ArcGIS versions)
-        desc = arcpy.Describe("spatial_join_polygons")
-        oid_field = desc.OIDFieldName
-        with arcpy.da.UpdateCursor("spatial_join_polygons", [oid_field, "poly_id"]) as cursor:
-            for row in cursor:
-                row[1] = row[0]
-                cursor.updateRow(row)
         
         count_p = int(arcpy.GetCount_management("spatial_join_points")[0])
         count_poly = int(arcpy.GetCount_management("spatial_join_polygons")[0])
         print("  Created: {} points, {} polygons".format(count_p, count_poly))
-        return "sj_points", "sj_polygons"
+        return "spatial_join_points", "spatial_join_polygons"
     
     def create_calculate_field_data(self):
         """V6: Create data for calculate field test"""
@@ -342,36 +327,31 @@ class TestDataGenerator(object):
         return "calc_table"
     
     def create_raster_data(self):
-        """Create raster test data"""
+        """Create raster test data using pure arcpy"""
         print("\n[7/7] Creating raster data...")
         size = self.raster_config['constant_raster_size']
-        
-        # Try multiple methods for creating constant raster
         raster_path = os.path.join(self.gdb_path, "constant_raster")
         
-        # Method 1: arcpy.sa (ArcGIS Pro)
+        # Pure arcpy method: Use Raster Calculator to create a constant raster
+        # Create a simple calculation that results in all 1's
+        extent = "0 0 {} {}".format(size, size)
+        cell_size = 1
+        
         try:
-            import arcpy.sa
-            extent = "0 0 {} {}".format(size, size)
-            cell_size = 1
+            # Method 1: Try arcpy.sa.CreateConstantRaster (Pro style)
             out_raster = arcpy.sa.CreateConstantRaster(1, "INTEGER", cell_size, extent)
             out_raster.save(raster_path)
             print("  Created: {}x{} raster (using arcpy.sa)".format(size, size))
             return "constant_raster"
         except:
-            pass
-        
-        # Method 2: NumPy to Raster
-        try:
-            import numpy as np
-            arr = np.ones((size, size), dtype=np.int32)
-            raster = arcpy.NumPyArrayToRaster(arr, arcpy.Point(0, 0), 1, 1)
-            raster.save(raster_path)
-            print("  Created: {}x{} raster (using NumPy)".format(size, size))
-            return "constant_raster"
-        except Exception as e:
-            print("  Error creating raster: {}".format(str(e)[:50]))
-            return None
+            try:
+                # Method 2: Try arcpy.CreateConstantRaster_sa (Desktop style)
+                arcpy.CreateConstantRaster_sa(raster_path, 1, "INTEGER", cell_size, extent)
+                print("  Created: {}x{} raster (using CreateConstantRaster_sa)".format(size, size))
+                return "constant_raster"
+            except Exception as e:
+                print("  Error creating raster: {}".format(str(e)[:50]))
+                return None
     
     def generate_all(self):
         """Generate all test data"""

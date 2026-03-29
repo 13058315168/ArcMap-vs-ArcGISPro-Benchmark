@@ -45,14 +45,12 @@ class M1_PolygonToRaster(BaseBenchmark):
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
-        arcpy.CheckOutExtension("Spatial")
         
         gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
         self.input_fc = os.path.join(gdb_path, "test_polygons_a")
         self.output_raster = os.path.join(settings.DATA_DIR, "M1_poly_to_ras.tif")
         
         # Calculate cell size based on data extent
-        # Use a reasonable cell size for the data
         raster_size = settings.RASTER_CONFIG['constant_raster_size']
         self.cell_size = 360.0 / raster_size
     
@@ -62,10 +60,6 @@ class M1_PolygonToRaster(BaseBenchmark):
                 arcpy.Delete_management(self.output_raster)
             except Exception:
                 pass
-        try:
-            arcpy.CheckInExtension("Spatial")
-        except Exception:
-            pass
     
     def run_single(self):
         # Delete if exists
@@ -102,7 +96,6 @@ class M2_RasterToPoint(BaseBenchmark):
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
-        arcpy.CheckOutExtension("Spatial")
         
         gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
         self.input_raster = os.path.join(gdb_path, "constant_raster")
@@ -114,10 +107,6 @@ class M2_RasterToPoint(BaseBenchmark):
                 arcpy.Delete_management(self.output_fc)
             except Exception:
                 pass
-        try:
-            arcpy.CheckInExtension("Spatial")
-        except Exception:
-            pass
     
     def run_single(self):
         # Delete if exists
