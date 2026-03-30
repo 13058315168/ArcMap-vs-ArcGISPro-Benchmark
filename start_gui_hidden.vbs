@@ -11,7 +11,7 @@ strPath = fso.GetParentFolderName(WScript.ScriptFullName)
 
 ' Try ArcGIS Pro Python first
 strPython = "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe"
-strScript = strPath & "\benchmark_gui.py"
+strScript = strPath & "\benchmark_gui_modern.py"
 
 If fso.FileExists(strPython) Then
     ' Use ArcGIS Pro Python

@@ -221,26 +221,43 @@ class ResultExporter(object):
         """Create a Markdown table from results"""
         if not results:
             return ""
-        
-        # Select key columns
+
+        # Select key columns - check all results, not just first one
         key_cols = ['test_name', 'mean_time', 'std_time', 'min_time', 'max_time']
-        available_cols = [c for c in key_cols if c in results[0]]
-        
+        # Find columns that exist in ANY result
+        available_cols = []
+        for col in key_cols:
+            for result in results:
+                if col in result and result[col] != '':
+                    available_cols.append(col)
+                    break
+
         lines = []
-        
+
         # Header
         header = "| " + " | ".join([c.replace('_', ' ').title() for c in available_cols]) + " |"
         lines.append(header)
-        
+
         # Separator
         separator = "|" + "|".join(["---" for _ in available_cols]) + "|"
         lines.append(separator)
-        
+
         # Data rows
         for result in results:
-            row = "| " + " | ".join([self._format_cell(result.get(c, '')) for c in available_cols]) + " |"
+            row_values = []
+            for col in available_cols:
+                val = result.get(col, '')
+                if val == '' or val is None:
+                    # For failed tests, show N/A
+                    if not result.get('success', True):
+                        row_values.append('N/A')
+                    else:
+                        row_values.append('')
+                else:
+                    row_values.append(self._format_cell(val))
+            row = "| " + " | ".join(row_values) + " |"
             lines.append(row)
-        
+
         return '\n'.join(lines)
     
     def _format_cell(self, value):

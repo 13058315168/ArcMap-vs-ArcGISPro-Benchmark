@@ -12,10 +12,10 @@ import sys
 # ============================================================================
 
 # Number of runs for each test (excluding warmup)
-TEST_RUNS = 2
+TEST_RUNS = 3
 
 # Warmup runs (not counted in results)
-WARMUP_RUNS = 0
+WARMUP_RUNS = 1
 
 # ============================================================================
 # Data Scale Configuration

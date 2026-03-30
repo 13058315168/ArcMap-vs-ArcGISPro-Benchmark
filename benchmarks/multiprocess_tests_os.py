@@ -50,6 +50,16 @@ def buffer_features_chunk(features_chunk, buffer_distance=1.0):
     return gdf_chunk
 
 
+def generate_points_chunk(args):
+    """Worker function for generating random points chunk"""
+    seed_offset, count = args
+    np.random.seed(42 + seed_offset)
+    x_coords = np.random.uniform(-180, 180, count)
+    y_coords = np.random.uniform(-90, 90, count)
+    from shapely.geometry import Point
+    return [Point(x, y) for x, y in zip(x_coords, y_coords)]
+
+
 class MultiprocessBenchmarkOS(BaseBenchmark):
     """Base class for open-source multiprocess benchmarks"""
     
@@ -250,26 +260,21 @@ class MP_V2_CreateRandomPoints_OS(MultiprocessBenchmarkOS):
     def run_multiprocess(self, num_workers):
         # Generate points in parallel
         points_per_worker = self.num_points // num_workers
-        
-        def generate_points_chunk(seed_offset):
-            np.random.seed(42 + seed_offset)
-            count = points_per_worker
-            x_coords = np.random.uniform(-180, 180, count)
-            y_coords = np.random.uniform(-90, 90, count)
-            from shapely.geometry import Point
-            return [Point(x, y) for x, y in zip(x_coords, y_coords)]
-        
+
+        # Create args list for worker function
+        args_list = [(i, points_per_worker) for i in range(num_workers)]
+
         with mp.Pool(processes=num_workers) as pool:
-            results = pool.map(generate_points_chunk, range(num_workers))
-        
+            results = pool.map(generate_points_chunk, args_list)
+
         # Combine results
         all_points = []
         for chunk_points in results:
             all_points.extend(chunk_points)
-        
+
         gdf = gpd.GeoDataFrame(geometry=all_points, crs="EPSG:4326")
         gdf.to_file(self.output_path, driver="GPKG")
-        
+
         return {'features_created': len(all_points), 'mode': 'multiprocess', 'workers': num_workers}
 
 

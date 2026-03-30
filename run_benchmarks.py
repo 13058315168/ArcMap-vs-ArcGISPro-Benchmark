@@ -19,10 +19,20 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import settings
 from utils.arcgis_env import ArcGISEnvironment
 from utils.result_exporter import ResultExporter
-from benchmarks.vector_benchmarks import VectorBenchmarks
-from benchmarks.raster_benchmarks import RasterBenchmarks
-from benchmarks.mixed_benchmarks import MixedBenchmarks
-from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
+
+# Import ArcGIS-based benchmarks (may fail if arcpy not available)
+try:
+    from benchmarks.vector_benchmarks import VectorBenchmarks
+    from benchmarks.raster_benchmarks import RasterBenchmarks
+    from benchmarks.mixed_benchmarks import MixedBenchmarks
+    from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
+    HAS_ARCPY_BENCHMARKS = True
+except ImportError:
+    HAS_ARCPY_BENCHMARKS = False
+    VectorBenchmarks = None
+    RasterBenchmarks = None
+    MixedBenchmarks = None
+    get_multiprocess_benchmarks = None
 
 # Import open-source benchmarks (Python 3.x only)
 try:
@@ -148,22 +158,30 @@ def generate_test_data():
 def get_benchmarks(category, include_opensource=False):
     """Get benchmarks for specified category"""
     benchmarks = []
-    
-    if category in ['vector', 'all']:
-        benchmarks.extend(VectorBenchmarks.get_all_benchmarks())
-        if include_opensource and HAS_OS_BENCHMARKS:
+
+    if HAS_ARCPY_BENCHMARKS:
+        if category in ['vector', 'all']:
+            benchmarks.extend(VectorBenchmarks.get_all_benchmarks())
+
+        if category in ['raster', 'all']:
+            benchmarks.extend(RasterBenchmarks.get_all_benchmarks())
+
+        if category in ['mixed', 'all']:
+            benchmarks.extend(MixedBenchmarks.get_all_benchmarks())
+    else:
+        print("\n[信息] 跳过 ArcGIS 基准测试 (arcpy 不可用)")
+
+    # Open-source benchmarks (Python 3.x only)
+    if include_opensource and HAS_OS_BENCHMARKS:
+        if category in ['vector', 'all']:
             benchmarks.extend(VectorBenchmarksOS.get_all_benchmarks())
-    
-    if category in ['raster', 'all']:
-        benchmarks.extend(RasterBenchmarks.get_all_benchmarks())
-        if include_opensource and HAS_OS_BENCHMARKS:
+
+        if category in ['raster', 'all']:
             benchmarks.extend(RasterBenchmarksOS.get_all_benchmarks())
-    
-    if category in ['mixed', 'all']:
-        benchmarks.extend(MixedBenchmarks.get_all_benchmarks())
-        if include_opensource and HAS_OS_BENCHMARKS:
+
+        if category in ['mixed', 'all']:
             benchmarks.extend(MixedBenchmarksOS.get_all_benchmarks())
-    
+
     return benchmarks
 
 
@@ -263,10 +281,99 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_open
     if include_opensource:
         print("Include Open-Source: Yes")
     print("=" * 70)
-    
-    from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
-    
-<<<<<<< HEAD
+
+    mp_results = []
+
+    # Run arcpy multiprocess benchmarks if available
+    if HAS_ARCPY_BENCHMARKS:
+        from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
+
+        # Determine Python version prefix for naming
+        py_version = "Py{}".format(sys.version_info[0])
+
+        mp_benchmarks = get_multiprocess_benchmarks()
+
+        for i, benchmark in enumerate(mp_benchmarks, 1):
+            print("\n" + "-" * 70)
+            print("[{}/{}] Running multiprocess comparison: {}".format(
+                i, len(mp_benchmarks), benchmark.name
+            ))
+            print("-" * 70)
+
+            # Run single process version
+            print("\n  [1/2] Single process version...")
+            stats_single = None
+            try:
+                # Create fresh instance for single process test
+                fresh_benchmark = benchmark.__class__()
+                fresh_benchmark.setup()
+                stats_single = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs,
+                                             use_multiprocess=False)
+                fresh_benchmark.teardown()
+
+                stats_single['test_name'] = "{}_{}_single".format(py_version, benchmark.name)
+
+                if stats_single.get('success'):
+                    print("    [OK] Single process: {:.4f}s".format(stats_single.get('mean_time', 0)))
+                else:
+                    print("    [FAILED] Single process: {}".format(stats_single.get('error', 'Unknown')))
+            except Exception as e:
+                print("    [ERROR] Single process: {}".format(str(e)))
+                import traceback
+                print(traceback.format_exc())
+                stats_single = {
+                    'test_name': "{}_{}_single".format(py_version, benchmark.name),
+                    'success': False,
+                    'error': str(e)
+                }
+
+            mp_results.append(stats_single)
+
+            # Run multiprocess version
+            print("\n  [2/2] Multiprocess version ({} workers)...".format(num_workers))
+            try:
+                # Create fresh instance for multiprocess test
+                fresh_benchmark = benchmark.__class__()
+                fresh_benchmark.setup()
+                stats_mp = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs,
+                                         use_multiprocess=True)
+                fresh_benchmark.teardown()
+
+                stats_mp['test_name'] = "{}_{}_multiprocess".format(py_version, benchmark.name)
+
+                if stats_mp.get('success'):
+                    print("    [OK] Multiprocess: {:.4f}s".format(stats_mp.get('mean_time', 0)))
+
+                    # Calculate speedup
+                    if stats_single.get('success'):
+                        speedup = stats_single['mean_time'] / stats_mp['mean_time'] \
+                                  if stats_mp['mean_time'] > 0 else 0
+                        efficiency = speedup / num_workers * 100 if num_workers > 0 else 0
+                        print("    Speedup: {:.2f}x (Efficiency: {:.1f}%)".format(speedup, efficiency))
+                else:
+                    print("    [FAILED] Multiprocess: {}".format(stats_mp.get('error', 'Unknown')))
+            except Exception as e:
+                print("    [ERROR] Multiprocess: {}".format(str(e)))
+                import traceback
+                print(traceback.format_exc())
+                stats_mp = {
+                    'test_name': "{}_{}_multiprocess".format(py_version, benchmark.name),
+                    'success': False,
+                    'error': str(e)
+                }
+
+            # Add multiprocess metadata
+            stats_mp['execution_mode'] = 'multiprocess'
+            stats_mp['num_workers'] = num_workers
+            if stats_single.get('success') and stats_mp.get('success'):
+                stats_mp['speedup_vs_single'] = stats_single['mean_time'] / stats_mp['mean_time'] \
+                                                if stats_mp['mean_time'] > 0 else 0
+                stats_mp['parallel_efficiency'] = stats_mp['speedup_vs_single'] / num_workers * 100
+
+            mp_results.append(stats_mp)
+    else:
+        print("\n[信息] 跳过 ArcGIS 多进程基准测试 (arcpy 不可用)")
+
     # Import open-source multiprocess tests if available
     has_os_mp = False
     if include_opensource and sys.version_info[0] >= 3:
@@ -275,103 +382,7 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_open
             has_os_mp = True
         except ImportError:
             print("[Warning] Open-source multiprocess tests not available")
-    
-=======
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
-    # Determine Python version prefix for naming
-    py_version = "Py{}".format(sys.version_info[0])
-    
-    mp_benchmarks = get_multiprocess_benchmarks()
-    mp_results = []
-    
-    # Run arcpy multiprocess benchmarks
-    for i, benchmark in enumerate(mp_benchmarks, 1):
-        print("\n" + "-" * 70)
-        print("[{}/{}] Running multiprocess comparison: {}".format(
-            i, len(mp_benchmarks), benchmark.name
-        ))
-        print("-" * 70)
-        
-        # Run single process version
-        print("\n  [1/2] Single process version...")
-        stats_single = None
-        try:
-            # Create fresh instance for single process test
-            fresh_benchmark = benchmark.__class__()
-            fresh_benchmark.setup()
-            stats_single = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs, 
-                                         use_multiprocess=False)
-            fresh_benchmark.teardown()
-            
-            # Add Python version prefix to test name
-            stats_single['test_name'] = "{}_{}_single".format(py_version, benchmark.name)
-            
-            # Add Python version prefix to test name
-            stats_single['test_name'] = "{}_{}_single".format(py_version, benchmark.name)
-            
-            if stats_single.get('success'):
-                print("    [OK] Single process: {:.4f}s".format(stats_single.get('mean_time', 0)))
-            else:
-                print("    [FAILED] Single process: {}".format(stats_single.get('error', 'Unknown')))
-        except Exception as e:
-            print("    [ERROR] Single process: {}".format(str(e)))
-            import traceback
-            print(traceback.format_exc())
-            stats_single = {
-                'test_name': "{}_{}_single".format(py_version, benchmark.name),
-                'success': False,
-                'error': str(e)
-            }
-        
-        mp_results.append(stats_single)
-        
-        # Run multiprocess version
-        print("\n  [2/2] Multiprocess version ({} workers)...".format(num_workers))
-        try:
-            # Create fresh instance for multiprocess test
-            fresh_benchmark = benchmark.__class__()
-            fresh_benchmark.setup()
-            stats_mp = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs,
-                                     use_multiprocess=True)
-            fresh_benchmark.teardown()
-            
-            # Add Python version prefix to test name
-            stats_mp['test_name'] = "{}_{}_multiprocess".format(py_version, benchmark.name)
-            
-            # Add Python version prefix to test name
-            stats_mp['test_name'] = "{}_{}_multiprocess".format(py_version, benchmark.name)
-            
-            if stats_mp.get('success'):
-                print("    [OK] Multiprocess: {:.4f}s".format(stats_mp.get('mean_time', 0)))
-                
-                # Calculate speedup
-                if stats_single.get('success'):
-                    speedup = stats_single['mean_time'] / stats_mp['mean_time'] \
-                              if stats_mp['mean_time'] > 0 else 0
-                    efficiency = speedup / num_workers * 100 if num_workers > 0 else 0
-                    print("    Speedup: {:.2f}x (Efficiency: {:.1f}%)".format(speedup, efficiency))
-            else:
-                print("    [FAILED] Multiprocess: {}".format(stats_mp.get('error', 'Unknown')))
-        except Exception as e:
-            print("    [ERROR] Multiprocess: {}".format(str(e)))
-            import traceback
-            print(traceback.format_exc())
-            stats_mp = {
-                'test_name': "{}_{}_multiprocess".format(py_version, benchmark.name),
-                'success': False,
-                'error': str(e)
-            }
-        
-        # Add multiprocess metadata
-        stats_mp['execution_mode'] = 'multiprocess'
-        stats_mp['num_workers'] = num_workers
-        if stats_single.get('success') and stats_mp.get('success'):
-            stats_mp['speedup_vs_single'] = stats_single['mean_time'] / stats_mp['mean_time'] \
-                                            if stats_mp['mean_time'] > 0 else 0
-            stats_mp['parallel_efficiency'] = stats_mp['speedup_vs_single'] / num_workers * 100
-        
-        mp_results.append(stats_mp)
-    
+
     # Run open-source multiprocess benchmarks if available
     if has_os_mp:
         print("\n" + "=" * 70)
@@ -395,17 +406,19 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_open
                 stats_single = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs, 
                                              use_multiprocess=False)
                 fresh_benchmark.teardown()
-                
-                stats_single['test_name'] = "OS_{}_single".format(benchmark.name)
-                
+
+                os_name = benchmark.name.replace('_OS', '')
+                stats_single['test_name'] = "OS_{}_single".format(os_name)
+
                 if stats_single.get('success'):
                     print("    [OK] Single process: {:.4f}s".format(stats_single.get('mean_time', 0)))
                 else:
                     print("    [FAILED] Single process: {}".format(stats_single.get('error', 'Unknown')))
             except Exception as e:
                 print("    [ERROR] Single process: {}".format(str(e)))
+                os_name = benchmark.name.replace('_OS', '')
                 stats_single = {
-                    'test_name': "OS_{}_single".format(benchmark.name),
+                    'test_name': "OS_{}_single".format(os_name),
                     'success': False,
                     'error': str(e)
                 }
@@ -420,9 +433,10 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_open
                 stats_mp = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs,
                                          use_multiprocess=True)
                 fresh_benchmark.teardown()
-                
-                stats_mp['test_name'] = "OS_{}_multiprocess".format(benchmark.name)
-                
+
+                os_name = benchmark.name.replace('_OS', '')
+                stats_mp['test_name'] = "OS_{}_multiprocess".format(os_name)
+
                 if stats_mp.get('success'):
                     print("    [OK] Multiprocess: {:.4f}s".format(stats_mp.get('mean_time', 0)))
                     
@@ -435,8 +449,9 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_open
                     print("    [FAILED] Multiprocess: {}".format(stats_mp.get('error', 'Unknown')))
             except Exception as e:
                 print("    [ERROR] Multiprocess: {}".format(str(e)))
+                os_name = benchmark.name.replace('_OS', '')
                 stats_mp = {
-                    'test_name': "OS_{}_multiprocess".format(benchmark.name),
+                    'test_name': "OS_{}_multiprocess".format(os_name),
                     'success': False,
                     'error': str(e)
                 }
@@ -490,23 +505,33 @@ def main():
     """Main function"""
     # Parse arguments
     args = parse_args()
-    
+
     # Print banner
     print("=" * 70)
     print("ArcGIS Python Performance Benchmark")
     print("=" * 70)
-    
+
     # Check arcpy
-    if not check_arcpy():
-        print("\nERROR: arcpy is not available!")
-        print("Please run this script with an ArcGIS Python interpreter:")
+    has_arcpy = check_arcpy()
+    if not has_arcpy:
+        print("\n[警告] arcpy 不可用！")
+        print("只有开源测试将被运行（如果可用）")
+        print("要使用 ArcGIS 测试，请使用 ArcGIS Python 解释器运行：")
         print("  - ArcGIS Desktop: C:\\Python27\\ArcGIS10.8\\python.exe")
         print("  - ArcGIS Pro: \"C:\\Program Files\\ArcGIS\\Pro\\bin\\Python\\envs\\arcgispro-py3\\python.exe\"")
-        return 1
+
+        # If only opensource tests requested, we can continue
+        if not args.opensource:
+            print("\n错误: 未指定 --opensource 标志，且 arcpy 不可用")
+            print("请添加 --opensource 以仅运行开源测试")
+            return 1
     
     # Print environment info
-    env = ArcGISEnvironment()
-    env.print_info()
+    if has_arcpy:
+        env = ArcGISEnvironment()
+        env.print_info()
+    else:
+        print("\n[环境] 跳过 ArcGIS 环境信息 (arcpy 不可用)")
     
     # Print configuration
     settings.print_config()

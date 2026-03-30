@@ -1,5 +1,6 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
       "Bash(python test_vbs_debug.py)",
       "Bash(wscript //nologo \"启动工具.vbs\")",
@@ -16,6 +17,10 @@
       "Bash(python -c \"print\\(''✅ Python可以正常运行GUI''\\)\")"
     ]
   },
-  "model": "kimi-k2.5",
+  "env": {
+    "ENABLE_TOOL_SEARCH": "false",
+    "ANTHROPIC_BASE_URL": "https://api.kimi.com/coding/",
+    "ANTHROPIC_AUTH_TOKEN": "sk-kimi-QMw4ll6qqZUtzeIHmqxbx1iiST98g4B3grwdIbdGcPf0SpzqVxESgGSshlcI5dpZ"
+  },
   "defaultMode": "bypassPermissions"
 }

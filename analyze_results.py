@@ -91,12 +91,16 @@ def load_results(results_dir):
             
             # Determine Python version from filename or content
             if 'py2' in filename.lower():
-                results_py2 = results
+                if results_py2 is None:
+                    results_py2 = []
+                results_py2.extend(results)
                 print("Loaded Python 2.7 results from: {}".format(filename))
             elif 'py3' in filename.lower():
                 # Check if it's a dedicated open-source results file
                 if 'os_' in filename.lower() or 'opensource' in filename.lower():
-                    results_os = results
+                    if results_os is None:
+                        results_os = []
+                    results_os.extend(results)
                     print("Loaded Open-Source results from: {}".format(filename))
                 else:
                     # Split results into arcpy and open-source (if any _OS tests exist)
@@ -105,26 +109,42 @@ def load_results(results_dir):
                     os_results = [r for r in results if r.get('test_name', '').endswith('_OS')]
                     
                     if py3_results:
-                        results_py3 = py3_results
+                        if results_py3 is None:
+                            results_py3 = []
+                        results_py3.extend(py3_results)
                         print("Loaded Python 3.x results from: {} ({} tests)".format(filename, len(py3_results)))
                     if os_results:
-                        results_os = os_results
+                        if results_os is None:
+                            results_os = []
+                        results_os.extend(os_results)
                         print("Loaded Open-Source results from: {} ({} tests)".format(filename, len(os_results)))
             else:
                 # Try to detect from content
                 if results and 'python_version' in results[0]:
                     py_ver = results[0]['python_version']
                     if py_ver.startswith('2.'):
-                        results_py2 = results
+                        if results_py2 is None:
+                            results_py2 = []
+                        results_py2.extend(results)
                         print("Loaded Python 2.7 results from: {}".format(filename))
                     elif any(r.get('test_name', '').endswith('_OS') for r in results):
                         # Split results (OS tests have _OS suffix)
-                        results_py3 = [r for r in results if not r.get('test_name', '').endswith('_OS')]
-                        results_os = [r for r in results if r.get('test_name', '').endswith('_OS')]
-                        print("Loaded Python 3.x results from: {}".format(filename))
-                        print("Loaded Open-Source results from: {}".format(filename))
+                        new_py3_results = [r for r in results if not r.get('test_name', '').endswith('_OS')]
+                        new_os_results = [r for r in results if r.get('test_name', '').endswith('_OS')]
+                        if new_py3_results:
+                            if results_py3 is None:
+                                results_py3 = []
+                            results_py3.extend(new_py3_results)
+                            print("Loaded Python 3.x results from: {}".format(filename))
+                        if new_os_results:
+                            if results_os is None:
+                                results_os = []
+                            results_os.extend(new_os_results)
+                            print("Loaded Open-Source results from: {}".format(filename))
                     else:
-                        results_py3 = results
+                        if results_py3 is None:
+                            results_py3 = []
+                        results_py3.extend(results)
                         print("Loaded Python 3.x results from: {}".format(filename))
     
     return results_py2, results_py3, results_os
@@ -141,12 +161,19 @@ def create_comparison(results_py2, results_py3, results_os=None):
     os_lookup = {r['test_name']: r for r in (results_os or []) if r.get('success')}
     
     # Get all test names (base names without _OS suffix)
-    all_tests = set(py2_lookup.keys()) | set(py3_lookup.keys())
+    # Filter out multiprocess test names (they contain _single, _multiprocess, or start with PyX_MP_)
+    def is_multiprocess_test(name):
+        return '_single' in name or '_multiprocess' in name or '_MP_' in name
+
+    py2_tests = {n for n in py2_lookup.keys() if not is_multiprocess_test(n)}
+    py3_tests = {n for n in py3_lookup.keys() if not is_multiprocess_test(n)}
+    all_tests = py2_tests | py3_tests
     if has_os:
         # Add base names from OS tests (remove _OS suffix)
         for os_name in os_lookup.keys():
-            base_name = os_name.replace('_OS', '')
-            all_tests.add(base_name)
+            if not is_multiprocess_test(os_name):
+                base_name = os_name.replace('_OS', '')
+                all_tests.add(base_name)
     all_tests = sorted(all_tests)
     
     for test_name in all_tests:
@@ -200,7 +227,7 @@ def create_comparison(results_py2, results_py3, results_os=None):
             'fastest': fastest,
             'py2_success': test_name in py2_lookup,
             'py3_success': test_name in py3_lookup,
-            'os_success': 'OS_' + test_name in os_lookup
+            'os_success': test_name + '_OS' in os_lookup
         })
     
     return comparison, has_os
@@ -332,7 +359,6 @@ def format_speedup(value):
     return "{:.2f}x".format(value)
 
 
-<<<<<<< HEAD
 def extract_multiprocess_data(results_py2, results_py3, results_os=None, comparison=None):
     """提取多进程测试结果（支持三向对比）"""
     mp_data = {}
@@ -346,12 +372,12 @@ def extract_multiprocess_data(results_py2, results_py3, results_os=None, compari
                 # Parse name like "Py2_MP_V1_CreateFishnet_single" or "OS_MP_V1_CreateFishnet_OS_single"
                 base_name = name
                 if '_single' in name:
-                    base_name = name.replace('_single', '').replace('Py2_', '').replace('Py3_', '').replace('Py27_', '').replace('Py39_', '').replace('OS_', '')
+                    base_name = name.replace('_single', '').replace('Py2_', '').replace('Py3_', '').replace('Py27_', '').replace('Py39_', '').replace('OS_', '').replace('_OS', '')
                     mp_results[base_name] = mp_results.get(base_name, {})
                     mp_results[base_name]['%s_single' % version] = r.get('mean_time', 0)
                     mp_results[base_name]['%s_single_std' % version] = r.get('std_time', 0)
                 elif '_multiprocess' in name:
-                    base_name = name.replace('_multiprocess', '').replace('Py2_', '').replace('Py3_', '').replace('Py27_', '').replace('Py39_', '').replace('OS_', '')
+                    base_name = name.replace('_multiprocess', '').replace('Py2_', '').replace('Py3_', '').replace('Py27_', '').replace('Py39_', '').replace('OS_', '').replace('_OS', '')
                     mp_results[base_name] = mp_results.get(base_name, {})
                     mp_results[base_name]['%s_multi' % version] = r.get('mean_time', 0)
                     mp_results[base_name]['%s_multi_std' % version] = r.get('std_time', 0)
@@ -361,6 +387,27 @@ def extract_multiprocess_data(results_py2, results_py3, results_os=None, compari
     py2_mp = extract_mp_results(results_py2, 'py2')
     py3_mp = extract_mp_results(results_py3, 'py3')
     os_mp = extract_mp_results(results_os, 'os') if results_os else {}
+
+    # Also extract OS multiprocess tests from py2 and py3 results (they may contain OS MP tests)
+    def extract_os_mp_from_results(results, prefix):
+        """Extract OS-specific MP tests from py2/py3 results"""
+        for r in results or []:
+            name = r.get('test_name', '')
+            if 'MP_' in name and '_OS' in name:
+                # This is an OS multiprocess test stored in py2/py3 results
+                base_name = name.replace('_single', '').replace('_multiprocess', '').replace('Py2_', '').replace('Py3_', '').replace('Py27_', '').replace('Py39_', '').replace('OS_', '').replace('_OS', '')
+                if '_single' in name:
+                    os_mp[base_name] = os_mp.get(base_name, {})
+                    os_mp[base_name]['os_single'] = r.get('mean_time', 0)
+                    os_mp[base_name]['os_single_std'] = r.get('std_time', 0)
+                elif '_multiprocess' in name:
+                    os_mp[base_name] = os_mp.get(base_name, {})
+                    os_mp[base_name]['os_multi'] = r.get('mean_time', 0)
+                    os_mp[base_name]['os_multi_std'] = r.get('std_time', 0)
+                    os_mp[base_name]['workers'] = r.get('num_workers', 4)
+
+    extract_os_mp_from_results(results_py2, 'py2')
+    extract_os_mp_from_results(results_py3, 'py3')
     
     # Also extract OS single-thread times from comparison for reference
     os_single_times = {}
@@ -401,10 +448,6 @@ def extract_multiprocess_data(results_py2, results_py3, results_os=None, compari
 
 def generate_markdown_table(comparison, stats, results_py2=None, results_py3=None, has_os=False, results_os=None):
     """生成全面优化的 Markdown 对比报告（支持三向对比）"""
-=======
-def generate_markdown_table(comparison, stats, results_py2=None, results_py3=None):
-    """生成 Markdown 对比报告（全中文）"""
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     lines = []
     
     # 获取系统信息
@@ -698,7 +741,6 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     lines.append("## 3.4 单线程性能统计")
     lines.append("")
     
-<<<<<<< HEAD
     # 按类别统计
     categories = {}
     for test in single_thread_tests:
@@ -778,7 +820,11 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         for base_name in sorted(mp_data.keys()):
             data = mp_data[base_name]
             display_name = base_name.replace('MP_', '')
-            
+
+            # 跳过 Py2.7 没有多进程数据的测试（Py2.7 只有5个MP测试）
+            if data['py2_single'] == 0 and data['py2_multi'] == 0:
+                continue
+
             # Py2.7
             py2_single_str = "{:.4f}".format(data['py2_single']) if data['py2_single'] > 0 else "N/A"
             py2_multi_str = "{:.4f}".format(data['py2_multi']) if data['py2_multi'] > 0 else "N/A"
@@ -1083,109 +1129,6 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
             best_os['test_name'], os_speedup, 
             best_os['py3_time'] / best_os['os_time'] if best_os.get('os_time', 0) > 0 and best_os['py3_time'] > 0 else 0
         ))
-=======
-    # 详细结果表
-    lines.append("## 详细对比结果")
-    lines.append("")
-    
-    # Check if we have multiprocess results from raw data
-    has_mp_results = False
-    mp_data = {}  # {base_name: {py2_single, py2_multi, py3_single, py3_multi}}
-    
-    if results_py2 or results_py3:
-        # Extract multiprocess results from raw data
-        def extract_mp_results(results, version):
-            """Extract MP test results from raw results"""
-            mp_results = {}
-            for r in results or []:
-                name = r.get('test_name', '')
-                if 'MP_' in name:
-                    # Parse name like "Py2_MP_V1_CreateFishnet_single" or "MP_V1_CreateFishnet_single"
-                    base_name = name
-                    if '_single' in name:
-                        base_name = name.replace('_single', '').replace('Py2_', '').replace('Py3_', '').replace('Py27_', '').replace('Py39_', '')
-                        mp_results[base_name] = mp_results.get(base_name, {})
-                        mp_results[base_name]['%s_single' % version] = r.get('mean_time', 0)
-                    elif '_multiprocess' in name:
-                        base_name = name.replace('_multiprocess', '').replace('Py2_', '').replace('Py3_', '').replace('Py27_', '').replace('Py39_', '')
-                        mp_results[base_name] = mp_results.get(base_name, {})
-                        mp_results[base_name]['%s_multi' % version] = r.get('mean_time', 0)
-                        mp_results[base_name]['workers'] = r.get('num_workers', 4)
-            return mp_results
-        
-        py2_mp = extract_mp_results(results_py2, 'py2')
-        py3_mp = extract_mp_results(results_py3, 'py3')
-        
-        # Merge data
-        all_bases = set(py2_mp.keys()) | set(py3_mp.keys())
-        for base in all_bases:
-            mp_data[base] = {
-                'py2_single': py2_mp.get(base, {}).get('py2_single', 0),
-                'py2_multi': py2_mp.get(base, {}).get('py2_multi', 0),
-                'py3_single': py3_mp.get(base, {}).get('py3_single', 0),
-                'py3_multi': py3_mp.get(base, {}).get('py3_multi', 0),
-                'workers': py2_mp.get(base, {}).get('workers', 4) or py3_mp.get(base, {}).get('workers', 4)
-            }
-            if mp_data[base]['py2_single'] or mp_data[base]['py2_multi'] or mp_data[base]['py3_single'] or mp_data[base]['py3_multi']:
-                has_mp_results = True
-    
-    if has_mp_results:
-        # 有多进程结果，显示扩展表格（包含常规测试和多进程测试）
-        lines.append("| 测试项目 | 类别 | Py2.7单进程 | Py2.7多进程 | Py3.x单进程 | Py3.x多进程 | Py2.7单/多加速 | Py3.x单/多加速 |")
-        lines.append("|----------|------|-------------|-------------|-------------|-------------|----------------|----------------|")
-        
-        # Regular tests (non-MP) - 显示 Py2.7 vs Py3.x 对比
-        regular_tests = [r for r in comparison if not r.get('test_name', '').startswith('MP_') and 'MP_' not in r.get('test_name', '')]
-        for item in regular_tests:
-            lines.append("| {} | {} | {} | {} | {} | {} | {} | {} |".format(
-                item['test_name'],
-                item['category'],
-                format_time(item['py2_time'], item['py2_std']),
-                "-",
-                format_time(item['py3_time'], item['py3_std']),
-                "-",
-                format_speedup(item['speedup']),
-                "-"
-            ))
-        
-        # Multiprocess tests - 显示单进程vs多进程对比
-        for base_name, data in sorted(mp_data.items()):
-            py2_single = data.get('py2_single', 0)
-            py2_multi = data.get('py2_multi', 0)
-            py3_single = data.get('py3_single', 0)
-            py3_multi = data.get('py3_multi', 0)
-            
-            # 计算多进程加速比（单进程时间 / 多进程时间）
-            py2_mp_speedup = py2_single / py2_multi if py2_multi > 0 else 0
-            py3_mp_speedup = py3_single / py3_multi if py3_multi > 0 else 0
-            
-            # 简化显示名称：去掉 MP_ 前缀
-            display_name = base_name.replace('MP_', '')
-            
-            lines.append("| {} | multiprocess | {} | {} | {} | {} | {} | {} |".format(
-                display_name,
-                "{:.4f}".format(py2_single) if py2_single > 0 else "-",
-                "{:.4f}".format(py2_multi) if py2_multi > 0 else "-",
-                "{:.4f}".format(py3_single) if py3_single > 0 else "-",
-                "{:.4f}".format(py3_multi) if py3_multi > 0 else "-",
-                "{:.2f}x".format(py2_mp_speedup) if py2_mp_speedup > 0 else "-",
-                "{:.2f}x".format(py3_mp_speedup) if py3_mp_speedup > 0 else "-"
-            ))
-    else:
-        # 无多进程结果，显示标准表格
-        lines.append("| 测试项目 | 类别 | Python 2.7 (秒) | Python 3.x (秒) | 加速比 | 更快 |")
-        lines.append("|----------|------|-----------------|-----------------|--------|------|")
-        
-        for item in comparison:
-            lines.append("| {} | {} | {} | {} | {} | {} |".format(
-                item['test_name'],
-                item['category'],
-                format_time(item['py2_time'], item['py2_std']),
-                format_time(item['py3_time'], item['py3_std']),
-                format_speedup(item['speedup']),
-                item['faster']
-            ))
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     
     lines.append("")
     
@@ -1206,46 +1149,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     lines.append("- **arcpy差异**：ArcGIS Pro 使用 arcpy 的方式与 ArcMap 略有不同，部分工具参数可能变化。")
     lines.append("")
     
-<<<<<<< HEAD
     lines.append("## 6.3 性能优化建议")
-=======
-    if has_mp_results:
-        lines.append("> **说明**: 对比单进程与多进程（默认4进程）的性能差异。")
-        lines.append("> 详细数据见上文「详细对比结果」表格中的多进程相关列。")
-        lines.append("")
-        
-        # Calculate overall statistics from mp_data
-        py2_speedups = []
-        py3_speedups = []
-        for base_name, data in mp_data.items():
-            if data.get('py2_single') and data.get('py2_multi'):
-                py2_speedups.append(data['py2_single'] / data['py2_multi'])
-            if data.get('py3_single') and data.get('py3_multi'):
-                py3_speedups.append(data['py3_single'] / data['py3_multi'])
-        
-        lines.append("### 多进程统计摘要")
-        lines.append("")
-        lines.append("| Python版本 | 测试项目数 | 平均加速比 | 评价 |")
-        lines.append("|-----------|-----------|-----------|------|")
-        if py2_speedups:
-            avg_sp = sum(py2_speedups) / len(py2_speedups)
-            eval_text = "优秀" if avg_sp >= 3.5 else "良好" if avg_sp >= 2.5 else "一般" if avg_sp >= 1.5 else "较差"
-            lines.append("| Python 2.7 | {} | {:.2f}x | {} |".format(len(py2_speedups), avg_sp, eval_text))
-        if py3_speedups:
-            avg_sp = sum(py3_speedups) / len(py3_speedups)
-            eval_text = "优秀" if avg_sp >= 3.5 else "良好" if avg_sp >= 2.5 else "一般" if avg_sp >= 1.5 else "较差"
-            lines.append("| Python 3.x | {} | {:.2f}x | {} |".format(len(py3_speedups), avg_sp, eval_text))
-        lines.append("")
-        
-        lines.append("**说明**:")
-        lines.append("- **加速比**: 单进程时间 / 多进程时间，理想值为进程数（4.0x）")
-        lines.append("- **评价标准**: 优秀(≥3.5x) / 良好(2.5-3.5x) / 一般(1.5-2.5x) / 较差(<1.5x)")
-    else:
-        lines.append("本次测试未启用多进程对比。")
-        lines.append("")
-        lines.append("如需启用多进程测试，请勾选「多进程对比」选项。")
-    
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     lines.append("")
     
     if has_mp_results and py2_speedups and py3_speedups:
@@ -1396,24 +1300,15 @@ def generate_csv(comparison, output_path):
     return output_path
 
 
-<<<<<<< HEAD
 def save_outputs(comparison, stats, output_dir, results_py2=None, results_py3=None, has_os=False, results_os=None):
     """Save all output formats (support 3-way comparison)"""
-=======
-def save_outputs(comparison, stats, output_dir, results_py2=None, results_py3=None):
-    """Save all output formats"""
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
     saved_files = {}
     
     # Markdown
-<<<<<<< HEAD
     md_content = generate_markdown_table(comparison, stats, results_py2, results_py3, has_os, results_os)
-=======
-    md_content = generate_markdown_table(comparison, stats, results_py2, results_py3)
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     md_path = os.path.join(output_dir, "comparison_report.md")
     with open_text_file(md_path, 'w') as f:
         f.write(md_content)
@@ -1525,11 +1420,7 @@ def main():
     
     # Save outputs
     print("\nSaving output files...")
-<<<<<<< HEAD
     saved_files = save_outputs(comparison, stats, args.output_dir, results_py2, results_py3, has_os, results_os)
-=======
-    saved_files = save_outputs(comparison, stats, args.output_dir, results_py2, results_py3)
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     
     print("\n" + "=" * 70)
     print("Analysis Complete")

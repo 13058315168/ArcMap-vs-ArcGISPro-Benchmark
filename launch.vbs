@@ -7,7 +7,5 @@ If FSO.FileExists(VenvPython) Then
 Else
     PythonPath = "pythonw"
 End If
-Cmd = """" & PythonPath & """ """ & ScriptDir & "\benchmark_gui_modern.py"""
+Cmd = "\"" & PythonPath & "\" \"" & ScriptDir & "\benchmark_gui_modern.py\""
 WShell.Run Cmd, 0, False
-Set WShell = Nothing
-Set FSO = Nothing

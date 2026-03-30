@@ -13,9 +13,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     import arcpy
     from arcpy.sa import *
+    HAS_ARCPY = True
 except ImportError:
-    print("Error: arcpy or arcpy.sa is not available")
-    sys.exit(1)
+    HAS_ARCPY = False
+    arcpy = None
 
 from config import settings
 from benchmarks.base_benchmark import BaseBenchmark
@@ -23,10 +24,12 @@ from benchmarks.base_benchmark import BaseBenchmark
 
 class MixedBenchmarks(object):
     """Collection of mixed vector-raster benchmarks"""
-    
+
     @staticmethod
     def get_all_benchmarks():
         """Get all mixed benchmark instances"""
+        if not HAS_ARCPY:
+            return []
         return [
             M1_PolygonToRaster(),
             M2_RasterToPoint(),

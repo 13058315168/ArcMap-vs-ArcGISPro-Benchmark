@@ -1,38 +1,24 @@
 {
-<<<<<<< HEAD
-  "export_timestamp": "2026-03-30T13:07:06.036716",
-=======
-  "export_timestamp": "2026-03-30T08:33:57.326766",
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+  "export_timestamp": "2026-03-30T23:25:06.144313",
   "python_version": "3.13.7",
   "results": [
     {
       "test_name": "V1_CreateFishnet",
       "category": "vector",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 1.2424889500107383,
-      "std_time": 0.6804722607730218,
-      "min_time": 0.7613224000087939,
-      "max_time": 1.7236555000126828,
-      "cv_percent": 54.76686619765437,
+      "mean_time": 0.38546396667758626,
+      "std_time": 0.010997280113887491,
+      "min_time": 0.3771835000079591,
+      "max_time": 0.3979418000089936,
+      "cv_percent": 2.8529982215136465,
       "avg_memory_mb": 0.0,
       "all_times": [
-        1.7236555000126828,
-        0.7613224000087939
-=======
-      "mean_time": 0.7100639000127558,
-      "std_time": 0,
-      "min_time": 0.7100639000127558,
-      "max_time": 0.7100639000127558,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.7100639000127558
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.3979418000089936,
+        0.3771835000079591,
+        0.38126660001580603
       ],
       "python_version": "3.13.7"
     },
@@ -40,29 +26,19 @@
       "test_name": "V2_CreateRandomPoints",
       "category": "vector",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 0.45930144999874756,
-      "std_time": 0.08405342952759248,
-      "min_time": 0.39986669999780133,
-      "max_time": 0.5187361999996938,
-      "cv_percent": 18.300275239240303,
+      "mean_time": 0.259611566667445,
+      "std_time": 0.012795342795810752,
+      "min_time": 0.24746550002600998,
+      "max_time": 0.2729698999901302,
+      "cv_percent": 4.92864896586107,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.39986669999780133,
-        0.5187361999996938
-=======
-      "mean_time": 0.14469119999557734,
-      "std_time": 0,
-      "min_time": 0.14469119999557734,
-      "max_time": 0.14469119999557734,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.14469119999557734
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.2583992999861948,
+        0.24746550002600998,
+        0.2729698999901302
       ],
       "python_version": "3.13.7"
     },
@@ -70,29 +46,19 @@
       "test_name": "V3_Buffer",
       "category": "vector",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 0.8115686500095762,
-      "std_time": 0.07058643944137993,
-      "min_time": 0.7616565000207629,
-      "max_time": 0.8614807999983896,
-      "cv_percent": 8.69753155700963,
+      "mean_time": 0.3460650333339193,
+      "std_time": 0.003454483750512335,
+      "min_time": 0.34403380000730976,
+      "max_time": 0.35005370000726543,
+      "cv_percent": 0.9982180855524609,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.7616565000207629,
-        0.8614807999983896
-=======
-      "mean_time": 0.2637096999969799,
-      "std_time": 0,
-      "min_time": 0.2637096999969799,
-      "max_time": 0.2637096999969799,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.2637096999969799
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.34410759998718277,
+        0.34403380000730976,
+        0.35005370000726543
       ],
       "python_version": "3.13.7"
     },
@@ -100,29 +66,19 @@
       "test_name": "V4_Intersect",
       "category": "vector",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 0.7706607500003884,
-      "std_time": 0.016177542467604947,
-      "min_time": 0.7592215000186116,
-      "max_time": 0.7820999999821652,
-      "cv_percent": 2.0991782009913953,
+      "mean_time": 0.3908191333466675,
+      "std_time": 0.0012656780008057469,
+      "min_time": 0.3894161000207532,
+      "max_time": 0.39187500000116415,
+      "cv_percent": 0.3238526194885794,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.7592215000186116,
-        0.7820999999821652
-=======
-      "mean_time": 0.28497340000467375,
-      "std_time": 0,
-      "min_time": 0.28497340000467375,
-      "max_time": 0.28497340000467375,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.28497340000467375
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.3894161000207532,
+        0.39116630001808517,
+        0.39187500000116415
       ],
       "python_version": "3.13.7"
     },
@@ -130,29 +86,19 @@
       "test_name": "V5_SpatialJoin",
       "category": "vector",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 5.08613024999795,
-      "std_time": 0.23698407999708127,
-      "min_time": 4.918557199998759,
-      "max_time": 5.253703299997142,
-      "cv_percent": 4.659418228567323,
+      "mean_time": 2.2439791333357184,
+      "std_time": 0.025197528087089034,
+      "min_time": 2.2151716999942437,
+      "max_time": 2.2619203999929596,
+      "cv_percent": 1.122894937513631,
       "avg_memory_mb": 0.0,
       "all_times": [
-        4.918557199998759,
-        5.253703299997142
-=======
-      "mean_time": 1.6380674999963958,
-      "std_time": 0,
-      "min_time": 1.6380674999963958,
-      "max_time": 1.6380674999963958,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        1.6380674999963958
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        2.2151716999942437,
+        2.2548453000199515,
+        2.2619203999929596
       ],
       "python_version": "3.13.7"
     },
@@ -160,143 +106,19 @@
       "test_name": "V6_CalculateField",
       "category": "vector",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 3.0111917500034906,
-      "std_time": 0.06192226005609253,
-      "min_time": 2.9674061000114307,
-      "max_time": 3.0549773999955505,
-      "cv_percent": 2.0564037496456593,
+      "mean_time": 1.5959578333325528,
+      "std_time": 0.34686710503519974,
+      "min_time": 1.3779717000143137,
+      "max_time": 1.9959462999831885,
+      "cv_percent": 21.73410210412009,
       "avg_memory_mb": 0.0,
       "all_times": [
-        3.0549773999955505,
-        2.9674061000114307
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "V1_CreateFishnet_OS",
-      "category": "vector_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 0.2120576499874005,
-      "std_time": 0.051450715743620146,
-      "min_time": 0.17567649998818524,
-      "max_time": 0.24843879998661578,
-      "cv_percent": 24.262607713834946,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.17567649998818524,
-        0.24843879998661578
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "V2_CreateRandomPoints_OS",
-      "category": "vector_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 0.11610534999636002,
-      "std_time": 0.05473550959287327,
-      "min_time": 0.077401499991538,
-      "max_time": 0.15480920000118203,
-      "cv_percent": 47.14296937616507,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.077401499991538,
-        0.15480920000118203
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "V3_Buffer_OS",
-      "category": "vector_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 0.36730954999802634,
-      "std_time": 0.12106382271846827,
-      "min_time": 0.2817044999974314,
-      "max_time": 0.45291459999862127,
-      "cv_percent": 32.959617499495664,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.45291459999862127,
-        0.2817044999974314
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "V4_Intersect_OS",
-      "category": "vector_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 3.144266300005256,
-      "std_time": 0.3090427157716641,
-      "min_time": 2.9257401000068057,
-      "max_time": 3.3627925000037067,
-      "cv_percent": 9.828770412071886,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        2.9257401000068057,
-        3.3627925000037067
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "V5_SpatialJoin_OS",
-      "category": "vector_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 0.555883699998958,
-      "std_time": 0.024376233474635193,
-      "min_time": 0.538647100009257,
-      "max_time": 0.5731202999886591,
-      "cv_percent": 4.385131903432478,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.538647100009257,
-        0.5731202999886591
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "V6_CalculateField_OS",
-      "category": "vector_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 0.6821392999991076,
-      "std_time": 0.0199846761016268,
-      "min_time": 0.6680080000078306,
-      "max_time": 0.6962705999903847,
-      "cv_percent": 2.9297060148349385,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.6680080000078306,
-        0.6962705999903847
-=======
-      "mean_time": 1.068926800013287,
-      "std_time": 0,
-      "min_time": 1.068926800013287,
-      "max_time": 1.068926800013287,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        1.068926800013287
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        1.9959462999831885,
+        1.3779717000143137,
+        1.4139555000001565
       ],
       "python_version": "3.13.7"
     },
@@ -304,29 +126,19 @@
       "test_name": "R1_CreateConstantRaster",
       "category": "raster",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 2.440482099991641,
-      "std_time": 2.185979601827479,
-      "min_time": 0.8947611000039615,
-      "max_time": 3.9862030999793205,
-      "cv_percent": 89.57163020515357,
+      "mean_time": 0.3264340333310732,
+      "std_time": 0.012735083753537782,
+      "min_time": 0.3143240000063088,
+      "max_time": 0.3397134999977425,
+      "cv_percent": 3.901273290527803,
       "avg_memory_mb": 0.0,
       "all_times": [
-        3.9862030999793205,
-        0.8947611000039615
-=======
-      "mean_time": 1.1155146999808494,
-      "std_time": 0,
-      "min_time": 1.1155146999808494,
-      "max_time": 1.1155146999808494,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        1.1155146999808494
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.3397134999977425,
+        0.3143240000063088,
+        0.32526459998916835
       ],
       "python_version": "3.13.7"
     },
@@ -334,29 +146,19 @@
       "test_name": "R2_Resample",
       "category": "raster",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 1.3479088000021875,
-      "std_time": 0.1275599420392111,
-      "min_time": 1.2577102999784984,
-      "max_time": 1.4381073000258766,
-      "cv_percent": 9.46354397560162,
+      "mean_time": 0.6072505666622116,
+      "std_time": 0.017157719363081678,
+      "min_time": 0.5968320999818388,
+      "max_time": 0.6270535999792628,
+      "cv_percent": 2.8254760563485504,
       "avg_memory_mb": 0.0,
       "all_times": [
-        1.2577102999784984,
-        1.4381073000258766
-=======
-      "mean_time": 0.47200430001248606,
-      "std_time": 0,
-      "min_time": 0.47200430001248606,
-      "max_time": 0.47200430001248606,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.47200430001248606
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.5968320999818388,
+        0.5978660000255331,
+        0.6270535999792628
       ],
       "python_version": "3.13.7"
     },
@@ -364,29 +166,19 @@
       "test_name": "R3_Clip",
       "category": "raster",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 0.76697554999555,
-      "std_time": 0.05317068228627998,
-      "min_time": 0.7293781999906059,
-      "max_time": 0.804572900000494,
-      "cv_percent": 6.932513335866897,
+      "mean_time": 0.42170973334577866,
+      "std_time": 0.010842829432058257,
+      "min_time": 0.41020040001603775,
+      "max_time": 0.43173270000261255,
+      "cv_percent": 2.5711593958320464,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.7293781999906059,
-        0.804572900000494
-=======
-      "mean_time": 0.3073257000069134,
-      "std_time": 0,
-      "min_time": 0.3073257000069134,
-      "max_time": 0.3073257000069134,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.3073257000069134
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.41020040001603775,
+        0.4231961000186857,
+        0.43173270000261255
       ],
       "python_version": "3.13.7"
     },
@@ -394,105 +186,19 @@
       "test_name": "R4_RasterCalculator",
       "category": "raster",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 0.5279732499911916,
-      "std_time": 0.10381225575283452,
-      "min_time": 0.4545668999780901,
-      "max_time": 0.601379600004293,
-      "cv_percent": 19.662408228933277,
+      "mean_time": 0.28524630000659573,
+      "std_time": 0.008126366126446445,
+      "min_time": 0.2802992000069935,
+      "max_time": 0.2946251000103075,
+      "cv_percent": 2.8488944909218943,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.4545668999780901,
-        0.601379600004293
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "R1_CreateConstantRaster_OS",
-      "category": "raster_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 0.04527974998927675,
-      "std_time": 0.013716528034924102,
-      "min_time": 0.03558070000144653,
-      "max_time": 0.054978799977106974,
-      "cv_percent": 30.29285284961264,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.054978799977106974,
-        0.03558070000144653
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "R2_Resample_OS",
-      "category": "raster_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 0.03174254999612458,
-      "std_time": 0.011041260241894738,
-      "min_time": 0.02393520000623539,
-      "max_time": 0.03954989998601377,
-      "cv_percent": 34.78378467779922,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.02393520000623539,
-        0.03954989998601377
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "R3_Clip_OS",
-      "category": "raster_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 0.0518193500029156,
-      "std_time": 0.016948288883359065,
-      "min_time": 0.039835100003983825,
-      "max_time": 0.06380360000184737,
-      "cv_percent": 32.70648682857943,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.06380360000184737,
-        0.039835100003983825
-      ],
-      "python_version": "3.13.7"
-    },
-    {
-      "test_name": "R4_RasterCalculator_OS",
-      "category": "raster_os",
-      "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
-      "failed_runs": 0,
-      "mean_time": 0.04039935002219863,
-      "std_time": 0.005631893376420217,
-      "min_time": 0.036417000024812296,
-      "max_time": 0.04438170001958497,
-      "cv_percent": 13.940554423092461,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.04438170001958497,
-        0.036417000024812296
-=======
-      "mean_time": 0.5163385999912862,
-      "std_time": 0,
-      "min_time": 0.5163385999912862,
-      "max_time": 0.5163385999912862,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.5163385999912862
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.2946251000103075,
+        0.2802992000069935,
+        0.28081460000248626
       ],
       "python_version": "3.13.7"
     },
@@ -500,79 +206,247 @@
       "test_name": "M1_PolygonToRaster",
       "category": "mixed",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 1.720457150004222,
-      "std_time": 0.14854241650307848,
-      "min_time": 1.6154218000010587,
-      "max_time": 1.8254925000073854,
-      "cv_percent": 8.633892247924567,
+      "mean_time": 0.8400427333350914,
+      "std_time": 0.014183383636118287,
+      "min_time": 0.8242059999902267,
+      "max_time": 0.8515759000147227,
+      "cv_percent": 1.6884121572968318,
       "avg_memory_mb": 0.0,
       "all_times": [
-        1.6154218000010587,
-        1.8254925000073854
-=======
-      "mean_time": 0.6606145999976434,
-      "std_time": 0,
-      "min_time": 0.6606145999976434,
-      "max_time": 0.6606145999976434,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.6606145999976434
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.8242059999902267,
+        0.8515759000147227,
+        0.8443463000003248
       ],
       "python_version": "3.13.7"
     },
     {
       "test_name": "M2_RasterToPoint",
       "category": "mixed",
+      "success": false,
+      "error": "All runs failed",
+      "total_runs": 3,
+      "successful_runs": 0
+    },
+    {
+      "test_name": "V1_CreateFishnet_OS",
+      "category": "vector_os",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 22.41469925000274,
-      "std_time": 0.23582117217897988,
-      "min_time": 22.247948500007624,
-      "max_time": 22.581449999997858,
-      "cv_percent": 1.052082696041309,
+      "mean_time": 0.08530643333021241,
+      "std_time": 0.0039305394679873575,
+      "min_time": 0.08216260001063347,
+      "max_time": 0.08971319999545813,
+      "cv_percent": 4.607553398432032,
       "avg_memory_mb": 0.0,
       "all_times": [
-        22.581449999997858,
-        22.247948500007624
-=======
-      "mean_time": 8.938796500005992,
-      "std_time": 0,
-      "min_time": 8.938796500005992,
-      "max_time": 8.938796500005992,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        8.938796500005992
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.08971319999545813,
+        0.08216260001063347,
+        0.08404349998454563
       ],
       "python_version": "3.13.7"
     },
     {
-<<<<<<< HEAD
+      "test_name": "V2_CreateRandomPoints_OS",
+      "category": "vector_os",
+      "success": true,
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.05538673333163994,
+      "std_time": 0.010321418322773076,
+      "min_time": 0.04662310000276193,
+      "max_time": 0.06676359998527914,
+      "cv_percent": 18.635181571318483,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.06676359998527914,
+        0.04662310000276193,
+        0.05277350000687875
+      ],
+      "python_version": "3.13.7"
+    },
+    {
+      "test_name": "V3_Buffer_OS",
+      "category": "vector_os",
+      "success": true,
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.10486526666985203,
+      "std_time": 0.001544860855971623,
+      "min_time": 0.10326269999495707,
+      "max_time": 0.10634510000818409,
+      "cv_percent": 1.4731864086469335,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.10634510000818409,
+        0.10326269999495707,
+        0.10498800000641495
+      ],
+      "python_version": "3.13.7"
+    },
+    {
+      "test_name": "V4_Intersect_OS",
+      "category": "vector_os",
+      "success": true,
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 1.2908207000000402,
+      "std_time": 0.004186687954684976,
+      "min_time": 1.28609010000946,
+      "max_time": 1.2940487999876495,
+      "cv_percent": 0.32434310626447543,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        1.2940487999876495,
+        1.2923232000030112,
+        1.28609010000946
+      ],
+      "python_version": "3.13.7"
+    },
+    {
+      "test_name": "V5_SpatialJoin_OS",
+      "category": "vector_os",
+      "success": true,
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.16546023332436258,
+      "std_time": 0.006921410915055541,
+      "min_time": 0.1598849000001792,
+      "max_time": 0.17320699998526834,
+      "cv_percent": 4.183126528950944,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.17320699998526834,
+        0.1598849000001792,
+        0.16328879998764023
+      ],
+      "python_version": "3.13.7"
+    },
+    {
+      "test_name": "V6_CalculateField_OS",
+      "category": "vector_os",
+      "success": true,
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.23257463333235742,
+      "std_time": 0.023326123662208355,
+      "min_time": 0.2109844999795314,
+      "max_time": 0.25731630000518635,
+      "cv_percent": 10.029521847670503,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.22942310001235455,
+        0.25731630000518635,
+        0.2109844999795314
+      ],
+      "python_version": "3.13.7"
+    },
+    {
+      "test_name": "R1_CreateConstantRaster_OS",
+      "category": "raster_os",
+      "success": true,
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.005049333325587213,
+      "std_time": 0.000984304704871134,
+      "min_time": 0.00401209999108687,
+      "max_time": 0.005970400001388043,
+      "cv_percent": 19.493755737677787,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.005970400001388043,
+        0.0051654999842867255,
+        0.00401209999108687
+      ],
+      "python_version": "3.13.7"
+    },
+    {
+      "test_name": "R2_Resample_OS",
+      "category": "raster_os",
+      "success": true,
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.006963699988167112,
+      "std_time": 0.0012335579138744645,
+      "min_time": 0.005727599986130372,
+      "max_time": 0.00819469999987632,
+      "cv_percent": 17.71411628833172,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.006968799978494644,
+        0.00819469999987632,
+        0.005727599986130372
+      ],
+      "python_version": "3.13.7"
+    },
+    {
+      "test_name": "R3_Clip_OS",
+      "category": "raster_os",
+      "success": true,
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.006457299993295844,
+      "std_time": 0.0010536537352001298,
+      "min_time": 0.005251800001133233,
+      "max_time": 0.0072023999819066375,
+      "cv_percent": 16.317249257337643,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.006917699996847659,
+        0.0072023999819066375,
+        0.005251800001133233
+      ],
+      "python_version": "3.13.7"
+    },
+    {
+      "test_name": "R4_RasterCalculator_OS",
+      "category": "raster_os",
+      "success": true,
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.006042633331768836,
+      "std_time": 0.0007783644981174882,
+      "min_time": 0.005202300002565607,
+      "max_time": 0.006738900003256276,
+      "cv_percent": 12.881213460781685,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.005202300002565607,
+        0.006738900003256276,
+        0.006186699989484623
+      ],
+      "python_version": "3.13.7"
+    },
+    {
       "test_name": "M1_PolygonToRaster_OS",
       "category": "mixed_os",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 0.9246834999939892,
-      "std_time": 0.013111739609629313,
-      "min_time": 0.9154121000028681,
-      "max_time": 0.9339548999851104,
-      "cv_percent": 1.4179705390779163,
+      "mean_time": 0.3911177333308539,
+      "std_time": 0.0176902840140894,
+      "min_time": 0.37998729999526404,
+      "max_time": 0.4115163999958895,
+      "cv_percent": 4.523007398164903,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.9154121000028681,
-        0.9339548999851104
+        0.37998729999526404,
+        0.4115163999958895,
+        0.38184950000140816
       ],
       "python_version": "3.13.7"
     },
@@ -580,18 +454,19 @@
       "test_name": "M2_RasterToPoint_OS",
       "category": "mixed_os",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 6.715326899997308,
-      "std_time": 0.5033246879444224,
-      "min_time": 6.359422600013204,
-      "max_time": 7.071231199981412,
-      "cv_percent": 7.495162863100889,
+      "mean_time": 2.4181500666794213,
+      "std_time": 0.00786627538634332,
+      "min_time": 2.411169600003632,
+      "max_time": 2.426673500012839,
+      "cv_percent": 0.32530137375407836,
       "avg_memory_mb": 0.0,
       "all_times": [
-        7.071231199981412,
-        6.359422600013204
+        2.411169600003632,
+        2.4166071000217926,
+        2.426673500012839
       ],
       "python_version": "3.13.7"
     },
@@ -599,34 +474,19 @@
       "test_name": "Py3_MP_V1_CreateFishnet_single",
       "category": "vector_multiprocess",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 0.7251042000134476,
-      "std_time": 0.09151262825020666,
-      "min_time": 0.6603950000135228,
-      "max_time": 0.7898134000133723,
-      "cv_percent": 12.620617595169012,
+      "mean_time": 0.40679886666475795,
+      "std_time": 0.008840685328389107,
+      "min_time": 0.3973563999752514,
+      "max_time": 0.41487980002420954,
+      "cv_percent": 2.173232536479679,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.6603950000135228,
-        0.7898134000133723
-=======
-      "test_name": "Py3_MP_V1_CreateFishnet_single",
-      "category": "vector_multiprocess",
-      "success": true,
-      "total_runs": 1,
-      "successful_runs": 1,
-      "failed_runs": 0,
-      "mean_time": 0.22575449998839758,
-      "std_time": 0,
-      "min_time": 0.22575449998839758,
-      "max_time": 0.22575449998839758,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.22575449998839758
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.3973563999752514,
+        0.4081603999948129,
+        0.41487980002420954
       ],
       "python_version": "3.13.7"
     },
@@ -634,72 +494,43 @@
       "test_name": "Py3_MP_V1_CreateFishnet_multiprocess",
       "category": "vector_multiprocess",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 2.6644568000047,
-      "std_time": 0.1099749034458947,
-      "min_time": 2.5866928000177722,
-      "max_time": 2.742220799991628,
-      "cv_percent": 4.1274793213273595,
+      "mean_time": 1.2428389999937888,
+      "std_time": 0.015843179785431056,
+      "min_time": 1.2305085000116378,
+      "max_time": 1.2607078999863006,
+      "cv_percent": 1.2747572119566761,
       "avg_memory_mb": 0.0,
       "all_times": [
-        2.5866928000177722,
-        2.742220799991628
-=======
-      "mean_time": 0.5247438999940641,
-      "std_time": 0.42283486449380797,
-      "min_time": 0.22575449998839758,
-      "max_time": 0.8237332999997307,
-      "cv_percent": 80.57928153116045,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.22575449998839758,
-        0.8237332999997307
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        1.2373005999834277,
+        1.2607078999863006,
+        1.2305085000116378
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
-<<<<<<< HEAD
-      "speedup_vs_single": 0.2721395970886705,
-      "parallel_efficiency": 6.803489927216763
-=======
-      "speedup_vs_single": 0.4302184360617652,
-      "parallel_efficiency": 10.75546090154413
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+      "speedup_vs_single": 0.32731421098532554,
+      "parallel_efficiency": 8.182855274633138
     },
     {
       "test_name": "Py3_MP_V2_CreateRandomPoints_single",
       "category": "vector_multiprocess",
       "success": true,
-<<<<<<< HEAD
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 0.4501033999986248,
-      "std_time": 0.049034319738727204,
-      "min_time": 0.4154309000005014,
-      "max_time": 0.4847758999967482,
-      "cv_percent": 10.89401229559186,
+      "mean_time": 0.26892903333646245,
+      "std_time": 0.005397487193094549,
+      "min_time": 0.26427730001159944,
+      "max_time": 0.2748470999940764,
+      "cv_percent": 2.0070303031735683,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.4154309000005014,
-        0.4847758999967482
-=======
-      "total_runs": 1,
-      "successful_runs": 1,
-      "failed_runs": 0,
-      "mean_time": 0.14437419999740086,
-      "std_time": 0,
-      "min_time": 0.14437419999740086,
-      "max_time": 0.14437419999740086,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.14437419999740086
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.2748470999940764,
+        0.2676627000037115,
+        0.26427730001159944
       ],
       "python_version": "3.13.7"
     },
@@ -707,72 +538,43 @@
       "test_name": "Py3_MP_V2_CreateRandomPoints_multiprocess",
       "category": "vector_multiprocess",
       "success": true,
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-<<<<<<< HEAD
-      "mean_time": 1.946883849988808,
-      "std_time": 0.11102446206879422,
-      "min_time": 1.868377699982375,
-      "max_time": 2.025389999995241,
-      "cv_percent": 5.70267517856458,
+      "mean_time": 0.8524147999899773,
+      "std_time": 0.0554133914990552,
+      "min_time": 0.8189677999762353,
+      "max_time": 0.9163782999967225,
+      "cv_percent": 6.50075426889664,
       "avg_memory_mb": 0.0,
       "all_times": [
-        1.868377699982375,
-        2.025389999995241
-=======
-      "mean_time": 0.37008665000030305,
-      "std_time": 0.3192056079905634,
-      "min_time": 0.14437419999740086,
-      "max_time": 0.5957991000032052,
-      "cv_percent": 86.25158675415663,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.14437419999740086,
-        0.5957991000032052
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.9163782999967225,
+        0.821898299996974,
+        0.8189677999762353
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
-<<<<<<< HEAD
-      "speedup_vs_single": 0.23119170668615507,
-      "parallel_efficiency": 5.779792667153877
-=======
-      "speedup_vs_single": 0.3901091811803604,
-      "parallel_efficiency": 9.752729529509011
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+      "speedup_vs_single": 0.31549080722158335,
+      "parallel_efficiency": 7.887270180539583
     },
     {
       "test_name": "Py3_MP_V3_Buffer_single",
       "category": "vector_multiprocess",
       "success": true,
-<<<<<<< HEAD
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 2.2413269499957096,
-      "std_time": 0.008746981602475697,
-      "min_time": 2.235141899989685,
-      "max_time": 2.247512000001734,
-      "cv_percent": 0.3902590651708552,
+      "mean_time": 0.7906898666697089,
+      "std_time": 0.009635181455608472,
+      "min_time": 0.7802273000124842,
+      "max_time": 0.7991979999933392,
+      "cv_percent": 1.2185790993111754,
       "avg_memory_mb": 0.0,
       "all_times": [
-        2.247512000001734,
-        2.235141899989685
-=======
-      "total_runs": 1,
-      "successful_runs": 1,
-      "failed_runs": 0,
-      "mean_time": 0.6568662000063341,
-      "std_time": 0,
-      "min_time": 0.6568662000063341,
-      "max_time": 0.6568662000063341,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.6568662000063341
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.7926443000033032,
+        0.7802273000124842,
+        0.7991979999933392
       ],
       "python_version": "3.13.7"
     },
@@ -780,73 +582,43 @@
       "test_name": "Py3_MP_V3_Buffer_multiprocess",
       "category": "vector_multiprocess",
       "success": true,
-      "total_runs": 2,
-<<<<<<< HEAD
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 5.7457038499997,
-      "std_time": 0.11133318487358382,
-      "min_time": 5.666979400004493,
-      "max_time": 5.824428299994906,
-      "cv_percent": 1.937677050194462,
+      "mean_time": 2.373576799989678,
+      "std_time": 0.11029224582998393,
+      "min_time": 2.2746855999866966,
+      "max_time": 2.4925189999921713,
+      "cv_percent": 4.646668514389909,
       "avg_memory_mb": 0.0,
       "all_times": [
-        5.666979400004493,
-        5.824428299994906
-=======
-      "successful_runs": 1,
-      "failed_runs": 1,
-      "mean_time": 0.6568662000063341,
-      "std_time": 0,
-      "min_time": 0.6568662000063341,
-      "max_time": 0.6568662000063341,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.6568662000063341
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        2.2746855999866966,
+        2.353525799990166,
+        2.4925189999921713
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
-<<<<<<< HEAD
-      "speedup_vs_single": 0.3900874476842079,
-      "parallel_efficiency": 9.752186192105198
-=======
-      "speedup_vs_single": 1.0,
-      "parallel_efficiency": 25.0
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+      "speedup_vs_single": 0.3331216696561693,
+      "parallel_efficiency": 8.328041741404233
     },
     {
       "test_name": "Py3_MP_V4_Intersect_single",
       "category": "vector_multiprocess",
       "success": true,
-<<<<<<< HEAD
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 0.8094251500006067,
-      "std_time": 0.03866537664001901,
-      "min_time": 0.7820845999813173,
-      "max_time": 0.836765700019896,
-      "cv_percent": 4.77689340885813,
+      "mean_time": 0.40539280001151684,
+      "std_time": 0.014828050140212662,
+      "min_time": 0.3933979000139516,
+      "max_time": 0.42197150000720285,
+      "cv_percent": 3.6576994312161957,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.836765700019896,
-        0.7820845999813173
-=======
-      "total_runs": 1,
-      "successful_runs": 1,
-      "failed_runs": 0,
-      "mean_time": 0.2670145999873057,
-      "std_time": 0,
-      "min_time": 0.2670145999873057,
-      "max_time": 0.2670145999873057,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.2670145999873057
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.3933979000139516,
+        0.40080900001339614,
+        0.42197150000720285
       ],
       "python_version": "3.13.7"
     },
@@ -854,73 +626,43 @@
       "test_name": "Py3_MP_V4_Intersect_multiprocess",
       "category": "vector_multiprocess",
       "success": true,
-      "total_runs": 2,
-<<<<<<< HEAD
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 8.871437549998518,
-      "std_time": 2.308509681198699,
-      "min_time": 7.239074699988123,
-      "max_time": 10.503800400008913,
-      "cv_percent": 26.021821922187627,
+      "mean_time": 3.216197433328489,
+      "std_time": 0.05861393580395521,
+      "min_time": 3.1485983000020497,
+      "max_time": 3.2528885999927297,
+      "cv_percent": 1.8224607481044721,
       "avg_memory_mb": 0.0,
       "all_times": [
-        7.239074699988123,
-        10.503800400008913
-=======
-      "successful_runs": 1,
-      "failed_runs": 1,
-      "mean_time": 0.2670145999873057,
-      "std_time": 0,
-      "min_time": 0.2670145999873057,
-      "max_time": 0.2670145999873057,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.2670145999873057
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        3.1485983000020497,
+        3.247105399990687,
+        3.2528885999927297
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
-<<<<<<< HEAD
-      "speedup_vs_single": 0.09123945757818493,
-      "parallel_efficiency": 2.2809864394546233
-=======
-      "speedup_vs_single": 1.0,
-      "parallel_efficiency": 25.0
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+      "speedup_vs_single": 0.1260472369670322,
+      "parallel_efficiency": 3.1511809241758053
     },
     {
       "test_name": "Py3_MP_R1_CreateConstantRaster_single",
       "category": "raster_multiprocess",
       "success": true,
-<<<<<<< HEAD
-      "total_runs": 2,
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 0.7526093499909621,
-      "std_time": 0.20110138070600134,
-      "min_time": 0.610409199987771,
-      "max_time": 0.8948094999941532,
-      "cv_percent": 26.720553060949392,
+      "mean_time": 0.26232873334083706,
+      "std_time": 0.0007548743784905307,
+      "min_time": 0.2615477000072133,
+      "max_time": 0.26305440001306124,
+      "cv_percent": 0.2877589385184663,
       "avg_memory_mb": 0.0,
       "all_times": [
-        0.610409199987771,
-        0.8948094999941532
-=======
-      "total_runs": 1,
-      "successful_runs": 1,
-      "failed_runs": 0,
-      "mean_time": 0.14908249999280088,
-      "std_time": 0,
-      "min_time": 0.14908249999280088,
-      "max_time": 0.14908249999280088,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.14908249999280088
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        0.26305440001306124,
+        0.26238410000223666,
+        0.2615477000072133
       ],
       "python_version": "3.13.7"
     },
@@ -928,99 +670,160 @@
       "test_name": "Py3_MP_R1_CreateConstantRaster_multiprocess",
       "category": "raster_multiprocess",
       "success": true,
-      "total_runs": 2,
-<<<<<<< HEAD
-      "successful_runs": 2,
+      "total_runs": 3,
+      "successful_runs": 3,
       "failed_runs": 0,
-      "mean_time": 3.6534128000203054,
-      "std_time": 0.24465187522387946,
-      "min_time": 3.480417800019495,
-      "max_time": 3.8264078000211157,
-      "cv_percent": 6.696529754932695,
+      "mean_time": 1.1812130000034813,
+      "std_time": 0.012308335660256414,
+      "min_time": 1.1703437000105623,
+      "max_time": 1.1945778999943286,
+      "cv_percent": 1.0420081441890783,
       "avg_memory_mb": 0.0,
       "all_times": [
-        3.8264078000211157,
-        3.480417800019495
-=======
-      "successful_runs": 1,
-      "failed_runs": 1,
-      "mean_time": 0.14908249999280088,
-      "std_time": 0,
-      "min_time": 0.14908249999280088,
-      "max_time": 0.14908249999280088,
-      "cv_percent": 0.0,
-      "avg_memory_mb": 0.0,
-      "all_times": [
-        0.14908249999280088
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+        1.1703437000105623,
+        1.1945778999943286,
+        1.178717400005553
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
-<<<<<<< HEAD
-      "speedup_vs_single": 0.20600172802448688,
-      "parallel_efficiency": 5.150043200612172
+      "speedup_vs_single": 0.22208419086148215,
+      "parallel_efficiency": 5.552104771537054
     },
     {
-      "test_name": "OS_MP_V1_CreateFishnet_OS_single",
+      "test_name": "OS_MP_V1_CreateFishnet_single",
       "category": "vector_multiprocess",
       "success": true,
-      "mean_time": 0.2121,
-      "std_time": 0,
-      "mode": "single"
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.08835326666788508,
+      "std_time": 0.005043039764790966,
+      "min_time": 0.0825306000187993,
+      "max_time": 0.09133289998862892,
+      "cv_percent": 5.707813593070041,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.09119629999622703,
+        0.0825306000187993,
+        0.09133289998862892
+      ],
+      "python_version": "3.13.7",
+      "num_workers": 1
     },
     {
-      "test_name": "OS_MP_V1_CreateFishnet_OS_multiprocess",
+      "test_name": "OS_MP_V1_CreateFishnet_multiprocess",
       "category": "vector_multiprocess",
       "success": true,
-      "mean_time": 0.12726,
-      "std_time": 0,
-      "mode": "multiprocess",
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 11.734128133335616,
+      "std_time": 1.8976632166500962,
+      "min_time": 9.590973700018367,
+      "max_time": 13.2010437999852,
+      "cv_percent": 16.172170570210525,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        12.410366900003282,
+        13.2010437999852,
+        9.590973700018367
+      ],
+      "python_version": "3.13.7",
       "num_workers": 4,
-      "speedup_vs_single": 1.6666666666666665,
-      "parallel_efficiency": 41.666666666666664
+      "execution_mode": "multiprocess",
+      "speedup_vs_single": 0.007529597909953045,
+      "parallel_efficiency": 0.18823994774882613
     },
     {
-      "test_name": "OS_MP_V2_CreateRandomPoints_OS_single",
+      "test_name": "OS_MP_V2_CreateRandomPoints_single",
       "category": "vector_multiprocess",
       "success": true,
-      "mean_time": 0.1161,
-      "std_time": 0,
-      "mode": "single"
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.056250266662876434,
+      "std_time": 0.0006051262013755225,
+      "min_time": 0.05584129999624565,
+      "max_time": 0.05694539999240078,
+      "cv_percent": 1.0757748136594851,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.055964099999982864,
+        0.05584129999624565,
+        0.05694539999240078
+      ],
+      "python_version": "3.13.7",
+      "num_workers": 1
     },
     {
-      "test_name": "OS_MP_V2_CreateRandomPoints_OS_multiprocess",
+      "test_name": "OS_MP_V2_CreateRandomPoints_multiprocess",
       "category": "vector_multiprocess",
       "success": true,
-      "mean_time": 0.06966,
-      "std_time": 0,
-      "mode": "multiprocess",
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 10.431077699991874,
+      "std_time": 0.8468527136456349,
+      "min_time": 9.45418050000444,
+      "max_time": 10.957121699990239,
+      "cv_percent": 8.11855436228123,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        10.957121699990239,
+        10.881930899980944,
+        9.45418050000444
+      ],
+      "python_version": "3.13.7",
       "num_workers": 4,
-      "speedup_vs_single": 1.6666666666666665,
-      "parallel_efficiency": 41.666666666666664
+      "execution_mode": "multiprocess",
+      "speedup_vs_single": 0.005392565205694926,
+      "parallel_efficiency": 0.13481413014237315
     },
     {
-      "test_name": "OS_MP_V3_Buffer_OS_single",
+      "test_name": "OS_MP_V3_Buffer_single",
       "category": "vector_multiprocess",
       "success": true,
-      "mean_time": 0.3673,
-      "std_time": 0,
-      "mode": "single"
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 0.12412316666450351,
+      "std_time": 0.004793241777814461,
+      "min_time": 0.11983760001021437,
+      "max_time": 0.12929919999442063,
+      "cv_percent": 3.86168183315067,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.12323269998887554,
+        0.11983760001021437,
+        0.12929919999442063
+      ],
+      "python_version": "3.13.7",
+      "num_workers": 1
     },
     {
-      "test_name": "OS_MP_V3_Buffer_OS_multiprocess",
+      "test_name": "OS_MP_V3_Buffer_multiprocess",
       "category": "vector_multiprocess",
       "success": true,
-      "mean_time": 0.22038,
-      "std_time": 0,
-      "mode": "multiprocess",
+      "total_runs": 3,
+      "successful_runs": 3,
+      "failed_runs": 0,
+      "mean_time": 9.485714966673791,
+      "std_time": 1.5733282840620153,
+      "min_time": 8.09434730000794,
+      "max_time": 11.19304790001479,
+      "cv_percent": 16.586290960561193,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        9.169749699998647,
+        11.19304790001479,
+        8.09434730000794
+      ],
+      "python_version": "3.13.7",
       "num_workers": 4,
-      "speedup_vs_single": 1.6666666666666667,
-      "parallel_efficiency": 41.66666666666667
-=======
-      "speedup_vs_single": 1.0,
-      "parallel_efficiency": 25.0
->>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
+      "execution_mode": "multiprocess",
+      "speedup_vs_single": 0.013085272654785226,
+      "parallel_efficiency": 0.3271318163696307
     }
   ]
 }

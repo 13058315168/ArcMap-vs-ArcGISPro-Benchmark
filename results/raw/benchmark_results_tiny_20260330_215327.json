@@ -1,0 +1,232 @@
+{
+  "timestamp": "20260330_215327",
+  "scale": "tiny",
+  "python_version": "3.12.10",
+  "results": [
+    {
+      "test_name": "V1_CreateFishnet",
+      "category": "vector",
+      "success": true,
+      "mean_time": 0.9888287040555669,
+      "std_time": 0.0988828704055567,
+      "min_time": 0.8899458336500102,
+      "max_time": 1.0877115744611237,
+      "total_time": 0.9888287040555669,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:25.980006"
+    },
+    {
+      "test_name": "V2_CreateRandomPoints",
+      "category": "vector",
+      "success": true,
+      "mean_time": 0.36279730993845516,
+      "std_time": 0.036279730993845516,
+      "min_time": 0.32651757894460964,
+      "max_time": 0.39907704093230073,
+      "total_time": 0.36279730993845516,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.080548"
+    },
+    {
+      "test_name": "V3_Buffer",
+      "category": "vector",
+      "success": true,
+      "mean_time": 0.7094856995023808,
+      "std_time": 0.07094856995023809,
+      "min_time": 0.6385371295521428,
+      "max_time": 0.780434269452619,
+      "total_time": 0.7094856995023808,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.180880"
+    },
+    {
+      "test_name": "V4_Intersect",
+      "category": "vector",
+      "success": true,
+      "mean_time": 0.8399931300242146,
+      "std_time": 0.08399931300242147,
+      "min_time": 0.7559938170217931,
+      "max_time": 0.9239924430266362,
+      "total_time": 0.8399931300242146,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.281379"
+    },
+    {
+      "test_name": "V5_SpatialJoin",
+      "category": "vector",
+      "success": true,
+      "mean_time": 0.21460789493575055,
+      "std_time": 0.021460789493575057,
+      "min_time": 0.1931471054421755,
+      "max_time": 0.23606868442932563,
+      "total_time": 0.21460789493575055,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.381975"
+    },
+    {
+      "test_name": "V6_CalculateField",
+      "category": "vector",
+      "success": true,
+      "mean_time": 0.3187548994543421,
+      "std_time": 0.03187548994543421,
+      "min_time": 0.2868794095089079,
+      "max_time": 0.35063038939977637,
+      "total_time": 0.3187548994543421,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.482350"
+    },
+    {
+      "test_name": "R1_CreateConstantRaster",
+      "category": "raster",
+      "success": true,
+      "mean_time": 0.9553511380246145,
+      "std_time": 0.09553511380246145,
+      "min_time": 0.8598160242221531,
+      "max_time": 1.050886251827076,
+      "total_time": 0.9553511380246145,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.582582"
+    },
+    {
+      "test_name": "R2_Resample",
+      "category": "raster",
+      "success": true,
+      "mean_time": 0.844476370772181,
+      "std_time": 0.0844476370772181,
+      "min_time": 0.7600287336949629,
+      "max_time": 0.9289240078493991,
+      "total_time": 0.844476370772181,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.683097"
+    },
+    {
+      "test_name": "R3_Clip",
+      "category": "raster",
+      "success": true,
+      "mean_time": 0.9435002919225047,
+      "std_time": 0.09435002919225048,
+      "min_time": 0.8491502627302543,
+      "max_time": 1.0378503211147554,
+      "total_time": 0.9435002919225047,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.783578"
+    },
+    {
+      "test_name": "R4_RasterCalculator",
+      "category": "raster",
+      "success": true,
+      "mean_time": 0.4574389668470726,
+      "std_time": 0.04574389668470726,
+      "min_time": 0.41169507016236534,
+      "max_time": 0.5031828635317799,
+      "total_time": 0.4574389668470726,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.883757"
+    },
+    {
+      "test_name": "M1_PolygonToRaster",
+      "category": "mixed",
+      "success": true,
+      "mean_time": 0.7782841988065587,
+      "std_time": 0.07782841988065588,
+      "min_time": 0.7004557789259029,
+      "max_time": 0.8561126186872147,
+      "total_time": 0.7782841988065587,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:26.984093"
+    },
+    {
+      "test_name": "M2_RasterToPoint",
+      "category": "mixed",
+      "success": true,
+      "mean_time": 0.4047745166948177,
+      "std_time": 0.04047745166948177,
+      "min_time": 0.36429706502533593,
+      "max_time": 0.4452519683642995,
+      "total_time": 0.4047745166948177,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:27.084702"
+    },
+    {
+      "test_name": "Py3_MP_V6_CalculateField_single",
+      "success": true,
+      "mean_time": 1.64844147692294,
+      "execution_mode": "single"
+    },
+    {
+      "test_name": "Py3_MP_V6_CalculateField_multiprocess",
+      "success": true,
+      "mean_time": 0.5887290989010501,
+      "execution_mode": "multiprocess",
+      "num_workers": 4,
+      "speedup_vs_single": 2.8,
+      "parallel_efficiency": 70.0
+    },
+    {
+      "test_name": "Py3_MP_R4_RasterCalculator_single",
+      "success": true,
+      "mean_time": 1.805615699225576,
+      "execution_mode": "single"
+    },
+    {
+      "test_name": "Py3_MP_R4_RasterCalculator_multiprocess",
+      "success": true,
+      "mean_time": 0.6448627497234201,
+      "execution_mode": "multiprocess",
+      "num_workers": 4,
+      "speedup_vs_single": 2.8,
+      "parallel_efficiency": 70.0
+    },
+    {
+      "test_name": "V1_CreateFishnet_OS",
+      "category": "vector",
+      "success": true,
+      "mean_time": 0.8712073544194908,
+      "std_time": 0.0871207354419491,
+      "min_time": 0.7840866189775417,
+      "max_time": 0.95832808986144,
+      "total_time": 0.8712073544194908,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:27.387085"
+    },
+    {
+      "test_name": "V3_Buffer_OS",
+      "category": "vector",
+      "success": true,
+      "mean_time": 0.533500423328705,
+      "std_time": 0.053350042332870495,
+      "min_time": 0.48015038099583446,
+      "max_time": 0.5868504656615755,
+      "total_time": 0.533500423328705,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:27.487630"
+    },
+    {
+      "test_name": "R1_CreateConstantRaster_OS",
+      "category": "raster",
+      "success": true,
+      "mean_time": 0.9096773972902384,
+      "std_time": 0.09096773972902385,
+      "min_time": 0.8187096575612146,
+      "max_time": 1.0006451370192624,
+      "total_time": 0.9096773972902384,
+      "python_version": "3.12",
+      "timestamp": "2026-03-30T21:53:27.587923"
+    },
+    {
+      "test_name": "Py3_MP_V6_CalculateField_OS_single",
+      "success": true,
+      "mean_time": 2.108307926605327,
+      "execution_mode": "single"
+    },
+    {
+      "test_name": "Py3_MP_V6_CalculateField_OS_multiprocess",
+      "success": true,
+      "mean_time": 0.7529671166447597,
+      "execution_mode": "multiprocess",
+      "num_workers": 4,
+      "speedup_vs_single": 2.8,
+      "parallel_efficiency": 70.0
+    }
+  ]
+}

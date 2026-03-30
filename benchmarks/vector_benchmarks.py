@@ -13,9 +13,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     import arcpy
+    HAS_ARCPY = True
 except ImportError:
-    print("Error: arcpy is not available")
-    sys.exit(1)
+    HAS_ARCPY = False
+    arcpy = None
 
 from config import settings
 from benchmarks.base_benchmark import BaseBenchmark
@@ -23,10 +24,12 @@ from benchmarks.base_benchmark import BaseBenchmark
 
 class VectorBenchmarks(object):
     """Collection of vector data benchmarks"""
-    
+
     @staticmethod
     def get_all_benchmarks():
         """Get all vector benchmark instances"""
+        if not HAS_ARCPY:
+            return []
         return [
             V1_CreateFishnet(),
             V2_CreateRandomPoints(),
