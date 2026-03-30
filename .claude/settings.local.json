@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python test_vbs_debug.py)",
+      "Bash(wscript //nologo \"启动工具.vbs\")",
+      "Bash(python test_gui.py)",
+      "Bash(ls -la *.vbs *.bat)",
+      "Bash(cmd /c launch_gui.bat)",
+      "Bash(python test_launcher.py)",
+      "Bash(python fix_merge_conflicts.py)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''benchmark_gui.py''\\).read\\(\\)\\); print\\(''语法检查通过''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''benchmark_gui.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''语法检查通过''\\)\")",
+      "Bash(python benchmark_gui.py)",
+      "Bash(cscript //nologo \"启动工具.vbs\")",
+      "Bash(cmd /c \"启动工具_批处理版.bat\")",
+      "Bash(python -c \"print\\(''✅ Python可以正常运行GUI''\\)\")"
+    ]
+  },
+  "model": "kimi-k2.5",
+  "defaultMode": "bypassPermissions"
+}

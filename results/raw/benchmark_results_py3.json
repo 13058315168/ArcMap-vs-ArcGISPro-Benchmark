@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "export_timestamp": "2026-03-30T13:07:06.036716",
+=======
+  "export_timestamp": "2026-03-30T08:33:57.326766",
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
   "python_version": "3.13.7",
   "results": [
     {
@@ -9,6 +13,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 1.2424889500107383,
       "std_time": 0.6804722607730218,
       "min_time": 0.7613224000087939,
@@ -18,6 +23,16 @@
       "all_times": [
         1.7236555000126828,
         0.7613224000087939
+=======
+      "mean_time": 0.7100639000127558,
+      "std_time": 0,
+      "min_time": 0.7100639000127558,
+      "max_time": 0.7100639000127558,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.7100639000127558
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -28,6 +43,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 0.45930144999874756,
       "std_time": 0.08405342952759248,
       "min_time": 0.39986669999780133,
@@ -37,6 +53,16 @@
       "all_times": [
         0.39986669999780133,
         0.5187361999996938
+=======
+      "mean_time": 0.14469119999557734,
+      "std_time": 0,
+      "min_time": 0.14469119999557734,
+      "max_time": 0.14469119999557734,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.14469119999557734
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -47,6 +73,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 0.8115686500095762,
       "std_time": 0.07058643944137993,
       "min_time": 0.7616565000207629,
@@ -56,6 +83,16 @@
       "all_times": [
         0.7616565000207629,
         0.8614807999983896
+=======
+      "mean_time": 0.2637096999969799,
+      "std_time": 0,
+      "min_time": 0.2637096999969799,
+      "max_time": 0.2637096999969799,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.2637096999969799
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -66,6 +103,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 0.7706607500003884,
       "std_time": 0.016177542467604947,
       "min_time": 0.7592215000186116,
@@ -75,6 +113,16 @@
       "all_times": [
         0.7592215000186116,
         0.7820999999821652
+=======
+      "mean_time": 0.28497340000467375,
+      "std_time": 0,
+      "min_time": 0.28497340000467375,
+      "max_time": 0.28497340000467375,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.28497340000467375
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -85,6 +133,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 5.08613024999795,
       "std_time": 0.23698407999708127,
       "min_time": 4.918557199998759,
@@ -94,6 +143,16 @@
       "all_times": [
         4.918557199998759,
         5.253703299997142
+=======
+      "mean_time": 1.6380674999963958,
+      "std_time": 0,
+      "min_time": 1.6380674999963958,
+      "max_time": 1.6380674999963958,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        1.6380674999963958
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -104,6 +163,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 3.0111917500034906,
       "std_time": 0.06192226005609253,
       "min_time": 2.9674061000114307,
@@ -227,6 +287,16 @@
       "all_times": [
         0.6680080000078306,
         0.6962705999903847
+=======
+      "mean_time": 1.068926800013287,
+      "std_time": 0,
+      "min_time": 1.068926800013287,
+      "max_time": 1.068926800013287,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        1.068926800013287
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -237,6 +307,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 2.440482099991641,
       "std_time": 2.185979601827479,
       "min_time": 0.8947611000039615,
@@ -246,6 +317,16 @@
       "all_times": [
         3.9862030999793205,
         0.8947611000039615
+=======
+      "mean_time": 1.1155146999808494,
+      "std_time": 0,
+      "min_time": 1.1155146999808494,
+      "max_time": 1.1155146999808494,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        1.1155146999808494
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -256,6 +337,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 1.3479088000021875,
       "std_time": 0.1275599420392111,
       "min_time": 1.2577102999784984,
@@ -265,6 +347,16 @@
       "all_times": [
         1.2577102999784984,
         1.4381073000258766
+=======
+      "mean_time": 0.47200430001248606,
+      "std_time": 0,
+      "min_time": 0.47200430001248606,
+      "max_time": 0.47200430001248606,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.47200430001248606
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -275,6 +367,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 0.76697554999555,
       "std_time": 0.05317068228627998,
       "min_time": 0.7293781999906059,
@@ -284,6 +377,16 @@
       "all_times": [
         0.7293781999906059,
         0.804572900000494
+=======
+      "mean_time": 0.3073257000069134,
+      "std_time": 0,
+      "min_time": 0.3073257000069134,
+      "max_time": 0.3073257000069134,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.3073257000069134
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -294,6 +397,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 0.5279732499911916,
       "std_time": 0.10381225575283452,
       "min_time": 0.4545668999780901,
@@ -379,6 +483,16 @@
       "all_times": [
         0.04438170001958497,
         0.036417000024812296
+=======
+      "mean_time": 0.5163385999912862,
+      "std_time": 0,
+      "min_time": 0.5163385999912862,
+      "max_time": 0.5163385999912862,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.5163385999912862
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -389,6 +503,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 1.720457150004222,
       "std_time": 0.14854241650307848,
       "min_time": 1.6154218000010587,
@@ -398,6 +513,16 @@
       "all_times": [
         1.6154218000010587,
         1.8254925000073854
+=======
+      "mean_time": 0.6606145999976434,
+      "std_time": 0,
+      "min_time": 0.6606145999976434,
+      "max_time": 0.6606145999976434,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.6606145999976434
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -408,6 +533,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 22.41469925000274,
       "std_time": 0.23582117217897988,
       "min_time": 22.247948500007624,
@@ -417,10 +543,21 @@
       "all_times": [
         22.581449999997858,
         22.247948500007624
+=======
+      "mean_time": 8.938796500005992,
+      "std_time": 0,
+      "min_time": 8.938796500005992,
+      "max_time": 8.938796500005992,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        8.938796500005992
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
     {
+<<<<<<< HEAD
       "test_name": "M1_PolygonToRaster_OS",
       "category": "mixed_os",
       "success": true,
@@ -474,6 +611,22 @@
       "all_times": [
         0.6603950000135228,
         0.7898134000133723
+=======
+      "test_name": "Py3_MP_V1_CreateFishnet_single",
+      "category": "vector_multiprocess",
+      "success": true,
+      "total_runs": 1,
+      "successful_runs": 1,
+      "failed_runs": 0,
+      "mean_time": 0.22575449998839758,
+      "std_time": 0,
+      "min_time": 0.22575449998839758,
+      "max_time": 0.22575449998839758,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.22575449998839758
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -484,6 +637,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 2.6644568000047,
       "std_time": 0.1099749034458947,
       "min_time": 2.5866928000177722,
@@ -493,17 +647,34 @@
       "all_times": [
         2.5866928000177722,
         2.742220799991628
+=======
+      "mean_time": 0.5247438999940641,
+      "std_time": 0.42283486449380797,
+      "min_time": 0.22575449998839758,
+      "max_time": 0.8237332999997307,
+      "cv_percent": 80.57928153116045,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.22575449998839758,
+        0.8237332999997307
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
+<<<<<<< HEAD
       "speedup_vs_single": 0.2721395970886705,
       "parallel_efficiency": 6.803489927216763
+=======
+      "speedup_vs_single": 0.4302184360617652,
+      "parallel_efficiency": 10.75546090154413
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     },
     {
       "test_name": "Py3_MP_V2_CreateRandomPoints_single",
       "category": "vector_multiprocess",
       "success": true,
+<<<<<<< HEAD
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
@@ -516,6 +687,19 @@
       "all_times": [
         0.4154309000005014,
         0.4847758999967482
+=======
+      "total_runs": 1,
+      "successful_runs": 1,
+      "failed_runs": 0,
+      "mean_time": 0.14437419999740086,
+      "std_time": 0,
+      "min_time": 0.14437419999740086,
+      "max_time": 0.14437419999740086,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.14437419999740086
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -526,6 +710,7 @@
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
+<<<<<<< HEAD
       "mean_time": 1.946883849988808,
       "std_time": 0.11102446206879422,
       "min_time": 1.868377699982375,
@@ -535,17 +720,34 @@
       "all_times": [
         1.868377699982375,
         2.025389999995241
+=======
+      "mean_time": 0.37008665000030305,
+      "std_time": 0.3192056079905634,
+      "min_time": 0.14437419999740086,
+      "max_time": 0.5957991000032052,
+      "cv_percent": 86.25158675415663,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.14437419999740086,
+        0.5957991000032052
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
+<<<<<<< HEAD
       "speedup_vs_single": 0.23119170668615507,
       "parallel_efficiency": 5.779792667153877
+=======
+      "speedup_vs_single": 0.3901091811803604,
+      "parallel_efficiency": 9.752729529509011
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     },
     {
       "test_name": "Py3_MP_V3_Buffer_single",
       "category": "vector_multiprocess",
       "success": true,
+<<<<<<< HEAD
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
@@ -558,6 +760,19 @@
       "all_times": [
         2.247512000001734,
         2.235141899989685
+=======
+      "total_runs": 1,
+      "successful_runs": 1,
+      "failed_runs": 0,
+      "mean_time": 0.6568662000063341,
+      "std_time": 0,
+      "min_time": 0.6568662000063341,
+      "max_time": 0.6568662000063341,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.6568662000063341
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -566,6 +781,7 @@
       "category": "vector_multiprocess",
       "success": true,
       "total_runs": 2,
+<<<<<<< HEAD
       "successful_runs": 2,
       "failed_runs": 0,
       "mean_time": 5.7457038499997,
@@ -577,17 +793,35 @@
       "all_times": [
         5.666979400004493,
         5.824428299994906
+=======
+      "successful_runs": 1,
+      "failed_runs": 1,
+      "mean_time": 0.6568662000063341,
+      "std_time": 0,
+      "min_time": 0.6568662000063341,
+      "max_time": 0.6568662000063341,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.6568662000063341
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
+<<<<<<< HEAD
       "speedup_vs_single": 0.3900874476842079,
       "parallel_efficiency": 9.752186192105198
+=======
+      "speedup_vs_single": 1.0,
+      "parallel_efficiency": 25.0
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     },
     {
       "test_name": "Py3_MP_V4_Intersect_single",
       "category": "vector_multiprocess",
       "success": true,
+<<<<<<< HEAD
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
@@ -600,6 +834,19 @@
       "all_times": [
         0.836765700019896,
         0.7820845999813173
+=======
+      "total_runs": 1,
+      "successful_runs": 1,
+      "failed_runs": 0,
+      "mean_time": 0.2670145999873057,
+      "std_time": 0,
+      "min_time": 0.2670145999873057,
+      "max_time": 0.2670145999873057,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.2670145999873057
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -608,6 +855,7 @@
       "category": "vector_multiprocess",
       "success": true,
       "total_runs": 2,
+<<<<<<< HEAD
       "successful_runs": 2,
       "failed_runs": 0,
       "mean_time": 8.871437549998518,
@@ -619,17 +867,35 @@
       "all_times": [
         7.239074699988123,
         10.503800400008913
+=======
+      "successful_runs": 1,
+      "failed_runs": 1,
+      "mean_time": 0.2670145999873057,
+      "std_time": 0,
+      "min_time": 0.2670145999873057,
+      "max_time": 0.2670145999873057,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.2670145999873057
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
+<<<<<<< HEAD
       "speedup_vs_single": 0.09123945757818493,
       "parallel_efficiency": 2.2809864394546233
+=======
+      "speedup_vs_single": 1.0,
+      "parallel_efficiency": 25.0
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     },
     {
       "test_name": "Py3_MP_R1_CreateConstantRaster_single",
       "category": "raster_multiprocess",
       "success": true,
+<<<<<<< HEAD
       "total_runs": 2,
       "successful_runs": 2,
       "failed_runs": 0,
@@ -642,6 +908,19 @@
       "all_times": [
         0.610409199987771,
         0.8948094999941532
+=======
+      "total_runs": 1,
+      "successful_runs": 1,
+      "failed_runs": 0,
+      "mean_time": 0.14908249999280088,
+      "std_time": 0,
+      "min_time": 0.14908249999280088,
+      "max_time": 0.14908249999280088,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.14908249999280088
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7"
     },
@@ -650,6 +929,7 @@
       "category": "raster_multiprocess",
       "success": true,
       "total_runs": 2,
+<<<<<<< HEAD
       "successful_runs": 2,
       "failed_runs": 0,
       "mean_time": 3.6534128000203054,
@@ -661,10 +941,23 @@
       "all_times": [
         3.8264078000211157,
         3.480417800019495
+=======
+      "successful_runs": 1,
+      "failed_runs": 1,
+      "mean_time": 0.14908249999280088,
+      "std_time": 0,
+      "min_time": 0.14908249999280088,
+      "max_time": 0.14908249999280088,
+      "cv_percent": 0.0,
+      "avg_memory_mb": 0.0,
+      "all_times": [
+        0.14908249999280088
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       ],
       "python_version": "3.13.7",
       "execution_mode": "multiprocess",
       "num_workers": 4,
+<<<<<<< HEAD
       "speedup_vs_single": 0.20600172802448688,
       "parallel_efficiency": 5.150043200612172
     },
@@ -724,6 +1017,10 @@
       "num_workers": 4,
       "speedup_vs_single": 1.6666666666666667,
       "parallel_efficiency": 41.66666666666667
+=======
+      "speedup_vs_single": 1.0,
+      "parallel_efficiency": 25.0
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     }
   ]
 }

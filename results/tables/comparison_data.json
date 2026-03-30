@@ -3,6 +3,7 @@
     {
       "test_name": "M1_PolygonToRaster",
       "category": "mixed",
+<<<<<<< HEAD
       "py2_time": 2.6190621500000013,
       "py2_std": 0.0011127739415543768,
       "py3_time": 1.720457150004222,
@@ -10,6 +11,13 @@
       "os_time": 0.9246834999939892,
       "os_std": 0.013111739609629313,
       "speedup": 1.5223059464128903,
+=======
+      "py2_time": 1.0905257000000006,
+      "py2_std": 0,
+      "py3_time": 0.6606145999976434,
+      "py3_std": 0,
+      "speedup": 1.6507744454995255,
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "faster": "Python 3.x \u66f4\u5feb",
       "fastest": "Open-Source",
       "py2_success": true,
@@ -19,6 +27,7 @@
     {
       "test_name": "M2_RasterToPoint",
       "category": "mixed",
+<<<<<<< HEAD
       "py2_time": 31.4909747,
       "py2_std": 0.2341852806476034,
       "py3_time": 22.41469925000274,
@@ -26,6 +35,13 @@
       "os_time": 6.715326899997308,
       "os_std": 0.5033246879444224,
       "speedup": 1.4049251497316497,
+=======
+      "py2_time": 13.395961900000001,
+      "py2_std": 0,
+      "py3_time": 8.938796500005992,
+      "py3_std": 0,
+      "speedup": 1.4986314880298508,
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "faster": "Python 3.x \u66f4\u5feb",
       "fastest": "Open-Source",
       "py2_success": true,
@@ -449,8 +465,249 @@
       "os_success": false
     },
     {
+      "test_name": "Py2_MP_R1_CreateConstantRaster_multiprocess",
+      "category": "raster_multiprocess",
+      "py2_time": 0.07408990000000415,
+      "py2_std": 0,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py2_MP_R1_CreateConstantRaster_single",
+      "category": "raster_multiprocess",
+      "py2_time": 0.07408990000000415,
+      "py2_std": 0,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py2_MP_V1_CreateFishnet_multiprocess",
+      "category": "vector_multiprocess",
+      "py2_time": 0.4760882500000001,
+      "py2_std": 0.38940971480707104,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py2_MP_V1_CreateFishnet_single",
+      "category": "vector_multiprocess",
+      "py2_time": 0.20073400000000063,
+      "py2_std": 0,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py2_MP_V2_CreateRandomPoints_multiprocess",
+      "category": "vector_multiprocess",
+      "py2_time": 0.25100879999999925,
+      "py2_std": 0.24086913678609917,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py2_MP_V2_CreateRandomPoints_single",
+      "category": "vector_multiprocess",
+      "py2_time": 0.08068859999999844,
+      "py2_std": 0,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py2_MP_V3_Buffer_multiprocess",
+      "category": "vector_multiprocess",
+      "py2_time": 3.6862604999999995,
+      "py2_std": 0,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py2_MP_V3_Buffer_single",
+      "category": "vector_multiprocess",
+      "py2_time": 3.6862604999999995,
+      "py2_std": 0,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py2_MP_V4_Intersect_multiprocess",
+      "category": "vector_multiprocess",
+      "py2_time": 0.33987319999999954,
+      "py2_std": 0,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py2_MP_V4_Intersect_single",
+      "category": "vector_multiprocess",
+      "py2_time": 0.33987319999999954,
+      "py2_std": 0,
+      "py3_time": 0,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": true,
+      "py3_success": false
+    },
+    {
+      "test_name": "Py3_MP_R1_CreateConstantRaster_multiprocess",
+      "category": "raster_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.14908249999280088,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
+      "test_name": "Py3_MP_R1_CreateConstantRaster_single",
+      "category": "raster_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.14908249999280088,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
+      "test_name": "Py3_MP_V1_CreateFishnet_multiprocess",
+      "category": "vector_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.5247438999940641,
+      "py3_std": 0.42283486449380797,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
+      "test_name": "Py3_MP_V1_CreateFishnet_single",
+      "category": "vector_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.22575449998839758,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
+      "test_name": "Py3_MP_V2_CreateRandomPoints_multiprocess",
+      "category": "vector_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.37008665000030305,
+      "py3_std": 0.3192056079905634,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
+      "test_name": "Py3_MP_V2_CreateRandomPoints_single",
+      "category": "vector_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.14437419999740086,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
+      "test_name": "Py3_MP_V3_Buffer_multiprocess",
+      "category": "vector_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.6568662000063341,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
+      "test_name": "Py3_MP_V3_Buffer_single",
+      "category": "vector_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.6568662000063341,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
+      "test_name": "Py3_MP_V4_Intersect_multiprocess",
+      "category": "vector_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.2670145999873057,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
+      "test_name": "Py3_MP_V4_Intersect_single",
+      "category": "vector_multiprocess",
+      "py2_time": 0,
+      "py2_std": 0,
+      "py3_time": 0.2670145999873057,
+      "py3_std": 0,
+      "speedup": 0,
+      "faster": "Python 2.7 \u66f4\u5feb",
+      "py2_success": false,
+      "py3_success": true
+    },
+    {
       "test_name": "R1_CreateConstantRaster",
       "category": "raster",
+<<<<<<< HEAD
       "py2_time": 0.2755111499999998,
       "py2_std": 0.049473079499108896,
       "py3_time": 2.440482099991641,
@@ -458,6 +715,13 @@
       "os_time": 0.04527974998927675,
       "os_std": 0.013716528034924102,
       "speedup": 0.11289210029483251,
+=======
+      "py2_time": 0.15386070000000007,
+      "py2_std": 0,
+      "py3_time": 1.1155146999808494,
+      "py3_std": 0,
+      "speedup": 0.13792798965593325,
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "faster": "Python 2.7 \u66f4\u5feb",
       "fastest": "Open-Source",
       "py2_success": true,
@@ -467,6 +731,7 @@
     {
       "test_name": "R2_Resample",
       "category": "raster",
+<<<<<<< HEAD
       "py2_time": 0.5140612000000004,
       "py2_std": 0.013406603149938957,
       "py3_time": 1.3479088000021875,
@@ -474,6 +739,13 @@
       "os_time": 0.03174254999612458,
       "os_std": 0.011041260241894738,
       "speedup": 0.38137684092511764,
+=======
+      "py2_time": 0.2564013000000003,
+      "py2_std": 0,
+      "py3_time": 0.47200430001248606,
+      "py3_std": 0,
+      "speedup": 0.5432181443966032,
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "faster": "Python 2.7 \u66f4\u5feb",
       "fastest": "Open-Source",
       "py2_success": true,
@@ -483,6 +755,7 @@
     {
       "test_name": "R3_Clip",
       "category": "raster",
+<<<<<<< HEAD
       "py2_time": 0.6605614499999994,
       "py2_std": 0.07653264180155221,
       "py3_time": 0.76697554999555,
@@ -492,6 +765,14 @@
       "speedup": 0.8612548991996317,
       "faster": "Python 2.7 \u66f4\u5feb",
       "fastest": "Open-Source",
+=======
+      "py2_time": 0.31737140000000075,
+      "py2_std": 0,
+      "py3_time": 0.3073257000069134,
+      "py3_std": 0,
+      "speedup": 1.0326874712816447,
+      "faster": "\u6027\u80fd\u76f8\u5f53",
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "py2_success": true,
       "py3_success": true,
       "os_success": false
@@ -499,6 +780,7 @@
     {
       "test_name": "R4_RasterCalculator",
       "category": "raster",
+<<<<<<< HEAD
       "py2_time": 0.7641101499999987,
       "py2_std": 0.04672427259792432,
       "py3_time": 0.5279732499911916,
@@ -508,6 +790,14 @@
       "speedup": 1.4472516363523091,
       "faster": "Python 3.x \u66f4\u5feb",
       "fastest": "Open-Source",
+=======
+      "py2_time": 0.45389130000000044,
+      "py2_std": 0,
+      "py3_time": 0.5163385999912862,
+      "py3_std": 0,
+      "speedup": 0.8790574634700183,
+      "faster": "Python 2.7 \u66f4\u5feb",
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "py2_success": true,
       "py3_success": true,
       "os_success": false
@@ -515,6 +805,7 @@
     {
       "test_name": "V1_CreateFishnet",
       "category": "vector",
+<<<<<<< HEAD
       "py2_time": 1.0929894500000001,
       "py2_std": 0.748613454267451,
       "py3_time": 1.2424889500107383,
@@ -524,6 +815,14 @@
       "speedup": 0.8796774007451365,
       "faster": "Python 2.7 \u66f4\u5feb",
       "fastest": "Open-Source",
+=======
+      "py2_time": 0.6753775,
+      "py2_std": 0,
+      "py3_time": 0.7100639000127558,
+      "py3_std": 0,
+      "speedup": 0.9511503119477942,
+      "faster": "\u6027\u80fd\u76f8\u5f53",
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "py2_success": true,
       "py3_success": true,
       "os_success": false
@@ -531,6 +830,7 @@
     {
       "test_name": "V2_CreateRandomPoints",
       "category": "vector",
+<<<<<<< HEAD
       "py2_time": 0.2399331499999997,
       "py2_std": 0.009226965677025318,
       "py3_time": 0.45930144999874756,
@@ -538,6 +838,13 @@
       "os_time": 0.11610534999636002,
       "os_std": 0.05473550959287327,
       "speedup": 0.5223870945773281,
+=======
+      "py2_time": 0.08511650000000004,
+      "py2_std": 0,
+      "py3_time": 0.14469119999557734,
+      "py3_std": 0,
+      "speedup": 0.5882631424896727,
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "faster": "Python 2.7 \u66f4\u5feb",
       "fastest": "Open-Source",
       "py2_success": true,
@@ -547,6 +854,7 @@
     {
       "test_name": "V3_Buffer",
       "category": "vector",
+<<<<<<< HEAD
       "py2_time": 0.4846588999999999,
       "py2_std": 0.01611340790832322,
       "py3_time": 0.8115686500095762,
@@ -554,6 +862,13 @@
       "os_time": 0.36730954999802634,
       "os_std": 0.12106382271846827,
       "speedup": 0.5971878041300401,
+=======
+      "py2_time": 0.17873910000000004,
+      "py2_std": 0,
+      "py3_time": 0.2637096999969799,
+      "py3_std": 0,
+      "speedup": 0.6777873548149613,
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "faster": "Python 2.7 \u66f4\u5feb",
       "fastest": "Open-Source",
       "py2_success": true,
@@ -563,6 +878,7 @@
     {
       "test_name": "V4_Intersect",
       "category": "vector",
+<<<<<<< HEAD
       "py2_time": 0.7909975,
       "py2_std": 0.06515974846498447,
       "py3_time": 0.7706607500003884,
@@ -572,6 +888,14 @@
       "speedup": 1.026388719030522,
       "faster": "\u6027\u80fd\u76f8\u5f53",
       "fastest": "Python 3.x",
+=======
+      "py2_time": 0.3538709999999998,
+      "py2_std": 0,
+      "py3_time": 0.28497340000467375,
+      "py3_std": 0,
+      "speedup": 1.2417685299547119,
+      "faster": "Python 3.x \u66f4\u5feb",
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "py2_success": true,
       "py3_success": true,
       "os_success": false
@@ -579,6 +903,7 @@
     {
       "test_name": "V5_SpatialJoin",
       "category": "vector",
+<<<<<<< HEAD
       "py2_time": 2.3604540999999992,
       "py2_std": 0.4274966780728021,
       "py3_time": 5.08613024999795,
@@ -586,6 +911,13 @@
       "os_time": 0.555883699998958,
       "os_std": 0.024376233474635193,
       "speedup": 0.46409627437302664,
+=======
+      "py2_time": 1.0736854999999998,
+      "py2_std": 0,
+      "py3_time": 1.6380674999963958,
+      "py3_std": 0,
+      "speedup": 0.6554586425787474,
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "faster": "Python 2.7 \u66f4\u5feb",
       "fastest": "Open-Source",
       "py2_success": true,
@@ -595,6 +927,7 @@
     {
       "test_name": "V6_CalculateField",
       "category": "vector",
+<<<<<<< HEAD
       "py2_time": 2.9756366499999993,
       "py2_std": 0.04253141222819807,
       "py3_time": 3.0111917500034906,
@@ -604,12 +937,21 @@
       "speedup": 0.9881923494232973,
       "faster": "\u6027\u80fd\u76f8\u5f53",
       "fastest": "Open-Source",
+=======
+      "py2_time": 1.1907050999999997,
+      "py2_std": 0,
+      "py3_time": 1.068926800013287,
+      "py3_std": 0,
+      "speedup": 1.1139257617876164,
+      "faster": "Python 3.x \u66f4\u5feb",
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
       "py2_success": true,
       "py3_success": true,
       "os_success": false
     }
   ],
   "statistics": {
+<<<<<<< HEAD
     "total_tests": 38,
     "py3_faster": 3,
     "py2_faster": 33,
@@ -625,4 +967,16 @@
     "os_vs_py3_avg": 12.938629854950902
   },
   "generated": "2026-03-30T14:42:16.134001"
+=======
+    "total_tests": 32,
+    "py3_faster": 4,
+    "py2_faster": 26,
+    "equal": 2,
+    "average_speedup": 0.9142208954922566,
+    "median_speedup": 0.9511503119477942,
+    "max_speedup": 1.6507744454995255,
+    "min_speedup": 0.13792798965593325
+  },
+  "generated": "2026-03-30T08:34:04.194261"
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
 }

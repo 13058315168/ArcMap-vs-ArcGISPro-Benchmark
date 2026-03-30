@@ -167,7 +167,7 @@ class SimpleBenchmarkGUI(object):
         # Row 1: Data scale selection + All scales button + Description
         row1_frame = ttk.Frame(settings_frame)
         row1_frame.pack(fill=tk.X, pady=(0, 8))
-        
+
         ttk.Label(row1_frame, text="数据规模:", font=("Microsoft YaHei", 10)).pack(side=tk.LEFT, padx=5)
         
         # Scale data mapping
@@ -1442,6 +1442,7 @@ MULTIPROCESS_CONFIG = {{
     
     def _step4_py3_test(self):
         """Step 4: Python 3.x test (单进程 + 多进程 + 开源测试)"""
+        """Step 4: Python 3.x test (单进程 + 多进程)"""
         if not os.path.exists(PYTHON3_PATH):
             self._log_error("Python 3.x 未找到")
             return False

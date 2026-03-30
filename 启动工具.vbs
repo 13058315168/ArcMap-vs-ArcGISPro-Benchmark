@@ -16,13 +16,12 @@ strScript = strPath & "\benchmark_gui.py"
 If fso.FileExists(strPython) Then
     ' Use ArcGIS Pro Python
     cmd = Chr(34) & strPython & Chr(34) & " " & Chr(34) & strScript & Chr(34)
+    WshShell.Run cmd, 1, False  ' Show window for debugging
 Else
     ' Use system Python
     cmd = "python " & Chr(34) & strScript & Chr(34)
+    WshShell.Run cmd, 1, False  ' Show window for debugging
 End If
-
-' Run hidden (0 = hidden window)
-WshShell.Run cmd, 0, False
 
 Set WshShell = Nothing
 Set fso = Nothing

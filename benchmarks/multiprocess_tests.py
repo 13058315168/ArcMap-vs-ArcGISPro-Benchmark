@@ -123,15 +123,17 @@ class MP_V1_CreateFishnet(MultiprocessBenchmark):
         self.temp_dir = tempfile.mkdtemp(prefix="mp_fishnet_")
     
     def teardown(self):
+<<<<<<< HEAD
         """Clean up all temporary files and directories"""
         # Clean up output feature class
+=======
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
         if self.output_fc and arcpy.Exists(self.output_fc):
             try:
                 arcpy.Delete_management(self.output_fc)
             except Exception:
                 pass
         
-        # Clean up temp directory
         if self.temp_dir and os.path.exists(self.temp_dir):
             try:
                 shutil.rmtree(self.temp_dir, ignore_errors=True)
@@ -251,6 +253,7 @@ class MP_V1_CreateFishnet(MultiprocessBenchmark):
         
         sr = arcpy.SpatialReference(settings.SPATIAL_REFERENCE)
         arcpy.DefineProjection_management(output_path, sr)
+<<<<<<< HEAD
 
 
 def get_oid_field(fc):
@@ -273,6 +276,8 @@ def get_oid_field(fc):
     
     # Final fallback
     return 'FID'
+=======
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
 
 
 class MP_V2_CreateRandomPoints(MultiprocessBenchmark):
@@ -465,8 +470,12 @@ class MP_V3_Buffer(MultiprocessBenchmark):
         remainder = total_count % num_workers
         
         partition_outputs = []
+<<<<<<< HEAD
         oid_start = 1
         oid_field = get_oid_field(self.input_fc)
+=======
+        fid_start = 1
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
         
         for worker_id in range(num_workers):
             extra = 1 if worker_id < remainder else 0
@@ -476,8 +485,13 @@ class MP_V3_Buffer(MultiprocessBenchmark):
             output_path = os.path.join(self.temp_dir, "buffer_w%d.shp" % worker_id)
             
             try:
+<<<<<<< HEAD
                 # Select by OID using correct field name
                 where_clause = "%s >= %d AND %s <= %d" % (oid_field, oid_start, oid_field, oid_end)
+=======
+                # Select by FID
+                where_clause = "FID >= %d AND FID <= %d" % (fid_start, fid_end)
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
                 temp_layer = "buf_lyr_%d" % worker_id
                 arcpy.MakeFeatureLayer_management(self.input_fc, temp_layer, where_clause)
                 
@@ -534,7 +548,10 @@ class MP_V4_Intersect(MultiprocessBenchmark):
         self.temp_dir = tempfile.mkdtemp(prefix="mp_intersect_")
     
     def teardown(self):
+<<<<<<< HEAD
         """Clean up all temporary files and directories"""
+=======
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
         if self.output_fc and arcpy.Exists(self.output_fc):
             try:
                 arcpy.Delete_management(self.output_fc)
@@ -546,6 +563,7 @@ class MP_V4_Intersect(MultiprocessBenchmark):
                 shutil.rmtree(self.temp_dir, ignore_errors=True)
             except Exception:
                 pass
+<<<<<<< HEAD
         
         # Clean up orphaned temp directories
         try:
@@ -573,6 +591,13 @@ class MP_V4_Intersect(MultiprocessBenchmark):
         if arcpy.Exists(self.output_fc):
             arcpy.Delete_management(self.output_fc)
         
+=======
+    
+    def run_single(self):
+        if arcpy.Exists(self.output_fc):
+            arcpy.Delete_management(self.output_fc)
+        
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
         arcpy.Intersect_analysis(
             in_features=[self.input_a, self.input_b],
             out_feature_class=self.output_fc,
@@ -584,12 +609,17 @@ class MP_V4_Intersect(MultiprocessBenchmark):
         return {'features_created': count, 'mode': 'single'}
     
     def run_multiprocess(self, num_workers):
+<<<<<<< HEAD
         # For intersect, we divide input A by OID and intersect each part with B
+=======
+        # For intersect, we divide input A by FID and intersect each part with B
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
         total_count = int(arcpy.GetCount_management(self.input_a)[0])
         count_per_worker = total_count // num_workers
         remainder = total_count % num_workers
         
         partition_outputs = []
+<<<<<<< HEAD
         oid_start = 1
         oid_field = get_oid_field(self.input_a)
         
@@ -597,12 +627,25 @@ class MP_V4_Intersect(MultiprocessBenchmark):
             extra = 1 if worker_id < remainder else 0
             oid_count = count_per_worker + extra
             oid_end = oid_start + oid_count - 1
+=======
+        fid_start = 1
+        
+        for worker_id in range(num_workers):
+            extra = 1 if worker_id < remainder else 0
+            fid_count = count_per_worker + extra
+            fid_end = fid_start + fid_count - 1
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
             
             output_path = os.path.join(self.temp_dir, "intersect_w%d.shp" % worker_id)
             
             try:
+<<<<<<< HEAD
                 # Select subset of A using correct OID field
                 where_clause = "%s >= %d AND %s <= %d" % (oid_field, oid_start, oid_field, oid_end)
+=======
+                # Select subset of A
+                where_clause = "FID >= %d AND FID <= %d" % (fid_start, fid_end)
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
                 temp_a = os.path.join(self.temp_dir, "temp_a_%d.shp" % worker_id)
                 
                 arcpy.Select_analysis(self.input_a, temp_a, where_clause)
@@ -619,7 +662,11 @@ class MP_V4_Intersect(MultiprocessBenchmark):
             except Exception as e:
                 print("    Worker %d failed: %s" % (worker_id, str(e)[:50]))
             
+<<<<<<< HEAD
             oid_start = oid_end + 1
+=======
+            fid_start = fid_end + 1
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
         
         if not partition_outputs:
             raise RuntimeError("All partitions failed")
