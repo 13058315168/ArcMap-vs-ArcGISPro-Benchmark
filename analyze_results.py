@@ -74,9 +74,10 @@ Examples:
 
 
 def load_results(results_dir):
-    """Load benchmark results from JSON files"""
+    """Load benchmark results from JSON files (including open-source)"""
     results_py2 = None
     results_py3 = None
+    results_os = None
     
     # Look for result files
     for filename in os.listdir(results_dir):
@@ -89,23 +90,32 @@ def load_results(results_dir):
             results = data.get('results', [])
             
             # Determine Python version from filename or content
-            if 'py2' in filename:
+            if 'py2' in filename.lower():
                 results_py2 = results
                 print("Loaded Python 2.7 results from: {}".format(filename))
-            elif 'py3' in filename:
-                results_py3 = results
-                print("Loaded Python 3.x results from: {}".format(filename))
+            elif 'py3' in filename.lower():
+                # Check if it's open-source results
+                if 'os_' in filename.lower() or 'opensource' in filename.lower():
+                    results_os = results
+                    print("Loaded Open-Source results from: {}".format(filename))
+                else:
+                    results_py3 = results
+                    print("Loaded Python 3.x results from: {}".format(filename))
             else:
                 # Try to detect from content
                 if results and 'python_version' in results[0]:
-                    if results[0]['python_version'].startswith('2.'):
+                    py_ver = results[0]['python_version']
+                    if py_ver.startswith('2.'):
                         results_py2 = results
                         print("Loaded Python 2.7 results from: {}".format(filename))
+                    elif any('OS_' in r.get('test_name', '') for r in results[:5]):
+                        results_os = results
+                        print("Loaded Open-Source results from: {}".format(filename))
                     else:
                         results_py3 = results
                         print("Loaded Python 3.x results from: {}".format(filename))
     
-    return results_py2, results_py3
+    return results_py2, results_py3, results_os
 
 
 def create_comparison(results_py2, results_py3):
