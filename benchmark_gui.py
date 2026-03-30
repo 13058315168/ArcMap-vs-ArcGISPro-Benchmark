@@ -164,11 +164,16 @@ class SimpleBenchmarkGUI(object):
         settings_frame = ttk.LabelFrame(main_frame, text="测试设置", padding="10")
         settings_frame.pack(fill=tk.X, pady=5)
         
+<<<<<<< HEAD
         # Row 1: Data scale selection + All scales button + Description
         row1_frame = ttk.Frame(settings_frame)
         row1_frame.pack(fill=tk.X, pady=(0, 8))
         
         ttk.Label(row1_frame, text="数据规模:", font=("Microsoft YaHei", 10)).pack(side=tk.LEFT, padx=5)
+=======
+        # Scale selection
+        ttk.Label(settings_frame, text="数据规模:", font=("Microsoft YaHei", 10)).pack(side=tk.LEFT, padx=5)
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
         
         # Scale data mapping
         self.scale_data = {
@@ -189,6 +194,7 @@ class SimpleBenchmarkGUI(object):
         )
         scale_combo.pack(side=tk.LEFT, padx=5)
         
+<<<<<<< HEAD
         # All scales run button (moved from bottom button area)
         self.all_scales_btn = tk.Button(
             row1_frame,
@@ -207,6 +213,11 @@ class SimpleBenchmarkGUI(object):
         # Scale description with data volume
         self.scale_desc_label = ttk.Label(
             row1_frame,
+=======
+        # Scale description with data volume
+        self.scale_desc_label = ttk.Label(
+            settings_frame,
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
             text="超小: 渔网2,500 | 栅格25万 | 1-2分钟",
             font=("Microsoft YaHei", 9),
             foreground="blue"
@@ -1441,7 +1452,11 @@ MULTIPROCESS_CONFIG = {{
             return False
     
     def _step4_py3_test(self):
+<<<<<<< HEAD
         """Step 4: Python 3.x test (单进程 + 多进程 + 开源测试)"""
+=======
+        """Step 4: Python 3.x test (单进程 + 多进程)"""
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
         if not os.path.exists(PYTHON3_PATH):
             self._log_error("Python 3.x 未找到")
             return False
@@ -1456,11 +1471,14 @@ MULTIPROCESS_CONFIG = {{
             cmd.extend(["--multiprocess", "--mp-workers", str(self.mp_workers_var.get())])
             self._log("已启用多进程对比测试（{}进程）".format(self.mp_workers_var.get()))
         
+<<<<<<< HEAD
         # 开源库测试
         if self.opensource_var.get():
             cmd.append("--opensource")
             self._log("已启用开源库对比测试 (GeoPandas/Rasterio)")
         
+=======
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
         if self._run_command(cmd, "Python 3.x 测试"):
             self._log_success("Python 3.x 测试完成")
             return True

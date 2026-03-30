@@ -266,6 +266,7 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_open
     
     from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
     
+<<<<<<< HEAD
     # Import open-source multiprocess tests if available
     has_os_mp = False
     if include_opensource and sys.version_info[0] >= 3:
@@ -275,6 +276,8 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_open
         except ImportError:
             print("[Warning] Open-source multiprocess tests not available")
     
+=======
+>>>>>>> 40b57fe01d65ffa95c50ace2d064180f92d37bce
     # Determine Python version prefix for naming
     py_version = "Py{}".format(sys.version_info[0])
     
@@ -299,6 +302,9 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_open
             stats_single = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs, 
                                          use_multiprocess=False)
             fresh_benchmark.teardown()
+            
+            # Add Python version prefix to test name
+            stats_single['test_name'] = "{}_{}_single".format(py_version, benchmark.name)
             
             # Add Python version prefix to test name
             stats_single['test_name'] = "{}_{}_single".format(py_version, benchmark.name)
@@ -328,6 +334,9 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_open
             stats_mp = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs,
                                      use_multiprocess=True)
             fresh_benchmark.teardown()
+            
+            # Add Python version prefix to test name
+            stats_mp['test_name'] = "{}_{}_multiprocess".format(py_version, benchmark.name)
             
             # Add Python version prefix to test name
             stats_mp['test_name'] = "{}_{}_multiprocess".format(py_version, benchmark.name)
