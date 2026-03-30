@@ -143,19 +143,25 @@ class V3_Buffer(BaseBenchmark):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
         
-        # Create input data if not exists
+        # Always recreate input data to ensure consistency
         self.input_fc = os.path.join(settings.DATA_DIR, "V3_buffer_input.shp")
         self.output_fc = os.path.join(settings.DATA_DIR, "V3_buffer_output.shp")
         
-        if not arcpy.Exists(self.input_fc):
-            print("    Creating input data...")
-            arcpy.CreateRandomPoints_management(
-                out_path=settings.DATA_DIR,
-                out_name="V3_buffer_input",
-                constraining_extent="-180 -90 180 90",
-                number_of_points_or_field=self.num_points,
-                minimum_allowed_distance="0 DecimalDegrees"
-            )
+        # Delete existing input data to ensure fresh data
+        if arcpy.Exists(self.input_fc):
+            try:
+                arcpy.Delete_management(self.input_fc)
+            except:
+                pass
+        
+        # Always create fresh input data
+        arcpy.CreateRandomPoints_management(
+            out_path=settings.DATA_DIR,
+            out_name="V3_buffer_input",
+            constraining_extent="-180 -90 180 90",
+            number_of_points_or_field=self.num_points,
+            minimum_allowed_distance="0 DecimalDegrees"
+        )
     
     def teardown(self):
         if self.output_fc and arcpy.Exists(self.output_fc):

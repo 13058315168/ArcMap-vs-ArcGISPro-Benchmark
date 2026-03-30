@@ -4,29 +4,76 @@
 
 本工具用于对比分析 ArcGIS Desktop (Python 2.7) 与 ArcGIS Pro (Python 3.x) 在相同硬件环境下处理 GIS 数据的性能差异。
 
+## 文件组织结构
+
+```
+📁 根目录（用户操作区）
+├── 📄 README.md              ← 本文件，项目说明
+├── 📄 QUICKSTART.md          ← 快速上手指南（先看这个）
+├── 📄 requirements.txt       ← Python依赖包清单
+├── 🖥️ benchmark_gui.py       ← 【主要】图形界面工具
+├── ⚡ run_benchmarks.py      ← 【主要】命令行测试脚本
+├── 📊 analyze_results.py     ← 【主要】生成对比报告
+├── 🚀 launch_gui.bat         ← 快速启动GUI（带窗口）
+├── 🚀 start_gui_hidden.vbs   ← 快速启动GUI（无窗口）
+├── 🧹 cleanup_temp.bat       ← 清理临时数据
+│
+📁 docs/                      ← 详细文档
+│   ├── GUI_GUIDE.md          ← GUI使用详解
+│   ├── DESKTOP_TEST_GUIDE.md ← 桌面自动化测试指南
+│   ├── README_SIMPLE.md      ← 简化版说明
+│   └── ...                   ← 其他技术文档
+│
+📁 benchmarks/                ← 基准测试代码（无需修改）
+📁 config/                    ← 配置文件
+│   └── settings.py           ← 测试参数配置（可调整）
+📁 data/                      ← 测试数据生成代码
+📁 results/                   ← 测试结果输出目录
+│   ├── raw/                  ← 原始JSON/CSV数据
+│   └── tables/               ← 生成的对比报告
+📁 scripts/                   ← 辅助脚本
+│   ├── run_both_versions.py  ← 同时运行Py2+Py3测试
+│   ├── test_setup.py         ← 环境检查脚本
+│   └── test_mp_quick.py      ← 多进程快速测试
+📁 utils/                     ← 工具函数库
+└── desktop_automation/       ← 桌面自动化测试代码
+```
+
+### 文档导航
+
+| 文档 | 位置 | 说明 |
+|------|------|------|
+| **快速开始** | `QUICKSTART.md` | ⭐ 新用户先看这个，5分钟上手 |
+| **详细指南** | `docs/GUI_GUIDE.md` | GUI界面各功能详解 |
+| **桌面测试** | `docs/DESKTOP_TEST_GUIDE.md` | 桌面自动化测试说明 |
+| **技术对比** | `docs/DESKTOP_VS_STANDALONE.md` | Desktop vs Standalone对比 |
+| **研究扩展** | `docs/RESEARCH_EXTENSION_SUMMARY.md` | 研究论文相关扩展功能 |
+
 ## 快速开始
 
 ### 1. 启动工具
 
-双击启动（无黑窗口）：
+**推荐方式** - 双击启动（无黑窗口）：
 ```
 启动工具.vbs
 ```
 
-或使用命令行：
+或命令行方式：
 ```bash
 python benchmark_gui.py
 ```
 
 ### 2. 运行测试
 
-- 在 GUI 中选择数据规模（超小/小型/中型/大型）
+- 在 GUI 中选择数据规模（超小/小型/标准/中型/大型）
+- 勾选「多进程对比」（可选）
 - 点击「开始全自动测试」按钮
 - 等待测试完成
 
-### 3. 导出报告
+### 3. 查看报告
 
-测试完成后，点击「导出报告」按钮选择保存位置。
+测试完成后，报告会自动保存到 `results/tables/comparison_report.md`
+也可点击「导出报告」按钮手动导出。
 
 ## 测试内容
 

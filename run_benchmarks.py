@@ -24,6 +24,15 @@ from benchmarks.raster_benchmarks import RasterBenchmarks
 from benchmarks.mixed_benchmarks import MixedBenchmarks
 from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
 
+# Import open-source benchmarks (Python 3.x only)
+try:
+    from benchmarks.vector_benchmarks_os import VectorBenchmarksOS
+    from benchmarks.raster_benchmarks_os import RasterBenchmarksOS
+    from benchmarks.mixed_benchmarks_os import MixedBenchmarksOS
+    HAS_OS_BENCHMARKS = True
+except ImportError:
+    HAS_OS_BENCHMARKS = False
+
 
 def check_arcpy():
     """Check if arcpy is available"""
@@ -99,6 +108,12 @@ Examples:
         help='Number of worker processes for multiprocess tests (default: 4)'
     )
     
+    parser.add_argument(
+        '--opensource',
+        action='store_true',
+        help='Run open-source library benchmarks (Python 3.x only)'
+    )
+    
     # Python 2/3 compatibility for argparse
     if len(sys.argv) == 1:
         return parser.parse_args([])
@@ -123,18 +138,24 @@ def generate_test_data():
         return False
 
 
-def get_benchmarks(category):
+def get_benchmarks(category, include_opensource=False):
     """Get benchmarks for specified category"""
     benchmarks = []
     
     if category in ['vector', 'all']:
         benchmarks.extend(VectorBenchmarks.get_all_benchmarks())
+        if include_opensource and HAS_OS_BENCHMARKS:
+            benchmarks.extend(VectorBenchmarksOS.get_all_benchmarks())
     
     if category in ['raster', 'all']:
         benchmarks.extend(RasterBenchmarks.get_all_benchmarks())
+        if include_opensource and HAS_OS_BENCHMARKS:
+            benchmarks.extend(RasterBenchmarksOS.get_all_benchmarks())
     
     if category in ['mixed', 'all']:
         benchmarks.extend(MixedBenchmarks.get_all_benchmarks())
+        if include_opensource and HAS_OS_BENCHMARKS:
+            benchmarks.extend(MixedBenchmarksOS.get_all_benchmarks())
     
     return benchmarks
 
@@ -251,11 +272,14 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers):
         
         # Run single process version
         print("\n  [1/2] Single process version...")
+        stats_single = None
         try:
-            benchmark.setup()
-            stats_single = benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs, 
+            # Create fresh instance for single process test
+            fresh_benchmark = benchmark.__class__()
+            fresh_benchmark.setup()
+            stats_single = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs, 
                                          use_multiprocess=False)
-            benchmark.teardown()
+            fresh_benchmark.teardown()
             
             # Add Python version prefix to test name
             stats_single['test_name'] = "{}_{}_single".format(py_version, benchmark.name)
@@ -266,6 +290,8 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers):
                 print("    [FAILED] Single process: {}".format(stats_single.get('error', 'Unknown')))
         except Exception as e:
             print("    [ERROR] Single process: {}".format(str(e)))
+            import traceback
+            print(traceback.format_exc())
             stats_single = {
                 'test_name': "{}_{}_single".format(py_version, benchmark.name),
                 'success': False,
@@ -277,10 +303,12 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers):
         # Run multiprocess version
         print("\n  [2/2] Multiprocess version ({} workers)...".format(num_workers))
         try:
-            benchmark.setup()
-            stats_mp = benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs,
+            # Create fresh instance for multiprocess test
+            fresh_benchmark = benchmark.__class__()
+            fresh_benchmark.setup()
+            stats_mp = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs,
                                      use_multiprocess=True)
-            benchmark.teardown()
+            fresh_benchmark.teardown()
             
             # Add Python version prefix to test name
             stats_mp['test_name'] = "{}_{}_multiprocess".format(py_version, benchmark.name)
@@ -298,6 +326,8 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers):
                 print("    [FAILED] Multiprocess: {}".format(stats_mp.get('error', 'Unknown')))
         except Exception as e:
             print("    [ERROR] Multiprocess: {}".format(str(e)))
+            import traceback
+            print(traceback.format_exc())
             stats_mp = {
                 'test_name': "{}_{}_multiprocess".format(py_version, benchmark.name),
                 'success': False,
@@ -380,7 +410,18 @@ def main():
             print("\nWarning: Failed to generate test data. Continuing anyway...")
     
     # Get benchmarks
-    benchmarks = get_benchmarks(args.category)
+    # Check if opensource flag is valid (Python 3.x only)
+    include_opensource = False
+    if args.opensource:
+        if sys.version_info[0] < 3:
+            print("\n[注意] 开源库基准测试需要 Python 3.x，在 Python 2.x 环境下跳过")
+        elif not HAS_OS_BENCHMARKS:
+            print("\n[注意] 未找到开源库模块 (geopandas, rasterio等)，跳过")
+        else:
+            include_opensource = True
+            print("\n[信息] 将包含开源库 (GeoPandas/Rasterio) 基准测试")
+    
+    benchmarks = get_benchmarks(args.category, include_opensource)
     
     if not benchmarks:
         print("\nNo benchmarks to run for category: {}".format(args.category))

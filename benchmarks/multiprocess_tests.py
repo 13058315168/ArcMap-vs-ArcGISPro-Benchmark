@@ -123,17 +123,42 @@ class MP_V1_CreateFishnet(MultiprocessBenchmark):
         self.temp_dir = tempfile.mkdtemp(prefix="mp_fishnet_")
     
     def teardown(self):
+        """Clean up all temporary files and directories"""
+        # Clean up output feature class
         if self.output_fc and arcpy.Exists(self.output_fc):
             try:
                 arcpy.Delete_management(self.output_fc)
             except Exception:
                 pass
         
+        # Clean up temp directory
         if self.temp_dir and os.path.exists(self.temp_dir):
             try:
                 shutil.rmtree(self.temp_dir, ignore_errors=True)
             except Exception:
                 pass
+        
+        # Also clean up any orphaned temp directories from previous runs
+        try:
+            import tempfile
+            temp_root = tempfile.gettempdir()
+            for item in os.listdir(temp_root):
+                if item.startswith('mp_fishnet_'):
+                    try:
+                        item_path = os.path.join(temp_root, item)
+                        if os.path.isdir(item_path):
+                            shutil.rmtree(item_path, ignore_errors=True)
+                    except:
+                        pass
+        except:
+            pass
+    
+    def __del__(self):
+        """Ensure cleanup even if test crashes"""
+        try:
+            self.teardown()
+        except:
+            pass
     
     def run_single(self):
         if arcpy.Exists(self.output_fc):
@@ -266,6 +291,7 @@ class MP_V2_CreateRandomPoints(MultiprocessBenchmark):
         self.temp_dir = tempfile.mkdtemp(prefix="mp_randpts_")
     
     def teardown(self):
+        """Clean up all temporary files and directories"""
         if self.output_fc and arcpy.Exists(self.output_fc):
             try:
                 arcpy.Delete_management(self.output_fc)
@@ -277,6 +303,28 @@ class MP_V2_CreateRandomPoints(MultiprocessBenchmark):
                 shutil.rmtree(self.temp_dir, ignore_errors=True)
             except Exception:
                 pass
+        
+        # Clean up orphaned temp directories
+        try:
+            import tempfile
+            temp_root = tempfile.gettempdir()
+            for item in os.listdir(temp_root):
+                if item.startswith('mp_randpts_'):
+                    try:
+                        item_path = os.path.join(temp_root, item)
+                        if os.path.isdir(item_path):
+                            shutil.rmtree(item_path, ignore_errors=True)
+                    except:
+                        pass
+        except:
+            pass
+    
+    def __del__(self):
+        """Ensure cleanup even if test crashes"""
+        try:
+            self.teardown()
+        except:
+            pass
     
     def run_single(self):
         if arcpy.Exists(self.output_fc):
@@ -359,6 +407,7 @@ class MP_V3_Buffer(MultiprocessBenchmark):
         self.temp_dir = tempfile.mkdtemp(prefix="mp_buffer_")
     
     def teardown(self):
+        """Clean up all temporary files and directories"""
         if self.output_fc and arcpy.Exists(self.output_fc):
             try:
                 arcpy.Delete_management(self.output_fc)
@@ -370,6 +419,28 @@ class MP_V3_Buffer(MultiprocessBenchmark):
                 shutil.rmtree(self.temp_dir, ignore_errors=True)
             except Exception:
                 pass
+        
+        # Clean up orphaned temp directories
+        try:
+            import tempfile
+            temp_root = tempfile.gettempdir()
+            for item in os.listdir(temp_root):
+                if item.startswith('mp_buffer_'):
+                    try:
+                        item_path = os.path.join(temp_root, item)
+                        if os.path.isdir(item_path):
+                            shutil.rmtree(item_path, ignore_errors=True)
+                    except:
+                        pass
+        except:
+            pass
+    
+    def __del__(self):
+        """Ensure cleanup even if test crashes"""
+        try:
+            self.teardown()
+        except:
+            pass
     
     def run_single(self):
         if arcpy.Exists(self.output_fc):
@@ -463,6 +534,7 @@ class MP_V4_Intersect(MultiprocessBenchmark):
         self.temp_dir = tempfile.mkdtemp(prefix="mp_intersect_")
     
     def teardown(self):
+        """Clean up all temporary files and directories"""
         if self.output_fc and arcpy.Exists(self.output_fc):
             try:
                 arcpy.Delete_management(self.output_fc)
@@ -474,6 +546,28 @@ class MP_V4_Intersect(MultiprocessBenchmark):
                 shutil.rmtree(self.temp_dir, ignore_errors=True)
             except Exception:
                 pass
+        
+        # Clean up orphaned temp directories
+        try:
+            import tempfile
+            temp_root = tempfile.gettempdir()
+            for item in os.listdir(temp_root):
+                if item.startswith('mp_intersect_'):
+                    try:
+                        item_path = os.path.join(temp_root, item)
+                        if os.path.isdir(item_path):
+                            shutil.rmtree(item_path, ignore_errors=True)
+                    except:
+                        pass
+        except:
+            pass
+    
+    def __del__(self):
+        """Ensure cleanup even if test crashes"""
+        try:
+            self.teardown()
+        except:
+            pass
     
     def run_single(self):
         if arcpy.Exists(self.output_fc):
@@ -560,6 +654,7 @@ class MP_R1_CreateConstantRaster(MultiprocessBenchmark):
         self.temp_dir = tempfile.mkdtemp(prefix="mp_raster_")
     
     def teardown(self):
+        """Clean up all temporary files and directories"""
         if self.output_raster and arcpy.Exists(self.output_raster):
             try:
                 arcpy.Delete_management(self.output_raster)
@@ -571,6 +666,28 @@ class MP_R1_CreateConstantRaster(MultiprocessBenchmark):
                 shutil.rmtree(self.temp_dir, ignore_errors=True)
             except Exception:
                 pass
+        
+        # Clean up orphaned temp directories
+        try:
+            import tempfile
+            temp_root = tempfile.gettempdir()
+            for item in os.listdir(temp_root):
+                if item.startswith('mp_raster_'):
+                    try:
+                        item_path = os.path.join(temp_root, item)
+                        if os.path.isdir(item_path):
+                            shutil.rmtree(item_path, ignore_errors=True)
+                    except:
+                        pass
+        except:
+            pass
+    
+    def __del__(self):
+        """Ensure cleanup even if test crashes"""
+        try:
+            self.teardown()
+        except:
+            pass
     
     def run_single(self):
         if arcpy.Exists(self.output_raster):

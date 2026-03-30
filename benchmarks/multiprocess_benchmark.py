@@ -161,6 +161,16 @@ class MultiprocessBenchmark(BaseBenchmark):
         super(MultiprocessBenchmark, self).__init__(name, category)
         self.num_workers = getattr(settings, 'MULTIPROCESS_WORKERS', 4)
         self.temp_outputs = []
+        self._temp_dir = None
+    
+    def __del__(self):
+        """Destructor to ensure cleanup of temporary files"""
+        try:
+            self.cleanup_temp_files()
+            if self._temp_dir and os.path.exists(self._temp_dir):
+                shutil.rmtree(self._temp_dir, ignore_errors=True)
+        except:
+            pass
     
     def run_single(self):
         """Single process version - must be implemented by subclass"""

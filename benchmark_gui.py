@@ -27,9 +27,84 @@ except ImportError:
     import tkMessageBox as messagebox
 
 # Configuration
-PYTHON27_PATH = r"C:\Python27\ArcGIS10.8\python.exe"
-PYTHON3_PATH = r"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Default Python paths (will be auto-detected if possible)
+DEFAULT_PYTHON27_PATH = r"C:\Python27\ArcGIS10.8\python.exe"
+DEFAULT_PYTHON3_PATH = r"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe"
+
+
+def find_python27():
+    """Auto-detect Python 2.7 installation"""
+    # Check common locations
+    possible_paths = [
+        r"C:\Python27\ArcGIS10.8\python.exe",
+        r"C:\Python27\ArcGIS10.7\python.exe",
+        r"C:\Python27\ArcGIS10.6\python.exe",
+        r"C:\Python27\python.exe",
+        r"C:\Python27\ArcGIS10.5\python.exe",
+    ]
+    
+    # Check environment variable
+    if 'PYTHON27_PATH' in os.environ:
+        possible_paths.insert(0, os.environ['PYTHON27_PATH'])
+    
+    # Check config file
+    config_file = os.path.join(SCRIPT_DIR, 'python_paths.config')
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                for line in f:
+                    if line.startswith('PYTHON27='):
+                        path = line.split('=', 1)[1].strip()
+                        possible_paths.insert(0, path)
+        except:
+            pass
+    
+    # Return first existing path
+    for path in possible_paths:
+        if os.path.exists(path):
+            return path
+    
+    return None
+
+
+def find_python3():
+    """Auto-detect Python 3.x (ArcGIS Pro) installation"""
+    # Check common locations
+    possible_paths = [
+        r"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe",
+        r"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3-clone\python.exe",
+        r"C:\ProgramData\Anaconda3\envs\arcgispro-py3\python.exe",
+    ]
+    
+    # Check environment variable
+    if 'PYTHON3_PATH' in os.environ:
+        possible_paths.insert(0, os.environ['PYTHON3_PATH'])
+    
+    # Check config file
+    config_file = os.path.join(SCRIPT_DIR, 'python_paths.config')
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                for line in f:
+                    if line.startswith('PYTHON3='):
+                        path = line.split('=', 1)[1].strip()
+                        possible_paths.insert(0, path)
+        except:
+            pass
+    
+    # Return first existing path
+    for path in possible_paths:
+        if os.path.exists(path):
+            return path
+    
+    return None
+
+
+# Auto-detect Python paths
+PYTHON27_PATH = find_python27() or DEFAULT_PYTHON27_PATH
+PYTHON3_PATH = find_python3() or DEFAULT_PYTHON3_PATH
 
 
 class SimpleBenchmarkGUI(object):
@@ -85,12 +160,15 @@ class SimpleBenchmarkGUI(object):
             foreground="gray"
         ).pack()
         
-        # ===== Settings Panel =====
+        # ===== Settings Panel (Two Rows) =====
         settings_frame = ttk.LabelFrame(main_frame, text="测试设置", padding="10")
         settings_frame.pack(fill=tk.X, pady=5)
         
-        # Scale selection
-        ttk.Label(settings_frame, text="数据规模:", font=("Microsoft YaHei", 10)).pack(side=tk.LEFT, padx=5)
+        # Row 1: Data scale selection + All scales button + Description
+        row1_frame = ttk.Frame(settings_frame)
+        row1_frame.pack(fill=tk.X, pady=(0, 8))
+        
+        ttk.Label(row1_frame, text="数据规模:", font=("Microsoft YaHei", 10)).pack(side=tk.LEFT, padx=5)
         
         # Scale data mapping
         self.scale_data = {
@@ -102,7 +180,7 @@ class SimpleBenchmarkGUI(object):
         }
         
         scale_combo = ttk.Combobox(
-            settings_frame,
+            row1_frame,
             textvariable=self.data_scale_var,
             values=["tiny", "small", "standard", "medium", "large"],
             width=12,
@@ -111,9 +189,24 @@ class SimpleBenchmarkGUI(object):
         )
         scale_combo.pack(side=tk.LEFT, padx=5)
         
+        # All scales run button (moved from bottom button area)
+        self.all_scales_btn = tk.Button(
+            row1_frame,
+            text="🔄 五级连跑",
+            font=("Microsoft YaHei", 9, "bold"),
+            bg="#FF9800",
+            fg="white",
+            activebackground="#F57C00",
+            command=self._start_all_scales_test,
+            height=1,
+            width=12,
+            cursor="hand2"
+        )
+        self.all_scales_btn.pack(side=tk.LEFT, padx=10)
+        
         # Scale description with data volume
         self.scale_desc_label = ttk.Label(
-            settings_frame,
+            row1_frame,
             text="超小: 渔网2,500 | 栅格25万 | 1-2分钟",
             font=("Microsoft YaHei", 9),
             foreground="blue"
@@ -123,51 +216,62 @@ class SimpleBenchmarkGUI(object):
         # Update description when scale changes
         scale_combo.bind("<<ComboboxSelected>>", self._update_scale_desc)
         
+        # Row 2: Test options (Runs, Warmup, Multiprocess, Open-source)
+        row2_frame = ttk.Frame(settings_frame)
+        row2_frame.pack(fill=tk.X)
+        
         # Runs
-        ttk.Label(settings_frame, text="循环:", font=("Microsoft YaHei", 10)).pack(side=tk.LEFT, padx=(30, 5))
+        ttk.Label(row2_frame, text="循环:", font=("Microsoft YaHei", 10)).pack(side=tk.LEFT, padx=5)
         tk.Spinbox(
-            settings_frame,
+            row2_frame,
             from_=1,
             to=20,
             width=5,
             textvariable=self.runs_var,
             font=("Microsoft YaHei", 9)
         ).pack(side=tk.LEFT)
-        ttk.Label(settings_frame, text="次", font=("Microsoft YaHei", 9)).pack(side=tk.LEFT, padx=2)
+        ttk.Label(row2_frame, text="次", font=("Microsoft YaHei", 9)).pack(side=tk.LEFT, padx=(2, 15))
         
         # Warmup
-        ttk.Label(settings_frame, text="预热:", font=("Microsoft YaHei", 10)).pack(side=tk.LEFT, padx=(20, 5))
+        ttk.Label(row2_frame, text="预热:", font=("Microsoft YaHei", 10)).pack(side=tk.LEFT, padx=5)
         tk.Spinbox(
-            settings_frame,
+            row2_frame,
             from_=0,
             to=5,
             width=5,
             textvariable=self.warmup_var,
             font=("Microsoft YaHei", 9)
         ).pack(side=tk.LEFT)
-        ttk.Label(settings_frame, text="次", font=("Microsoft YaHei", 9)).pack(side=tk.LEFT, padx=2)
+        ttk.Label(row2_frame, text="次", font=("Microsoft YaHei", 9)).pack(side=tk.LEFT, padx=(2, 15))
         
         # Multiprocess options
-        ttk.Separator(settings_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
-        
         self.mp_var = tk.BooleanVar(value=False)
         tk.Checkbutton(
-            settings_frame,
+            row2_frame,
             text="多进程对比",
             variable=self.mp_var,
             font=("Microsoft YaHei", 9)
-        ).pack(side=tk.LEFT)
+        ).pack(side=tk.LEFT, padx=5)
         
         self.mp_workers_var = tk.StringVar(value="4")
-        ttk.Label(settings_frame, text="进程数:", font=("Microsoft YaHei", 9)).pack(side=tk.LEFT, padx=(5, 2))
+        ttk.Label(row2_frame, text="进程数:", font=("Microsoft YaHei", 9)).pack(side=tk.LEFT, padx=(2, 2))
         tk.Spinbox(
-            settings_frame,
+            row2_frame,
             from_=2,
             to=16,
             width=4,
             textvariable=self.mp_workers_var,
             font=("Microsoft YaHei", 9)
-        ).pack(side=tk.LEFT)
+        ).pack(side=tk.LEFT, padx=(0, 15))
+        
+        # Open-source options (Python 3.x only)
+        self.opensource_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(
+            row2_frame,
+            text="开源包对比",
+            variable=self.opensource_var,
+            font=("Microsoft YaHei", 9)
+        ).pack(side=tk.LEFT, padx=5)
         
         # ===== Log Window (Main Focus) =====
         log_frame = ttk.LabelFrame(main_frame, text="执行日志", padding="5")
@@ -210,20 +314,6 @@ class SimpleBenchmarkGUI(object):
         )
         self.start_btn.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
         
-        # All scales run button
-        self.all_scales_btn = tk.Button(
-            btn_frame,
-            text="🔄 五级连跑",
-            font=("Microsoft YaHei", 11),
-            bg="#FF9800",
-            fg="white",
-            activebackground="#F57C00",
-            command=self._start_all_scales_test,
-            height=2,
-            cursor="hand2"
-        )
-        self.all_scales_btn.pack(side=tk.LEFT, padx=5)
-        
         # Export button
         self.export_btn = tk.Button(
             btn_frame,
@@ -238,6 +328,20 @@ class SimpleBenchmarkGUI(object):
             cursor="hand2"
         )
         self.export_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Settings button
+        self.settings_btn = tk.Button(
+            btn_frame,
+            text="⚙️ 设置",
+            font=("Microsoft YaHei", 11),
+            bg="#9E9E9E",
+            fg="white",
+            activebackground="#757575",
+            command=self._show_settings,
+            height=2,
+            cursor="hand2"
+        )
+        self.settings_btn.pack(side=tk.LEFT, padx=5)
         
         # Clear log button
         ttk.Button(
@@ -316,6 +420,289 @@ class SimpleBenchmarkGUI(object):
         
         if py27_ok and py3_ok:
             self._log("[OK] 检测到两个 Python 环境", "success")
+    
+    def _show_settings(self):
+        """Show settings dialog for Python paths and open-source packages"""
+        settings_window = tk.Toplevel(self.root)
+        settings_window.title("设置")
+        settings_window.geometry("650x420")
+        settings_window.transient(self.root)
+        settings_window.grab_set()
+        
+        # Center window
+        settings_window.update_idletasks()
+        x = (settings_window.winfo_screenwidth() // 2) - (650 // 2)
+        y = (settings_window.winfo_screenheight() // 2) - (420 // 2)
+        settings_window.geometry("+{}+{}".format(x, y))
+        
+        # ===== Python Paths Section =====
+        paths_frame = ttk.LabelFrame(settings_window, text="Python 路径设置", padding="10")
+        paths_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+        
+        # Python 2.7 path
+        ttk.Label(paths_frame, text="Python 2.7:", font=("Microsoft YaHei", 10)).pack(pady=(5, 5), anchor=tk.W)
+        
+        py27_frame = ttk.Frame(paths_frame)
+        py27_frame.pack(fill=tk.X)
+        
+        py27_var = tk.StringVar(value=PYTHON27_PATH)
+        py27_entry = ttk.Entry(py27_frame, textvariable=py27_var, font=("Consolas", 9))
+        py27_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        def browse_py27():
+            path = filedialog.askopenfilename(
+                title="选择 Python 2.7 可执行文件",
+                filetypes=[("Python Executable", "python.exe"), ("All Files", "*.*")]
+            )
+            if path:
+                py27_var.set(path)
+        
+        ttk.Button(py27_frame, text="浏览...", command=browse_py27).pack(side=tk.RIGHT, padx=(5, 0))
+        
+        # Python 3.x path
+        ttk.Label(paths_frame, text="Python 3.x:", font=("Microsoft YaHei", 10)).pack(pady=(10, 5), anchor=tk.W)
+        
+        py3_frame = ttk.Frame(paths_frame)
+        py3_frame.pack(fill=tk.X)
+        
+        py3_var = tk.StringVar(value=PYTHON3_PATH)
+        py3_entry = ttk.Entry(py3_frame, textvariable=py3_var, font=("Consolas", 9))
+        py3_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        def browse_py3():
+            path = filedialog.askopenfilename(
+                title="选择 Python 3.x 可执行文件",
+                filetypes=[("Python Executable", "python.exe"), ("All Files", "*.*")]
+            )
+            if path:
+                py3_var.set(path)
+        
+        ttk.Button(py3_frame, text="浏览...", command=browse_py3).pack(side=tk.RIGHT, padx=(5, 0))
+        
+        # ===== Open Source Packages Section =====
+        os_frame = ttk.LabelFrame(settings_window, text="开源库管理 (Python 3.x)", padding="10")
+        os_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        # Status label
+        self.os_status_var = tk.StringVar(value="点击'检查开源包'查看安装状态")
+        os_status_label = ttk.Label(
+            os_frame, 
+            textvariable=self.os_status_var,
+            font=("Microsoft YaHei", 9),
+            foreground="gray"
+        )
+        os_status_label.pack(pady=(0, 10), anchor=tk.W)
+        
+        # Buttons frame
+        os_btn_frame = ttk.Frame(os_frame)
+        os_btn_frame.pack(fill=tk.X)
+        
+        def check_os_packages():
+            """Check which open-source packages are installed"""
+            if not os.path.exists(py3_var.get()):
+                messagebox.showerror("错误", "Python 3.x 路径无效，请先设置正确的路径")
+                return
+            
+            required_packages = ['geopandas', 'rasterio', 'shapely', 'numpy', 'pyproj']
+            missing = []
+            installed = []
+            
+            for pkg in required_packages:
+                try:
+                    # Try to import using Python 3
+                    cmd = [py3_var.get(), "-c", "import {}".format(pkg)]
+                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        installed.append(pkg)
+                    else:
+                        missing.append(pkg)
+                except Exception:
+                    missing.append(pkg)
+            
+            if missing:
+                self.os_status_var.set("缺少包: {}".format(", ".join(missing)))
+                os_status_label.config(foreground="red")
+                
+                msg = "检测到以下开源包未安装:\n\n"
+                msg += "\n".join(["  • " + pkg for pkg in missing])
+                msg += "\n\n已安装:\n"
+                msg += "\n".join(["  ✓ " + pkg for pkg in installed]) if installed else "  (无)"
+                msg += "\n\n是否需要联网下载并安装这些包？"
+                
+                if messagebox.askyesno("开源包检查", msg):
+                    install_os_packages(missing)
+            else:
+                self.os_status_var.set("所有开源包已安装 ✓")
+                os_status_label.config(foreground="green")
+                messagebox.showinfo("开源包检查", "✓ 所有开源包已正确安装！\n\n" + 
+                                   "\n".join(["  ✓ " + pkg for pkg in installed]))
+        
+        def install_os_packages(packages=None):
+            """Install open-source packages using pip"""
+            if not os.path.exists(py3_var.get()):
+                messagebox.showerror("错误", "Python 3.x 路径无效，请先设置正确的路径")
+                return
+            
+            # If no specific packages provided, check first
+            if packages is None:
+                check_os_packages()
+                return
+            
+            # Confirm installation
+            pkg_list = ", ".join(packages)
+            if not messagebox.askyesno("确认安装", 
+                "将使用 pip 安装以下包:\n\n{}\n\n".format(pkg_list) +
+                "这将从互联网下载并安装，可能需要几分钟时间。\n" +
+                "安装完成后请重新检查。\n\n是否继续？"):
+                return
+            
+            # Show progress dialog
+            progress_window = tk.Toplevel(settings_window)
+            progress_window.title("安装开源包")
+            progress_window.geometry("450x300")
+            progress_window.transient(settings_window)
+            progress_window.grab_set()
+            
+            # Center
+            progress_window.update_idletasks()
+            x = (progress_window.winfo_screenwidth() // 2) - (450 // 2)
+            y = (progress_window.winfo_screenheight() // 2) - (300 // 2)
+            progress_window.geometry("+{}+{}".format(x, y))
+            
+            ttk.Label(progress_window, text="正在安装开源包...", 
+                     font=("Microsoft YaHei", 11, "bold")).pack(pady=(15, 10))
+            
+            # Python 2/3 compatibility for scrolledtext
+            try:
+                from tkinter.scrolledtext import ScrolledText
+            except ImportError:
+                from ScrolledText import ScrolledText
+            
+            progress_text = ScrolledText(
+                progress_window, wrap=tk.WORD, font=("Consolas", 9), height=10
+            )
+            progress_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+            
+            close_btn = ttk.Button(progress_window, text="关闭", command=progress_window.destroy)
+            close_btn.pack(pady=10)
+            close_btn.config(state=tk.DISABLED)
+            
+            def do_install():
+                success_count = 0
+                failed_packages = []
+                
+                for pkg in packages:
+                    progress_text.insert(tk.END, "正在安装 {}...\n".format(pkg))
+                    progress_text.see(tk.END)
+                    progress_window.update()
+                    
+                    try:
+                        # Use subprocess to install
+                        cmd = [py3_var.get(), "-m", "pip", "install", pkg, "--user"]
+                        result = subprocess.run(
+                            cmd, capture_output=True, text=True,
+                            timeout=300  # 5 minute timeout
+                        )
+                        
+                        if result.returncode == 0:
+                            progress_text.insert(tk.END, "  ✓ {} 安装成功\n".format(pkg))
+                            success_count += 1
+                        else:
+                            progress_text.insert(tk.END, "  ✗ {} 安装失败\n".format(pkg))
+                            progress_text.insert(tk.END, "    错误: {}\n".format(result.stderr[:200]))
+                            failed_packages.append(pkg)
+                    except subprocess.TimeoutExpired:
+                        progress_text.insert(tk.END, "  ✗ {} 安装超时\n".format(pkg))
+                        failed_packages.append(pkg)
+                    except Exception as e:
+                        progress_text.insert(tk.END, "  ✗ {} 安装出错: {}\n".format(pkg, str(e)))
+                        failed_packages.append(pkg)
+                    
+                    progress_text.see(tk.END)
+                    progress_window.update()
+                
+                progress_text.insert(tk.END, "\n" + "="*50 + "\n")
+                progress_text.insert(tk.END, "安装完成: {}/{} 成功\n".format(success_count, len(packages)))
+                if failed_packages:
+                    progress_text.insert(tk.END, "失败: {}\n".format(", ".join(failed_packages)))
+                    progress_text.insert(tk.END, "\n建议: 手动运行以下命令安装:\n")
+                    progress_text.insert(tk.END, "{} -m pip install {} --user\n".format(
+                        py3_var.get(), " ".join(failed_packages)))
+                
+                progress_text.see(tk.END)
+                close_btn.config(state=tk.NORMAL)
+                
+                # Update status
+                if success_count == len(packages):
+                    self.os_status_var.set("所有开源包已安装 ✓")
+                    os_status_label.config(foreground="green")
+                elif success_count > 0:
+                    self.os_status_var.set("部分安装 ({}/{})".format(success_count, len(packages)))
+                    os_status_label.config(foreground="orange")
+                else:
+                    self.os_status_var.set("安装失败，请手动安装")
+                    os_status_label.config(foreground="red")
+            
+            threading.Thread(target=do_install, daemon=True).start()
+        
+        ttk.Button(os_btn_frame, text="🔍 检查开源包", 
+                  command=check_os_packages).pack(side=tk.LEFT, padx=5)
+        ttk.Button(os_btn_frame, text="📥 安装开源包", 
+                  command=lambda: install_os_packages(None)).pack(side=tk.LEFT, padx=5)
+        
+        # Required packages info
+        ttk.Label(os_frame, text="所需包: geopandas, rasterio, shapely, numpy, pyproj", 
+                 font=("Microsoft YaHei", 8), foreground="gray").pack(pady=(10, 0), anchor=tk.W)
+        
+        # ===== Bottom Buttons =====
+        btn_frame = ttk.Frame(settings_window)
+        btn_frame.pack(pady=15)
+        
+        def save_settings():
+            global PYTHON27_PATH, PYTHON3_PATH
+            PYTHON27_PATH = py27_var.get()
+            PYTHON3_PATH = py3_var.get()
+            
+            # Save to config file
+            config_file = os.path.join(SCRIPT_DIR, 'python_paths.config')
+            try:
+                with open(config_file, 'w') as f:
+                    f.write("PYTHON27={}\n".format(PYTHON27_PATH))
+                    f.write("PYTHON3={}\n".format(PYTHON3_PATH))
+                self._log("设置已保存", "success")
+            except Exception as e:
+                self._log("保存设置失败: {}".format(e), "error")
+            
+            settings_window.destroy()
+            
+            # Re-check environment
+            self._check_environment()
+        
+        def test_paths():
+            py27_ok = os.path.exists(py27_var.get())
+            py3_ok = os.path.exists(py3_var.get())
+            
+            msg = "Python 2.7: {}\nPython 3.x: {}".format(
+                "✓ 找到" if py27_ok else "✗ 未找到",
+                "✓ 找到" if py3_ok else "✗ 未找到"
+            )
+            
+            if py27_ok and py3_ok:
+                messagebox.showinfo("路径检查", msg)
+            else:
+                messagebox.showwarning("路径检查", msg + "\n\n请检查路径设置。")
+        
+        ttk.Button(btn_frame, text="测试路径", command=test_paths).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="保存", command=save_settings).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="取消", command=settings_window.destroy).pack(side=tk.LEFT, padx=5)
+        
+        # Help text
+        ttk.Label(
+            settings_window, 
+            text="提示: 也可以通过设置 PYTHON27_PATH 和 PYTHON3_PATH 环境变量来配置路径",
+            font=("Microsoft YaHei", 8),
+            foreground="gray"
+        ).pack(pady=(5, 0))
     
     def _log(self, message, tag="info"):
         """Add message to log"""
@@ -1054,7 +1441,7 @@ MULTIPROCESS_CONFIG = {{
             return False
     
     def _step4_py3_test(self):
-        """Step 4: Python 3.x test (单进程 + 多进程)"""
+        """Step 4: Python 3.x test (单进程 + 多进程 + 开源测试)"""
         if not os.path.exists(PYTHON3_PATH):
             self._log_error("Python 3.x 未找到")
             return False
@@ -1068,6 +1455,11 @@ MULTIPROCESS_CONFIG = {{
         if self.mp_var.get():
             cmd.extend(["--multiprocess", "--mp-workers", str(self.mp_workers_var.get())])
             self._log("已启用多进程对比测试（{}进程）".format(self.mp_workers_var.get()))
+        
+        # 开源库测试
+        if self.opensource_var.get():
+            cmd.append("--opensource")
+            self._log("已启用开源库对比测试 (GeoPandas/Rasterio)")
         
         if self._run_command(cmd, "Python 3.x 测试"):
             self._log_success("Python 3.x 测试完成")

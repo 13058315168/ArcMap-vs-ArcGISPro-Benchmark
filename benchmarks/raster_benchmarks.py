@@ -245,9 +245,22 @@ class R4_RasterCalculator(BaseBenchmark):
         if arcpy.Exists(self.output_raster):
             arcpy.Delete_management(self.output_raster)
         
-        # Use Raster Calculator via arcpy.gp.RasterCalculator (avoids sa extension)
-        # Simple formula: Int("raster" * 2)
-        arcpy.gp.RasterCalculator_sa("Int(\"{}\" * 2)".format(self.input_raster), self.output_raster)
+        # Try multiple approaches for compatibility with both ArcGIS Desktop and Pro
+        try:
+            # Method 1: ArcGIS Pro style using arcpy.sa.Raster
+            from arcpy.sa import Raster, Int, Times
+            in_ras = Raster(self.input_raster)
+            out_ras = Int(Times(in_ras, 2))
+            out_ras.save(self.output_raster)
+        except:
+            try:
+                # Method 2: ArcGIS Desktop style using arcpy.gp.RasterCalculator_sa
+                arcpy.gp.RasterCalculator_sa('Int("{}" * 2)'.format(self.input_raster), self.output_raster)
+            except:
+                # Method 3: Alternative using raster algebra
+                arcpy.env.workspace = os.path.dirname(self.output_raster)
+                out_name = os.path.basename(self.output_raster)
+                arcpy.SingleOutputMapAlgebra_sa('Int("{}" * 2)'.format(self.input_raster), out_name)
         
         # Get raster info
         desc = arcpy.Describe(self.output_raster)

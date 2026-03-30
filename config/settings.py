@@ -12,7 +12,7 @@ import sys
 # ============================================================================
 
 # Number of runs for each test (excluding warmup)
-TEST_RUNS = 1
+TEST_RUNS = 2
 
 # Warmup runs (not counted in results)
 WARMUP_RUNS = 0
