@@ -69,6 +69,13 @@ Examples:
     )
     
     parser.add_argument(
+        '--scale',
+        choices=['tiny', 'small', 'standard', 'medium', 'large'],
+        default=None,
+        help='Data scale for testing (default: from settings.py)'
+    )
+    
+    parser.add_argument(
         '--runs',
         type=int,
         default=None,
@@ -248,14 +255,25 @@ def save_results(results, output_dir):
     }
 
 
-def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers):
+def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers, include_opensource=False):
     """Run multiprocess comparison benchmarks"""
     print("\n" + "=" * 70)
     print("Running Multiprocess Comparison Benchmarks")
     print("Workers: {}".format(num_workers))
+    if include_opensource:
+        print("Include Open-Source: Yes")
     print("=" * 70)
     
     from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
+    
+    # Import open-source multiprocess tests if available
+    has_os_mp = False
+    if include_opensource and sys.version_info[0] >= 3:
+        try:
+            from benchmarks.multiprocess_tests_os import MultiprocessTestsOS
+            has_os_mp = True
+        except ImportError:
+            print("[Warning] Open-source multiprocess tests not available")
     
     # Determine Python version prefix for naming
     py_version = "Py{}".format(sys.version_info[0])
@@ -263,6 +281,7 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers):
     mp_benchmarks = get_multiprocess_benchmarks()
     mp_results = []
     
+    # Run arcpy multiprocess benchmarks
     for i, benchmark in enumerate(mp_benchmarks, 1):
         print("\n" + "-" * 70)
         print("[{}/{}] Running multiprocess comparison: {}".format(
@@ -344,6 +363,85 @@ def run_multiprocess_benchmarks(num_runs, warmup_runs, num_workers):
         
         mp_results.append(stats_mp)
     
+    # Run open-source multiprocess benchmarks if available
+    if has_os_mp:
+        print("\n" + "=" * 70)
+        print("Running Open-Source Multiprocess Benchmarks")
+        print("=" * 70)
+        
+        os_mp_benchmarks = MultiprocessTestsOS.get_all_benchmarks()
+        for i, benchmark in enumerate(os_mp_benchmarks, 1):
+            print("\n" + "-" * 70)
+            print("[OS {}/{}] Running multiprocess comparison: {}".format(
+                i, len(os_mp_benchmarks), benchmark.name
+            ))
+            print("-" * 70)
+            
+            # Run single process version
+            print("\n  [1/2] Single process version...")
+            stats_single = None
+            try:
+                fresh_benchmark = benchmark.__class__()
+                fresh_benchmark.setup()
+                stats_single = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs, 
+                                             use_multiprocess=False)
+                fresh_benchmark.teardown()
+                
+                stats_single['test_name'] = "OS_{}_single".format(benchmark.name)
+                
+                if stats_single.get('success'):
+                    print("    [OK] Single process: {:.4f}s".format(stats_single.get('mean_time', 0)))
+                else:
+                    print("    [FAILED] Single process: {}".format(stats_single.get('error', 'Unknown')))
+            except Exception as e:
+                print("    [ERROR] Single process: {}".format(str(e)))
+                stats_single = {
+                    'test_name': "OS_{}_single".format(benchmark.name),
+                    'success': False,
+                    'error': str(e)
+                }
+            
+            mp_results.append(stats_single)
+            
+            # Run multiprocess version
+            print("\n  [2/2] Multiprocess version ({} workers)...".format(num_workers))
+            try:
+                fresh_benchmark = benchmark.__class__()
+                fresh_benchmark.setup()
+                stats_mp = fresh_benchmark.run(num_runs=num_runs, warmup_runs=warmup_runs,
+                                         use_multiprocess=True)
+                fresh_benchmark.teardown()
+                
+                stats_mp['test_name'] = "OS_{}_multiprocess".format(benchmark.name)
+                
+                if stats_mp.get('success'):
+                    print("    [OK] Multiprocess: {:.4f}s".format(stats_mp.get('mean_time', 0)))
+                    
+                    if stats_single.get('success'):
+                        speedup = stats_single['mean_time'] / stats_mp['mean_time'] \
+                                  if stats_mp['mean_time'] > 0 else 0
+                        efficiency = speedup / num_workers * 100 if num_workers > 0 else 0
+                        print("    Speedup: {:.2f}x (Efficiency: {:.1f}%)".format(speedup, efficiency))
+                else:
+                    print("    [FAILED] Multiprocess: {}".format(stats_mp.get('error', 'Unknown')))
+            except Exception as e:
+                print("    [ERROR] Multiprocess: {}".format(str(e)))
+                stats_mp = {
+                    'test_name': "OS_{}_multiprocess".format(benchmark.name),
+                    'success': False,
+                    'error': str(e)
+                }
+            
+            # Add multiprocess metadata
+            stats_mp['execution_mode'] = 'multiprocess'
+            stats_mp['num_workers'] = num_workers
+            if stats_single.get('success') and stats_mp.get('success'):
+                stats_mp['speedup_vs_single'] = stats_single['mean_time'] / stats_mp['mean_time'] \
+                                                if stats_mp['mean_time'] > 0 else 0
+                stats_mp['parallel_efficiency'] = stats_mp['speedup_vs_single'] / num_workers * 100
+            
+            mp_results.append(stats_mp)
+    
     return mp_results
 
 
@@ -404,6 +502,11 @@ def main():
     # Print configuration
     settings.print_config()
     
+    # Apply scale setting if specified
+    if args.scale:
+        settings.set_scale(args.scale)
+        print("\n[信息] 数据规模已设置为: {}".format(args.scale.upper()))
+    
     # Generate test data if requested
     if args.generate_data:
         if not generate_test_data():
@@ -438,7 +541,7 @@ def main():
     # Run multiprocess benchmarks if requested
     mp_results = []
     if args.multiprocess:
-        mp_results = run_multiprocess_benchmarks(num_runs, warmup_runs, args.mp_workers)
+        mp_results = run_multiprocess_benchmarks(num_runs, warmup_runs, args.mp_workers, include_opensource)
         results.extend(mp_results)
     
     # Print summary

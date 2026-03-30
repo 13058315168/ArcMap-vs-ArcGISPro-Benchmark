@@ -280,6 +280,42 @@ def cleanup_data():
         shutil.rmtree(DATA_DIR)
         print("Cleaned up: {}".format(DATA_DIR))
 
+def set_scale(scale):
+    """Set data scale dynamically"""
+    global DATA_SCALE, VECTOR_CONFIG, RASTER_CONFIG, DEFAULT_GDB_NAME
+    
+    if scale not in ALL_SCALES:
+        raise ValueError("Invalid scale: {}. Must be one of: {}".format(scale, ALL_SCALES))
+    
+    DATA_SCALE = scale
+    
+    # Update VECTOR_CONFIG
+    if scale == 'tiny':
+        VECTOR_CONFIG = VECTOR_CONFIG_TINY
+    elif scale == 'small':
+        VECTOR_CONFIG = VECTOR_CONFIG_SMALL
+    elif scale == 'standard':
+        VECTOR_CONFIG = VECTOR_CONFIG_STANDARD
+    elif scale == 'medium':
+        VECTOR_CONFIG = VECTOR_CONFIG_MEDIUM
+    elif scale == 'large':
+        VECTOR_CONFIG = VECTOR_CONFIG_LARGE
+    
+    # Update RASTER_CONFIG
+    if scale == 'tiny':
+        RASTER_CONFIG = RASTER_CONFIG_TINY
+    elif scale == 'small':
+        RASTER_CONFIG = RASTER_CONFIG_SMALL
+    elif scale == 'standard':
+        RASTER_CONFIG = RASTER_CONFIG_STANDARD
+    elif scale == 'medium':
+        RASTER_CONFIG = RASTER_CONFIG_MEDIUM
+    elif scale == 'large':
+        RASTER_CONFIG = RASTER_CONFIG_LARGE
+    
+    # Update DEFAULT_GDB_NAME
+    DEFAULT_GDB_NAME = 'benchmark_data_{}.gdb'.format(DATA_SCALE)
+
 def print_config():
     """Print current configuration"""
     print("=" * 60)

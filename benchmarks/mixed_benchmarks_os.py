@@ -45,13 +45,14 @@ class M1_PolygonToRaster_OS(BaseBenchmark):
     
     def __init__(self):
         super(M1_PolygonToRaster_OS, self).__init__("M1_PolygonToRaster_OS", "mixed_os")
-        self.input_path = None
+        self.gdb_path = None
+        self.input_layer = None
         self.output_path = None
         self.cell_size = None
     
     def setup(self):
-        gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
-        self.input_path = os.path.join(gdb_path, "test_polygons_a")
+        self.gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
+        self.input_layer = "test_polygons_a"
         self.output_path = os.path.join(settings.DATA_DIR, "M1_poly_to_ras_os.tif")
         
         # Calculate cell size
@@ -66,8 +67,8 @@ class M1_PolygonToRaster_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Read polygons
-        gdf = gpd.read_file(self.input_path)
+        # Read polygons (using layer parameter)
+        gdf = gpd.read_file(self.gdb_path, layer=self.input_layer)
         
         # Rasterize
         raster_size = settings.RASTER_CONFIG['constant_raster_size']
@@ -116,13 +117,12 @@ class M2_RasterToPoint_OS(BaseBenchmark):
         self.input_path = os.path.join(settings.DATA_DIR, "R1_constant_raster_os.tif")
         self.output_path = os.path.join(settings.DATA_DIR, "M2_raster_to_point_os.gpkg")
         
-        # Create input if not exists
+        # Create input if not exists (don't teardown - keep for other tests)
         if not os.path.exists(self.input_path):
             from benchmarks.raster_benchmarks_os import R1_CreateConstantRaster_OS
             r1 = R1_CreateConstantRaster_OS()
             r1.setup()
-            r1.run_single()
-            r1.teardown()
+            r1.run_single()  # Keep the file, don't call teardown()
     
     def teardown(self):
         if self.output_path and os.path.exists(self.output_path):

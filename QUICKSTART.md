@@ -34,16 +34,26 @@ C:\Python27\ArcGIS10.8\python.exe test_setup.py
 
 ```bash
 # 步骤1：使用 Python 2.7 生成数据并运行测试
-C:\Python27\ArcGIS10.8\python.exe run_benchmarks.py --generate-data
+C:\Python27\ArcGIS10.8\python.exe run_benchmarks.py --scale medium
 
 # 步骤2：使用 Python 3.x 运行测试（使用已生成的数据）
-"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale medium
 
 # 步骤3：分析结果（使用任一 Python 版本）
 python analyze_results.py
 ```
 
-### 3. 自动运行两个版本
+### 3. 包含开源库对比（Python 3.x 环境）
+
+```bash
+# 确保已安装开源库
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" -m pip install geopandas rasterio shapely pyogrio
+
+# 运行测试（包含开源对比）
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale medium --opensource
+```
+
+### 4. 自动运行两个版本
 
 ```bash
 python run_both_versions.py
@@ -70,25 +80,50 @@ results/tables/comparison_data.csv
 
 ## 调整测试设置
 
-在 GUI 界面的"测试设置"区域，可以直接修改：
+### 数据规模
 
-| 设置项 | 默认值 | 说明 |
-|--------|--------|------|
-| **循环次数** | 3 次 | 每项测试执行的次数，越多结果越稳定 |
-| **预热次数** | 1 次 | 正式测试前的预热运行次数 |
-| **数据规模** | 中小型 | 中小型（快速测试）或大型（学术论文）|
+在 GUI 界面的「测试设置」区域选择数据规模：
 
-或者手动编辑 `config/settings.py`：
+| 规模 | 名称 | 预计时间 | 适用场景 |
+|------|------|----------|----------|
+| tiny | 超小 | 1-2分钟 | 快速验证/调试 |
+| small | 小型 | 5-10分钟 | 功能测试 |
+| standard | 标准 | 15-30分钟 | 日常测试 |
+| medium | 中型 | 30-60分钟 | 性能对比（推荐）|
+| large | 大型 | 2-4小时 | 学术研究 |
+
+### 命令行参数
+
+```bash
+# 指定数据规模
+run_benchmarks.py --scale medium
+
+# 增加测试次数（提高统计可靠性）
+run_benchmarks.py --scale medium --runs 5 --warmup 2
+
+# 启用多进程对比
+run_benchmarks.py --scale medium --multiprocess --mp-workers 4
+
+# 启用开源库对比
+run_benchmarks.py --scale medium --opensource
+
+# 完整参数
+run_benchmarks.py --scale medium --runs 3 --warmup 1 --opensource --multiprocess --mp-workers 4
+```
+
+### 手动编辑配置
+
+编辑 `config/settings.py`：
 
 ```python
+# 数据规模（tiny/small/standard/medium/large）
+DATA_SCALE = 'medium'
+
 # 循环次数
 TEST_RUNS = 3
 
 # 预热次数
-WARMUP_RUNS = 1
-
-# 数据规模（False=中小型, True=大型）
-USE_LARGE_SCALE = False
+WARMUP_RUNS = 0
 ```
 
 ---
@@ -97,16 +132,19 @@ USE_LARGE_SCALE = False
 
 ```bash
 # 仅运行矢量测试
-run_benchmarks.py --category vector
+run_benchmarks.py --category vector --scale medium
 
 # 仅运行栅格测试
-run_benchmarks.py --category raster
+run_benchmarks.py --category raster --scale medium
 
-# 增加测试次数（提高统计可靠性）
-run_benchmarks.py --runs 10 --warmup 2
+# 仅运行开源测试
+run_benchmarks.py --category all --scale medium --opensource
 
 # 指定输出目录
-run_benchmarks.py --output-dir D:\benchmark_results
+run_benchmarks.py --scale medium --output-dir D:\benchmark_results
+
+# 强制重新生成测试数据
+run_benchmarks.py --scale medium --generate-data
 ```
 
 ---
@@ -122,14 +160,27 @@ run_benchmarks.py --output-dir D:\benchmark_results
 ### 问题：arcpy 不可用
 **解决**：确保使用 ArcGIS 自带的 Python 解释器运行脚本
 
+### 问题：开源库未找到
+**解决**：
+```bash
+# 安装开源依赖
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" -m pip install geopandas rasterio shapely pyogrio numpy
+```
+
 ### 问题：内存不足
-**解决**：在 `config/settings.py` 中减小数据规模
+**解决**：在 GUI 或命令行中选择更小的数据规模（tiny 或 small）
 
 ### 问题：许可错误
 **解决**：确保 ArcGIS 许可为 Advanced 级别
 
 ### 问题：结果文件未生成
 **解决**：检查 `results/` 目录是否有写入权限
+
+### 问题：文件锁定（File Lock）
+**解决**：
+1. 关闭所有 ArcGIS 程序（ArcMap、ArcGIS Pro）
+2. 手动删除 `C:\temp\arcgis_benchmark_data` 目录
+3. 重新运行测试
 
 ---
 
@@ -147,4 +198,12 @@ run_benchmarks.py --output-dir D:\benchmark_results
 \caption{ArcGIS Python 性能对比}
 \input{results/tables/comparison_table.tex}
 \end{table}
+```
+
+三向对比结果示例：
+```
+测试项目          | Python 2.7 | Python 3.x | 开源库 | Py3加速 | OS加速
+------------------|------------|------------|--------|---------|--------
+CreateFishnet     | 0.998s     | 1.040s     | 0.161s | 0.96x   | 6.20x
+RasterResample    | 0.550s     | 1.261s     | 0.021s | 0.44x   | 26.4x
 ```

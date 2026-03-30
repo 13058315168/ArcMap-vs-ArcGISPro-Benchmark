@@ -28,13 +28,14 @@ class BaseBenchmark(object):
         self.env_info = {}
         self.timer = None
         
-        # Import arcpy if available
+        # Import arcpy if available (optional for open-source benchmarks)
         self.arcpy = None
         try:
             import arcpy
             self.arcpy = arcpy
         except ImportError:
-            raise RuntimeError("arcpy is required for benchmarks")
+            # arcpy is optional - open-source benchmarks don't need it
+            pass
     
     def setup(self):
         """Setup before benchmark - override in subclass"""

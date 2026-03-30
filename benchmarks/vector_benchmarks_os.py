@@ -130,13 +130,14 @@ class V3_Buffer_OS(BaseBenchmark):
     
     def __init__(self):
         super(V3_Buffer_OS, self).__init__("V3_Buffer_OS", "vector_os")
-        self.input_path = None
+        self.gdb_path = None
+        self.input_layer = None
         self.output_path = None
         self.buffer_distance = 1.0  # degrees
     
     def setup(self):
-        gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
-        self.input_path = os.path.join(gdb_path, "buffer_points")
+        self.gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
+        self.input_layer = "buffer_points"
         self.output_path = os.path.join(settings.DATA_DIR, "V3_buffer_output_os.gpkg")
     
     def teardown(self):
@@ -147,8 +148,8 @@ class V3_Buffer_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Read input points from GDB
-        gdf = gpd.read_file(self.input_path)
+        # Read input points from GDB (using layer parameter)
+        gdf = gpd.read_file(self.gdb_path, layer=self.input_layer)
         
         # Perform buffer
         gdf['geometry'] = gdf.buffer(self.buffer_distance)
@@ -164,14 +165,15 @@ class V4_Intersect_OS(BaseBenchmark):
     
     def __init__(self):
         super(V4_Intersect_OS, self).__init__("V4_Intersect_OS", "vector_os")
-        self.input_a_path = None
-        self.input_b_path = None
+        self.gdb_path = None
+        self.input_a_layer = None
+        self.input_b_layer = None
         self.output_path = None
     
     def setup(self):
-        gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
-        self.input_a_path = os.path.join(gdb_path, "test_polygons_a")
-        self.input_b_path = os.path.join(gdb_path, "test_polygons_b")
+        self.gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
+        self.input_a_layer = "test_polygons_a"
+        self.input_b_layer = "test_polygons_b"
         self.output_path = os.path.join(settings.DATA_DIR, "V4_intersect_output_os.gpkg")
     
     def teardown(self):
@@ -182,9 +184,9 @@ class V4_Intersect_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Read input layers
-        gdf_a = gpd.read_file(self.input_a_path)
-        gdf_b = gpd.read_file(self.input_b_path)
+        # Read input layers (using layer parameter)
+        gdf_a = gpd.read_file(self.gdb_path, layer=self.input_a_layer)
+        gdf_b = gpd.read_file(self.gdb_path, layer=self.input_b_layer)
         
         # Perform intersection
         result = gpd.overlay(gdf_a, gdf_b, how='intersection')
@@ -200,14 +202,15 @@ class V5_SpatialJoin_OS(BaseBenchmark):
     
     def __init__(self):
         super(V5_SpatialJoin_OS, self).__init__("V5_SpatialJoin_OS", "vector_os")
-        self.target_path = None
-        self.join_path = None
+        self.gdb_path = None
+        self.target_layer = None
+        self.join_layer = None
         self.output_path = None
     
     def setup(self):
-        gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
-        self.target_path = os.path.join(gdb_path, "spatial_join_points")
-        self.join_path = os.path.join(gdb_path, "spatial_join_polygons")
+        self.gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
+        self.target_layer = "spatial_join_points"
+        self.join_layer = "spatial_join_polygons"
         self.output_path = os.path.join(settings.DATA_DIR, "V5_spatial_join_output_os.gpkg")
     
     def teardown(self):
@@ -218,9 +221,9 @@ class V5_SpatialJoin_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Read input layers
-        target = gpd.read_file(self.target_path)
-        join = gpd.read_file(self.join_path)
+        # Read input layers (using layer parameter)
+        target = gpd.read_file(self.gdb_path, layer=self.target_layer)
+        join = gpd.read_file(self.gdb_path, layer=self.join_layer)
         
         # Perform spatial join
         result = gpd.sjoin(target, join, how='left', predicate='within')
@@ -236,12 +239,13 @@ class V6_CalculateField_OS(BaseBenchmark):
     
     def __init__(self):
         super(V6_CalculateField_OS, self).__init__("V6_CalculateField_OS", "vector_os")
-        self.input_path = None
+        self.gdb_path = None
+        self.input_layer = None
         self.output_path = None
     
     def setup(self):
-        gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
-        self.input_path = os.path.join(gdb_path, "calculate_field_fc")
+        self.gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
+        self.input_layer = "calculate_field_fc"
         self.output_path = os.path.join(settings.DATA_DIR, "V6_calculate_field_os.gpkg")
     
     def teardown(self):
@@ -252,8 +256,8 @@ class V6_CalculateField_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Read input
-        gdf = gpd.read_file(self.input_path)
+        # Read input (using layer parameter)
+        gdf = gpd.read_file(self.gdb_path, layer=self.input_layer)
         
         # Perform field calculation (vectorized)
         gdf['calc_field'] = gdf['poly_id'] * 2.5 + 100

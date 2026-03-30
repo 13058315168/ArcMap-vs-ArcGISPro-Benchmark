@@ -106,12 +106,11 @@ class R2_Resample_OS(BaseBenchmark):
         self.input_path = os.path.join(settings.DATA_DIR, "R1_constant_raster_os.tif")
         self.output_path = os.path.join(settings.DATA_DIR, "R2_resample_output_os.tif")
         
-        # Create input if not exists
+        # Create input if not exists (don't teardown - keep for other tests)
         if not os.path.exists(self.input_path):
             r1 = R1_CreateConstantRaster_OS()
             r1.setup()
-            r1.run_single()
-            r1.teardown()
+            r1.run_single()  # Keep the file, don't call teardown()
     
     def teardown(self):
         if self.output_path and os.path.exists(self.output_path):
@@ -175,12 +174,11 @@ class R3_Clip_OS(BaseBenchmark):
         self.input_path = os.path.join(settings.DATA_DIR, "R1_constant_raster_os.tif")
         self.output_path = os.path.join(settings.DATA_DIR, "R3_clip_output_os.tif")
         
-        # Create input if not exists
+        # Create input if not exists (don't teardown - keep for other tests)
         if not os.path.exists(self.input_path):
             r1 = R1_CreateConstantRaster_OS()
             r1.setup()
-            r1.run_single()
-            r1.teardown()
+            r1.run_single()  # Keep the file, don't call teardown()
     
     def teardown(self):
         if self.output_path and os.path.exists(self.output_path):
@@ -235,12 +233,11 @@ class R4_RasterCalculator_OS(BaseBenchmark):
         self.input_path = os.path.join(settings.DATA_DIR, "R1_constant_raster_os.tif")
         self.output_path = os.path.join(settings.DATA_DIR, "R4_calc_output_os.tif")
         
-        # Create input if not exists
+        # Create input if not exists (don't teardown - keep for other tests)
         if not os.path.exists(self.input_path):
             r1 = R1_CreateConstantRaster_OS()
             r1.setup()
-            r1.run_single()
-            r1.teardown()
+            r1.run_single()  # Keep the file, don't call teardown()
     
     def teardown(self):
         if self.output_path and os.path.exists(self.output_path):
