@@ -13,7 +13,7 @@
 python launch_gui.py
 
 # 或直接运行（使用 ArcGIS Pro Python 效果更好）
-"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" benchmark_gui.py
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" benchmark_gui_modern.py
 ```
 
 ---
@@ -337,8 +337,8 @@ python launch_gui.py
 **解决步骤**：
 1. 确保步骤 3 和步骤 4 已成功执行
 2. 检查结果文件是否存在：
-   - `results/raw/benchmark_results_py2.json`
-   - `results/raw/benchmark_results_py3.json`
+   - `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\data\py2\benchmark_results_py2.json`
+   - `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\data\py3\benchmark_results_py3.json`
 3. 查看日志了解详细错误
 
 ---

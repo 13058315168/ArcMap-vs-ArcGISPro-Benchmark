@@ -22,7 +22,7 @@ python create_exe.py
 
 或者在命令行直接运行：
 ```bash
-pyinstaller --name=ArcGIS_Benchmark --windowed --onefile --icon=resources/icon.ico --add-data=config;config --add-data=utils;utils --add-data=benchmarks;benchmarks --add-data=data;data benchmark_gui_v2.py
+pyinstaller --name=ArcGIS_Benchmark --windowed --onefile --icon=resources/icon.ico --add-data=config;config --add-data=utils;utils --add-data=benchmarks;benchmarks --add-data=data;data benchmark_gui_modern.py
 ```
 
 ### 步骤4：创建桌面快捷方式
@@ -36,7 +36,7 @@ auto-py-to-exe
 ```
 
 然后在浏览器中配置：
-- Script Location: `benchmark_gui_v2.py`
+- Script Location: `benchmark_gui_modern.py`
 - Onefile: `One File`
 - Console Window: `Window Based`
 - Icon: 选择 `resources/icon.ico`

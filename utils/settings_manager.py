@@ -25,6 +25,7 @@ DEFAULT_CONFIG = {
         'runs': 3,
         'warmup': 1,
         'data_scale': 'tiny',
+        'data_scales': ['tiny'],
         'enable_multiprocess': False,
         'mp_workers': 4,
         'enable_opensource': False,
@@ -49,55 +50,75 @@ DEFAULT_CONFIG = {
             'fishnet_cols': 50,
             'random_points': 1000,
             'buffer_points': 1000,
-            'intersect_features': 10000,
+            'intersect_features_a': 10000,
+            'intersect_features_b': 10000,
             'spatial_join_points': 5000,
             'spatial_join_polygons': 500,
             'calculate_field_records': 10000,
             'constant_raster_size': 500,
+            'resample_source_size': 500,
+            'resample_target_size': 250,
+            'clip_ratio': 0.5,
         },
         'small': {
             'fishnet_rows': 100,
             'fishnet_cols': 100,
             'random_points': 10000,
             'buffer_points': 10000,
-            'intersect_features': 100000,
+            'intersect_features_a': 100000,
+            'intersect_features_b': 100000,
             'spatial_join_points': 50000,
             'spatial_join_polygons': 1000,
             'calculate_field_records': 100000,
             'constant_raster_size': 1000,
+            'resample_source_size': 1000,
+            'resample_target_size': 500,
+            'clip_ratio': 0.5,
         },
         'standard': {
             'fishnet_rows': 500,
             'fishnet_cols': 500,
             'random_points': 50000,
             'buffer_points': 50000,
-            'intersect_features': 300000,
+            'intersect_features_a': 300000,
+            'intersect_features_b': 300000,
             'spatial_join_points': 200000,
             'spatial_join_polygons': 5000,
             'calculate_field_records': 300000,
             'constant_raster_size': 5000,
+            'resample_source_size': 5000,
+            'resample_target_size': 2500,
+            'clip_ratio': 0.5,
         },
         'medium': {
             'fishnet_rows': 1000,
             'fishnet_cols': 1000,
             'random_points': 100000,
             'buffer_points': 100000,
-            'intersect_features': 1000000,
+            'intersect_features_a': 1000000,
+            'intersect_features_b': 1000000,
             'spatial_join_points': 500000,
             'spatial_join_polygons': 10000,
             'calculate_field_records': 1000000,
             'constant_raster_size': 10000,
+            'resample_source_size': 10000,
+            'resample_target_size': 5000,
+            'clip_ratio': 0.5,
         },
         'large': {
             'fishnet_rows': 5000,
             'fishnet_cols': 5000,
             'random_points': 500000,
             'buffer_points': 500000,
-            'intersect_features': 5000000,
+            'intersect_features_a': 5000000,
+            'intersect_features_b': 5000000,
             'spatial_join_points': 2000000,
             'spatial_join_polygons': 50000,
             'calculate_field_records': 5000000,
             'constant_raster_size': 30000,
+            'resample_source_size': 30000,
+            'resample_target_size': 15000,
+            'clip_ratio': 0.5,
         },
     },
     'paths': {
@@ -106,11 +127,19 @@ DEFAULT_CONFIG = {
     },
 }
 
+AVAILABLE_SCALES = ['tiny', 'small', 'standard', 'medium', 'large']
+
+try:
+    STRING_TYPES = (basestring,)
+except NameError:
+    STRING_TYPES = (str,)
+
 # Translations
 TRANSLATIONS = {
     'zh': {
         # Window titles
-        'app_title': 'ArcGIS Python 性能对比测试工具',
+        'app_title': 'ArcGIS Python2、3 与开源库性能对比测试工具',
+        'app_subtitle': 'ArcPy 与开源库性能基准对比',
         'settings_title': '测试设置',
 
         # Menu
@@ -126,6 +155,8 @@ TRANSLATIONS = {
         'tab_advanced': '高级设置',
         'tab_data_scale': '数据规模',
         'tab_results': '结果设置',
+        'label_vector_params': '向量参数:',
+        'label_raster_params': '栅格参数:',
 
         # Basic settings
         'label_language': '界面语言:',
@@ -195,12 +226,22 @@ TRANSLATIONS = {
 
         # Data scale parameters
         'param_fishnet': '渔网行列数:',
+        'param_fishnet_rows': '渔网行数:',
+        'param_fishnet_cols': '渔网列数:',
         'param_random_points': '随机点数量:',
         'param_buffer': '缓冲点数量:',
         'param_intersect': '叠加要素数量:',
+        'param_intersect_a': '叠加图层A要素数:',
+        'param_intersect_b': '叠加图层B要素数:',
         'param_spatial_join': '空间连接点数/面数:',
+        'param_spatial_join_points': '空间连接点数:',
+        'param_spatial_join_polygons': '空间连接面数:',
         'param_calculate': '字段计算记录数:',
         'param_raster': '栅格大小:',
+        'param_constant_raster': '常量栅格大小:',
+        'param_resample_source': '重采样源栅格大小:',
+        'param_resample_target': '重采样目标栅格大小:',
+        'param_clip_ratio': '裁剪比例:',
 
         # Result settings
         'label_retention': '结果保留天数:',
@@ -220,11 +261,16 @@ TRANSLATIONS = {
         'tooltip_mp': '启用多进程并行测试（4 workers）',
         'tooltip_os': '启用开源库对比测试（GeoPandas/Rasterio）',
         'btn_language': 'English',
-        'label_scale_select': '数据规模:',
+        'label_scale_select': '数据规模（可多选）:',
+        'label_scale_params': '数据规模参数:',
+        'label_edit_scale': '当前编辑规模:',
+        'btn_apply_scale': '应用当前参数',
+        'btn_reset_scale': '恢复默认值',
     },
     'en': {
         # Window titles
-        'app_title': 'ArcGIS Python Performance Benchmark Tool',
+        'app_title': 'ArcGIS Python2、3 & Open-Source Performance Comparison Tool',
+        'app_subtitle': 'ArcPy vs Open-Source Benchmark',
         'settings_title': 'Test Settings',
 
         # Menu
@@ -240,6 +286,8 @@ TRANSLATIONS = {
         'tab_advanced': 'Advanced',
         'tab_data_scale': 'Data Scale',
         'tab_results': 'Results',
+        'label_vector_params': 'Vector Parameters:',
+        'label_raster_params': 'Raster Parameters:',
 
         # Basic settings
         'label_language': 'Language:',
@@ -303,12 +351,22 @@ TRANSLATIONS = {
 
         # Data scale parameters
         'param_fishnet': 'Fishnet Rows/Cols:',
+        'param_fishnet_rows': 'Fishnet Rows:',
+        'param_fishnet_cols': 'Fishnet Cols:',
         'param_random_points': 'Random Points:',
         'param_buffer': 'Buffer Points:',
         'param_intersect': 'Intersect Features:',
+        'param_intersect_a': 'Intersect Layer A Features:',
+        'param_intersect_b': 'Intersect Layer B Features:',
         'param_spatial_join': 'Spatial Join Points/Polygons:',
+        'param_spatial_join_points': 'Spatial Join Points:',
+        'param_spatial_join_polygons': 'Spatial Join Polygons:',
         'param_calculate': 'Calculate Field Records:',
         'param_raster': 'Raster Size:',
+        'param_constant_raster': 'Constant Raster Size:',
+        'param_resample_source': 'Resample Source Size:',
+        'param_resample_target': 'Resample Target Size:',
+        'param_clip_ratio': 'Clip Ratio:',
 
         # Result settings
         'label_retention': 'Retention Days:',
@@ -328,7 +386,11 @@ TRANSLATIONS = {
         'tooltip_mp': 'Enable multiprocess parallel testing (4 workers)',
         'tooltip_os': 'Enable open-source library comparison (GeoPandas/Rasterio)',
         'btn_language': '中文',
-        'label_scale_select': 'Data Scale:',
+        'label_scale_select': 'Data Scales (multi-select):',
+        'label_scale_params': 'Data Scale Parameters:',
+        'label_edit_scale': 'Edit Scale:',
+        'btn_apply_scale': 'Apply Current',
+        'btn_reset_scale': 'Reset Defaults',
     }
 }
 
@@ -359,10 +421,15 @@ class SettingsManager(object):
                     # Merge with defaults to ensure all keys exist
                     config = copy.deepcopy(DEFAULT_CONFIG)
                     self._deep_update(config, saved_config)
+                    self._normalize_test_scales(config)
+                    self._normalize_scale_configs(config)
                     return config
             except Exception as e:
                 print("Error loading config: {}".format(e))
-        return copy.deepcopy(DEFAULT_CONFIG)
+        config = copy.deepcopy(DEFAULT_CONFIG)
+        self._normalize_test_scales(config)
+        self._normalize_scale_configs(config)
+        return config
 
     def _deep_update(self, d, u):
         """递归更新字典"""
@@ -411,6 +478,53 @@ class SettingsManager(object):
             config = config[key]
         config[keys[-1]] = value
 
+    def _normalize_test_scales(self, config=None):
+        """Normalize the saved multi-scale selection and keep backward compatibility."""
+        target = config if config is not None else self.config
+        test_settings = target.setdefault('test_settings', {})
+
+        raw_scales = test_settings.get('data_scales', [])
+        if isinstance(raw_scales, STRING_TYPES):
+            raw_scales = [raw_scales]
+        elif not isinstance(raw_scales, (list, tuple)):
+            raw_scales = []
+
+        normalized = []
+        for scale in raw_scales:
+            if scale in AVAILABLE_SCALES and scale not in normalized:
+                normalized.append(scale)
+
+        primary = test_settings.get('data_scale', 'tiny')
+        if primary not in AVAILABLE_SCALES:
+            primary = 'tiny'
+
+        if not normalized:
+            normalized = [primary]
+
+        test_settings['data_scales'] = normalized
+        test_settings['data_scale'] = primary if primary in normalized else normalized[0]
+        return normalized
+
+    def _normalize_scale_configs(self, config=None):
+        """Ensure saved scale configs keep the latest parameter schema."""
+        target = config if config is not None else self.config
+        scale_configs = target.setdefault('data_scale_custom', {})
+
+        for scale, scale_config in list(scale_configs.items()):
+            if not isinstance(scale_config, dict):
+                scale_config = {}
+
+            if 'intersect_features' in scale_config:
+                legacy_value = scale_config.pop('intersect_features')
+                scale_config.setdefault('intersect_features_a', legacy_value)
+                scale_config.setdefault('intersect_features_b', legacy_value)
+
+            merged = copy.deepcopy(DEFAULT_CONFIG['data_scale_custom'].get(scale, {}))
+            self._deep_update(merged, scale_config)
+            scale_configs[scale] = merged
+
+        return scale_configs
+
     def get_text(self, key):
         """获取当前语言的文本"""
         lang = self.config.get('language', 'zh')
@@ -420,13 +534,82 @@ class SettingsManager(object):
         """获取指定规模的配置"""
         if scale is None:
             scale = self.config['test_settings']['data_scale']
-        return self.config['data_scale_custom'].get(scale, {})
+        return self._merge_scale_config(scale)
+
+    def get_scale_runtime_config(self, scale=None):
+        """获取适合直接传递给运行器的规模配置。"""
+        return copy.deepcopy(self.get_scale_config(scale))
+
+    def _merge_scale_config(self, scale):
+        """Merge defaults with saved values for a given scale."""
+        if scale not in AVAILABLE_SCALES:
+            scale = self.config.get('test_settings', {}).get('data_scale', 'tiny')
+        if scale not in AVAILABLE_SCALES:
+            scale = 'tiny'
+
+        merged = copy.deepcopy(DEFAULT_CONFIG['data_scale_custom'].get(scale, {}))
+        saved = copy.deepcopy(self.config.get('data_scale_custom', {}).get(scale, {}))
+
+        if 'intersect_features' in saved:
+            legacy_value = saved.pop('intersect_features')
+            saved.setdefault('intersect_features_a', legacy_value)
+            saved.setdefault('intersect_features_b', legacy_value)
+
+        self._deep_update(merged, saved)
+        return merged
+
+    def get_selected_scales(self, default=None):
+        """Get the selected benchmark scales as an ordered list."""
+        scales = self.config.get('test_settings', {}).get('data_scales', [])
+        if isinstance(scales, STRING_TYPES):
+            scales = [scales]
+        elif not isinstance(scales, (list, tuple)):
+            scales = []
+
+        ordered = [scale for scale in AVAILABLE_SCALES if scale in scales]
+        if ordered:
+            return ordered
+
+        if default is not None:
+            if isinstance(default, STRING_TYPES):
+                default = [default]
+            elif not isinstance(default, (list, tuple)):
+                default = []
+            ordered = [scale for scale in AVAILABLE_SCALES if scale in default]
+            if ordered:
+                return ordered
+
+        fallback = self.config.get('test_settings', {}).get('data_scale', 'tiny')
+        return [fallback if fallback in AVAILABLE_SCALES else 'tiny']
+
+    def set_selected_scales(self, scales):
+        """Persist the selected benchmark scales."""
+        if isinstance(scales, STRING_TYPES):
+            scales = [scales]
+        elif not isinstance(scales, (list, tuple)):
+            scales = []
+
+        normalized = []
+        for scale in scales:
+            if scale in AVAILABLE_SCALES and scale not in normalized:
+                normalized.append(scale)
+
+        if not normalized:
+            normalized = ['tiny']
+
+        self.config['test_settings']['data_scales'] = normalized
+        self.config['test_settings']['data_scale'] = normalized[0]
+        return normalized
 
     def set_scale_config(self, scale, param, value):
         """设置指定规模的配置参数"""
         if scale not in self.config['data_scale_custom']:
             self.config['data_scale_custom'][scale] = {}
-        self.config['data_scale_custom'][scale][param] = value
+        if param == 'intersect_features':
+            self.config['data_scale_custom'][scale]['intersect_features_a'] = value
+            self.config['data_scale_custom'][scale]['intersect_features_b'] = value
+        else:
+            self.config['data_scale_custom'][scale][param] = value
 
     def get_output_dir(self):
         """获取输出目录（带时间戳）"""

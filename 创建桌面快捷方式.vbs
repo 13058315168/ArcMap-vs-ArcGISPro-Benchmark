@@ -6,9 +6,11 @@ Set Shortcut = WShell.CreateShortcut(DesktopPath & "\ArcGIS Benchmark.lnk")
 Shortcut.TargetPath = "wscript.exe"
 Shortcut.Arguments = """" & ScriptDir & "\启动工具.vbs"""
 Shortcut.WorkingDirectory = ScriptDir
-Shortcut.Description = "ArcGIS Python Performance Benchmark Tool"
+Shortcut.Description = "ArcGIS Python2、3 与开源库性能对比测试工具"
 Shortcut.IconLocation = ScriptDir & "\resources\icon.ico"
 Shortcut.Save
 MsgBox "Desktop shortcut created!", 64, "Done"
 Set WShell = Nothing
 Set FSO = Nothing
+
+

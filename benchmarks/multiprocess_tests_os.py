@@ -108,6 +108,15 @@ def split_even_ranges(total_items, num_workers):
     return ranges
 
 
+def _geometry_only_gdf(gdf):
+    """Return a lightweight GeoDataFrame that keeps only geometry."""
+    if gdf is None:
+        return gpd.GeoDataFrame({'geometry': []}, geometry='geometry')
+    if len(gdf) == 0:
+        return gpd.GeoDataFrame({'geometry': []}, geometry='geometry', crs=gdf.crs)
+    return gpd.GeoDataFrame({'geometry': gdf.geometry.copy()}, geometry='geometry', crs=gdf.crs)
+
+
 class MultiprocessBenchmarkOS(BaseBenchmark):
     """Base class for open-source multiprocess benchmarks"""
     
@@ -420,6 +429,9 @@ class MP_V4_Intersect_OS(MultiprocessBenchmarkOS):
         gdf_a = gpd.read_file(self.gdb_path, layer=self.input_a_layer)
         gdf_b = gpd.read_file(self.gdb_path, layer=self.input_b_layer)
 
+        gdf_a = _geometry_only_gdf(gdf_a)
+        gdf_b = _geometry_only_gdf(gdf_b)
+
         if gdf_a.crs is not None and gdf_b.crs != gdf_a.crs:
             gdf_b = gdf_b.to_crs(gdf_a.crs)
 
@@ -432,18 +444,28 @@ class MP_V4_Intersect_OS(MultiprocessBenchmarkOS):
         gdf_a = gpd.read_file(self.gdb_path, layer=self.input_a_layer)
         gdf_b = gpd.read_file(self.gdb_path, layer=self.input_b_layer)
 
+        gdf_a = _geometry_only_gdf(gdf_a)
+        gdf_b = _geometry_only_gdf(gdf_b)
+
         if gdf_a.crs is not None and gdf_b.crs != gdf_a.crs:
             gdf_b = gdf_b.to_crs(gdf_a.crs)
 
-        chunks = []
+        task_payloads = []
         for start, end in split_even_ranges(len(gdf_a), num_workers):
-            chunks.append(gdf_a.iloc[start:end].copy())
+            chunk = _geometry_only_gdf(gdf_a.iloc[start:end].copy())
+            if len(chunk) == 0:
+                continue
 
-        if not chunks:
+            minx, miny, maxx, maxy = chunk.total_bounds
+            candidate_b = _geometry_only_gdf(gdf_b.cx[minx:maxx, miny:maxy].copy())
+            task_payloads.append((chunk, candidate_b))
+
+        if not task_payloads:
             raise RuntimeError("No features available for multiprocess intersect")
 
-        with mp.Pool(processes=num_workers) as pool:
-            results = pool.map(partial(intersect_features_chunk, gdf_b=gdf_b), chunks)
+        worker_count = min(num_workers, len(task_payloads))
+        with mp.Pool(processes=worker_count) as pool:
+            results = pool.map(intersect_features_chunk, task_payloads)
 
         non_empty = [r for r in results if r is not None and len(r) > 0]
         if non_empty:

@@ -181,9 +181,19 @@ class BaseBenchmark(object):
         if settings.ENABLE_MEMORY_MONITORING:
             peak_memories = [r.get('memory_mb', {}).get('peak_mb', 0) for r in successful if 'memory_mb' in r]
             avg_memory = sum(peak_memories) / len(peak_memories) if peak_memories else 0
+            min_memory = min(peak_memories) if peak_memories else 0
+            max_memory = max(peak_memories) if peak_memories else 0
+            if len(peak_memories) > 1:
+                memory_variance = sum((m - avg_memory) ** 2 for m in peak_memories) / (len(peak_memories) - 1)
+                memory_std = memory_variance ** 0.5
+            else:
+                memory_std = 0
         else:
             avg_memory = 0
-        
+            min_memory = 0
+            max_memory = 0
+            memory_std = 0
+
         stats = {
             'test_name': self.name,
             'category': self.category,
@@ -197,6 +207,9 @@ class BaseBenchmark(object):
             'max_time': max_time,
             'cv_percent': (std_time / mean_time * 100) if mean_time > 0 else 0,
             'avg_memory_mb': avg_memory,
+            'min_memory_mb': min_memory,
+            'max_memory_mb': max_memory,
+            'std_memory_mb': memory_std,
             'all_times': times,
             'python_version': "{}.{}.{}".format(
                 sys.version_info[0],

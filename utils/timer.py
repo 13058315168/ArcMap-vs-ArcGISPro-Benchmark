@@ -15,6 +15,11 @@ if sys.version_info[0] >= 3:
 else:
     import thread
 
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
 class Timer(object):
     """
     High-precision timer with context manager support
@@ -74,13 +79,49 @@ class MemoryMonitor(object):
         self._monitoring = False
         self._thread = None
         self._pid = os.getpid()
+        self._psutil_process = None
+        if psutil is not None:
+            try:
+                self._psutil_process = psutil.Process(self._pid)
+            except Exception:
+                self._psutil_process = None
     
-    def _get_memory_usage(self):
-        """Get current memory usage in MB (Windows only)"""
+    def _get_memory_usage_psutil(self):
+        """Get current memory usage in MB using psutil."""
+        try:
+            process = self._psutil_process
+            if process is None:
+                process = psutil.Process(self._pid)
+                self._psutil_process = process
+
+            total_bytes = 0
+            try:
+                total_bytes += process.memory_info().rss
+            except Exception:
+                pass
+
+            # Include child processes so multiprocess benchmarks are measured
+            # as a whole process tree instead of only the parent interpreter.
+            try:
+                for child in process.children(recursive=True):
+                    try:
+                        total_bytes += child.memory_info().rss
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+            return total_bytes / (1024.0 * 1024.0)
+        except Exception:
+            pass
+        return 0
+
+    def _get_memory_usage_windows(self):
+        """Get current memory usage in MB using the Windows API fallback."""
         try:
             import ctypes
             from ctypes import wintypes
-            
+
             class PROCESS_MEMORY_COUNTERS_EX(ctypes.Structure):
                 _fields_ = [
                     ('cb', wintypes.DWORD),
@@ -95,20 +136,26 @@ class MemoryMonitor(object):
                     ('PeakPagefileUsage', ctypes.c_size_t),
                     ('PrivateUsage', ctypes.c_size_t),
                 ]
-            
+
             GetProcessMemoryInfo = ctypes.windll.psapi.GetProcessMemoryInfo
             GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
-            
+
             counters = PROCESS_MEMORY_COUNTERS_EX()
             counters.cb = ctypes.sizeof(counters)
-            
+
             process = GetCurrentProcess()
             if GetProcessMemoryInfo(process, ctypes.byref(counters), counters.cb):
                 # WorkingSetSize is in bytes, convert to MB
-                return counters.WorkingSetSize / (1024 * 1024)
+                return counters.WorkingSetSize / (1024.0 * 1024.0)
         except Exception:
             pass
         return 0
+
+    def _get_memory_usage(self):
+        """Get current memory usage in MB."""
+        if psutil is not None:
+            return self._get_memory_usage_psutil()
+        return self._get_memory_usage_windows()
     
     def _monitor(self):
         """Monitor memory in background thread"""
@@ -262,7 +309,13 @@ class BenchmarkTimer(object):
     def __init__(self, name="Benchmark", monitor_memory=True):
         self.name = name
         self.timer = Timer(name)
-        self.memory_monitor = MemoryMonitor() if monitor_memory else None
+        mem_interval = 0.5
+        try:
+            from config import settings as benchmark_settings
+            mem_interval = getattr(benchmark_settings, 'MEMORY_SAMPLE_INTERVAL', mem_interval)
+        except Exception:
+            pass
+        self.memory_monitor = MemoryMonitor(interval=mem_interval) if monitor_memory else None
         self.results = {}
     
     def __enter__(self):

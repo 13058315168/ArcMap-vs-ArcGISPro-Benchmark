@@ -1,9 +1,0 @@
-test_name,category,py2_time,py2_std,py2_success,py3_time,py3_std,py3_success,speedup,faster
-M2_RasterToPoint,mixed_os,0,0,False,0,0,False,0,Python 2.7 更快
-R1_CreateConstantRaster,raster,0.10907966666666684,0.0045046130914132365,True,0.2925541333388537,0.007736378882269258,True,0.3728529329658256,Python 2.7 更快
-R2_Resample,raster_os,0,0,False,0,0,False,0,Python 2.7 更快
-R3_Clip,raster_os,0,0,False,0,0,False,0,Python 2.7 更快
-R4_RasterCalculator,raster_os,0,0,False,0,0,False,0,Python 2.7 更快
-V1_CreateFishnet,vector,0.21337383333333335,0.0014072341679100338,True,0.34954216666907695,0.014624807116763658,True,0.6104380348919144,Python 2.7 更快
-V2_CreateRandomPoints,vector,0.09367529999999998,0.0017544225802238803,True,0.23353810001087064,0.004130549465219769,True,0.40111356560509664,Python 2.7 更快
-V3_Buffer,vector,0.18285833333333348,0.0004409274014316523,True,0.3140904999842557,0.005688883866284161,True,0.5821835851211659,Python 2.7 更快

@@ -411,7 +411,7 @@ class ResultExporter(object):
         lines.append("- **M2_RasterToPoint**: 栅转矢")
         lines.append("")
         lines.append("---")
-        lines.append("*报告由 ArcGIS Python 性能对比测试工具自动生成*")
+        lines.append("*报告由 ArcGIS Python2、3 与开源库性能对比测试工具自动生成*")
         
         return '\n'.join(lines)
 

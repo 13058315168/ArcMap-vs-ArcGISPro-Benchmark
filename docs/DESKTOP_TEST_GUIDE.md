@@ -38,8 +38,8 @@ C:\Python27\ArcGIS10.8\python.exe run_benchmarks.py
 ```
 
 结果文件：
-- `results/raw/benchmark_results_py2.json`
-- `results/raw/benchmark_results_py3.json`
+- `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\data\py2\benchmark_results_py2.json`
+- `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\data\py3\benchmark_results_py3.json`
 
 ---
 
@@ -74,7 +74,7 @@ exec(open(r"D:\测试arcmap与gispro的运行速度\arcgis_performance_benchmark
 - 完成后会提示结果保存位置
 
 #### 5. 结果文件
-- `results/raw/benchmark_results_arcmap.json`
+- `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\data\py2\benchmark_results_py2.json`
 
 ---
 
@@ -108,7 +108,7 @@ exec(open(r"D:\测试arcmap与gispro的运行速度\arcgis_performance_benchmark
 - 完成后会提示结果保存位置
 
 #### 5. 结果文件
-- `results/raw/benchmark_results_arcgis_pro.json`
+- `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\data\py3\benchmark_results_py3.json`
 
 ---
 
@@ -124,8 +124,8 @@ exec(open(r"D:\测试arcmap与gispro的运行速度\arcgis_performance_benchmark
 或者双击 GUI 中的「合并桌面软件结果」按钮（如果有）。
 
 生成的报告：
-- `results/tables/desktop_comparison_report.md`
-- `results/tables/desktop_comparison_data.csv`
+- `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\comparison_report.md`
+- `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\comparison_data.csv`
 
 ---
 

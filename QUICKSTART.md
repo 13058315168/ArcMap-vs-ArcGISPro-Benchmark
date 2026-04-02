@@ -67,13 +67,13 @@ python run_both_versions.py
 
 ```bash
 # Markdown 报告（可直接在浏览器或 Markdown 编辑器中查看）
-results/tables/comparison_report.md
+C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\comparison_report.md
 
 # LaTeX 表格（可直接插入论文）
-results/tables/comparison_table.tex
+C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\comparison_table.tex
 
 # CSV 数据（可用 Excel 打开）
-results/tables/comparison_data.csv
+C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\comparison_data.csv
 ```
 
 ---
@@ -174,7 +174,7 @@ run_benchmarks.py --scale medium --generate-data
 **解决**：确保 ArcGIS 许可为 Advanced 级别
 
 ### 问题：结果文件未生成
-**解决**：检查 `results/` 目录是否有写入权限
+**解决**：检查输出根目录是否有写入权限
 
 ### 问题：文件锁定（File Lock）
 **解决**：
@@ -196,7 +196,7 @@ run_benchmarks.py --scale medium --generate-data
 \begin{table}[htbp]
 \centering
 \caption{ArcGIS Python 性能对比}
-\input{results/tables/comparison_table.tex}
+\input{<输出根目录>/comparison_table.tex}
 \end{table}
 ```
 

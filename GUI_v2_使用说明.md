@@ -1,4 +1,4 @@
-# ArcGIS Python Performance Benchmark - GUI v2.0 使用说明
+# ArcGIS Python2、3 与开源库性能对比测试工具 - GUI v2.0 使用说明
 
 ## 新功能特性
 
@@ -61,7 +61,7 @@
 
 ### 方式3：命令行启动
 ```bash
-python benchmark_gui_v2.py
+python benchmark_gui_modern.py
 ```
 - 适用于调试
 - 可在控制台查看错误信息
@@ -75,7 +75,7 @@ python benchmark_gui_v2.py
 
 ```
 .
-├── benchmark_gui_v2.py          # 主GUI程序
+├── benchmark_gui_modern.py       # 主GUI程序
 ├── utils/
 │   └── settings_manager.py      # 设置管理模块
 ├── 启动工具.vbs                  # 虚拟环境启动器
@@ -103,7 +103,7 @@ python benchmark_gui_v2.py
 
 ### 默认路径
 ```
-项目目录/results/YYYYMMDD_HHMMSS/
+C:\temp\arcgis_benchmark_data\YYYYMMDD_HHMMSS\<规模>/
 ```
 
 ### 临时数据路径

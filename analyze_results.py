@@ -260,10 +260,19 @@ def create_comparison(results_py2, results_py3, results_os=None):
         
         py2_time = py2_result.get('mean_time', 0)
         py2_std = py2_result.get('std_time', 0)
+        py2_memory = py2_result.get('avg_memory_mb', 0)
+        py2_memory_min = py2_result.get('min_memory_mb', py2_memory)
+        py2_memory_max = py2_result.get('max_memory_mb', py2_memory)
         py3_time = py3_result.get('mean_time', 0)
         py3_std = py3_result.get('std_time', 0)
+        py3_memory = py3_result.get('avg_memory_mb', 0)
+        py3_memory_min = py3_result.get('min_memory_mb', py3_memory)
+        py3_memory_max = py3_result.get('max_memory_mb', py3_memory)
         os_time = os_result.get('mean_time', 0)
         os_std = os_result.get('std_time', 0)
+        os_memory = os_result.get('avg_memory_mb', 0)
+        os_memory_min = os_result.get('min_memory_mb', os_memory)
+        os_memory_max = os_result.get('max_memory_mb', os_memory)
         
         # Calculate speedup (Py3 vs Py2)
         if py3_time > 0 and py2_time > 0:
@@ -297,10 +306,19 @@ def create_comparison(results_py2, results_py3, results_os=None):
             'category': category,
             'py2_time': py2_time,
             'py2_std': py2_std,
+            'py2_memory_mb': py2_memory,
+            'py2_memory_min_mb': py2_memory_min,
+            'py2_memory_max_mb': py2_memory_max,
             'py3_time': py3_time,
             'py3_std': py3_std,
+            'py3_memory_mb': py3_memory,
+            'py3_memory_min_mb': py3_memory_min,
+            'py3_memory_max_mb': py3_memory_max,
             'os_time': os_time,
             'os_std': os_std,
+            'os_memory_mb': os_memory,
+            'os_memory_min_mb': os_memory_min,
+            'os_memory_max_mb': os_memory_max,
             'speedup': speedup,
             'faster': faster,
             'fastest': fastest,
@@ -707,27 +725,33 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     lines.append("")
     lines.append("| 数据类型 | 规模 | 说明 |")
     lines.append("|----------|------|------|")
-    lines.append("| 渔网多边形 | {:,} | {}×{}网格 |".format(
+    lines.append("| 向量 - 渔网多边形 | {:,} | {}×{}网格 |".format(
         settings.VECTOR_CONFIG['fishnet_rows'] * settings.VECTOR_CONFIG['fishnet_cols'],
         settings.VECTOR_CONFIG['fishnet_rows'],
         settings.VECTOR_CONFIG['fishnet_cols']
     ))
-    lines.append("| 随机点 | {:,} | 全球范围分布 |".format(settings.VECTOR_CONFIG['random_points']))
-    lines.append("| 缓冲区测试点 | {:,} | 用于V3测试 |".format(settings.VECTOR_CONFIG['buffer_points']))
-    lines.append("| 叠加分析要素 | {:,}×{:,} | 双图层叠加 |".format(
-        settings.VECTOR_CONFIG['intersect_features_a'],
-        settings.VECTOR_CONFIG['intersect_features_b']
-    ))
-    lines.append("| 空间连接 | {:,}点+{:,}多边形 | 点面关联 |".format(
+    lines.append("| 向量 - 随机点 | {:,} | 全球范围分布 |".format(settings.VECTOR_CONFIG['random_points']))
+    lines.append("| 向量 - 缓冲区测试点 | {:,} | 用于 V3 测试 |".format(settings.VECTOR_CONFIG['buffer_points']))
+    lines.append("| 向量 - 叠加分析图层 A | {:,} | 双图层叠加 |".format(settings.VECTOR_CONFIG['intersect_features_a']))
+    lines.append("| 向量 - 叠加分析图层 B | {:,} | 双图层叠加 |".format(settings.VECTOR_CONFIG['intersect_features_b']))
+    lines.append("| 向量 - 空间连接点 | {:,}点 | 点面关联 |".format(
         settings.VECTOR_CONFIG['spatial_join_points'],
-        settings.VECTOR_CONFIG['spatial_join_polygons']
     ))
-    lines.append("| 字段计算 | {:,}条 | 属性表计算 |".format(settings.VECTOR_CONFIG['calculate_field_records']))
-    lines.append("| 栅格数据 | {:,}×{:,} | 共{:,}像素 |".format(
+    lines.append("| 向量 - 空间连接面 | {:,}面 | 点面关联 |".format(settings.VECTOR_CONFIG['spatial_join_polygons']))
+    lines.append("| 向量 - 字段计算 | {:,}条 | 属性表计算 |".format(settings.VECTOR_CONFIG['calculate_field_records']))
+    lines.append("| 栅格 - 常量栅格 | {:,}×{:,} | 基准栅格 |".format(
         settings.RASTER_CONFIG['constant_raster_size'],
-        settings.RASTER_CONFIG['constant_raster_size'],
-        settings.RASTER_CONFIG['constant_raster_size'] ** 2
+        settings.RASTER_CONFIG['constant_raster_size']
     ))
+    lines.append("| 栅格 - 重采样源栅格 | {:,}×{:,} | R2 源数据 |".format(
+        settings.RASTER_CONFIG['resample_source_size'],
+        settings.RASTER_CONFIG['resample_source_size']
+    ))
+    lines.append("| 栅格 - 重采样目标栅格 | {:,}×{:,} | R2 目标数据 |".format(
+        settings.RASTER_CONFIG['resample_target_size'],
+        settings.RASTER_CONFIG['resample_target_size']
+    ))
+    lines.append("| 栅格 - 裁剪比例 | {} | R3 裁剪范围 |".format("{:.0%}".format(settings.RASTER_CONFIG['clip_ratio'])))
     lines.append("")
     
     # ==================== 3. 单线程性能报告 ====================
@@ -1158,8 +1182,74 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("")
     else:
         lines.append("内存监控数据不完整，无法进行分析。")
-        lines.append("")
+    lines.append("")
     
+    # 5.4 任务级内存占用明细
+    lines.append("## 5.4 任务级内存占用明细")
+    lines.append("")
+    lines.append("> 说明：以下内存值为每个任务正式运行期间采样到的峰值工作集（RSS）平均值。")
+    lines.append("> 采样采用进程树统计，优先使用 psutil 汇总当前进程及子进程的 RSS；在不支持 psutil 的环境中回退到 Windows API。")
+    lines.append("")
+
+    def _format_memory_mb(value):
+        if value is None or value <= 0:
+            return "N/A"
+        return "{:.1f} MB".format(value)
+
+    memory_tests = sorted(regular_comparison, key=lambda x: x['test_name'])
+    py2_memories = [t.get('py2_memory_mb', 0) for t in memory_tests if t.get('py2_memory_mb', 0) > 0]
+    py3_memories = [t.get('py3_memory_mb', 0) for t in memory_tests if t.get('py3_memory_mb', 0) > 0]
+    os_memories = [t.get('os_memory_mb', 0) for t in memory_tests if t.get('os_memory_mb', 0) > 0]
+
+    if py2_memories or py3_memories or os_memories:
+        lines.append("| 指标 | Python 2.7 | Python 3.x | 开源库 |")
+        lines.append("|------|-----------|-----------|--------|")
+        lines.append("| 平均峰值内存 | {} | {} | {} |".format(
+            _format_memory_mb(sum(py2_memories) / len(py2_memories) if py2_memories else 0),
+            _format_memory_mb(sum(py3_memories) / len(py3_memories) if py3_memories else 0),
+            _format_memory_mb(sum(os_memories) / len(os_memories) if os_memories else 0),
+        ))
+        lines.append("| 最高峰值内存 | {} | {} | {} |".format(
+            _format_memory_mb(max(py2_memories) if py2_memories else 0),
+            _format_memory_mb(max(py3_memories) if py3_memories else 0),
+            _format_memory_mb(max(os_memories) if os_memories else 0),
+        ))
+        lines.append("| 最低峰值内存 | {} | {} | {} |".format(
+            _format_memory_mb(min(py2_memories) if py2_memories else 0),
+            _format_memory_mb(min(py3_memories) if py3_memories else 0),
+            _format_memory_mb(min(os_memories) if os_memories else 0),
+        ))
+        lines.append("| 有效任务数 | {} | {} | {} |".format(
+            len(py2_memories), len(py3_memories), len(os_memories)
+        ))
+        lines.append("")
+
+        lines.append("| 测试项目 | 类别 | Py2.7峰值 | Py3.x峰值 | 开源库峰值 | 最省内存 |")
+        lines.append("|----------|------|----------|----------|----------|--------|")
+        for test in memory_tests:
+            py2_mem = test.get('py2_memory_mb', 0)
+            py3_mem = test.get('py3_memory_mb', 0)
+            os_mem = test.get('os_memory_mb', 0)
+            mem_candidates = {
+                'Py2.7': py2_mem,
+                'Py3.x': py3_mem,
+                'Open-Source': os_mem,
+            }
+            valid_candidates = {k: v for k, v in mem_candidates.items() if v > 0}
+            mem_winner = min(valid_candidates, key=valid_candidates.get) if valid_candidates else "N/A"
+            lines.append("| {} | {} | {} | {} | {} | {} |".format(
+                test['test_name'],
+                test['category'],
+                _format_memory_mb(py2_mem),
+                _format_memory_mb(py3_mem),
+                _format_memory_mb(os_mem),
+                mem_winner
+            ))
+        lines.append("")
+    else:
+        lines.append("当前结果未采集到有效的内存数据。")
+        lines.append("")
+
     # ==================== 6. 结论与建议 ====================
     lines.append("---")
     lines.append("")
@@ -1295,7 +1385,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     
     lines.append("---")
     lines.append("")
-    lines.append("*报告由 ArcGIS Python 性能对比测试工具自动生成*")
+    lines.append("*报告由 ArcGIS Python2、3 与开源库性能对比测试工具自动生成*")
     lines.append("")
     lines.append("*项目地址：https://github.com/yourusername/arcgis-python-benchmark*")
     

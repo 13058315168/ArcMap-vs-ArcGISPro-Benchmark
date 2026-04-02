@@ -1,8 +1,8 @@
-# ArcGIS Python 性能对比测试工具 - 开发指南
+# ArcGIS Python2、3 与开源库性能对比测试工具 - 开发指南
 
 ## 项目概述
 
-本项目是一个用于对比分析 ArcGIS Desktop (Python 2.7) 与 ArcGIS Pro (Python 3.x) 在相同硬件环境下处理 GIS 数据性能差异的基准测试工具。主要用于学术研究，生成可用于论文的对比数据。
+本项目是一个用于对比分析 ArcGIS Desktop (Python 2.7)、ArcGIS Pro (Python 3.x) 以及开源库方案在相同硬件环境下处理 GIS 数据性能差异的基准测试工具。主要用于学术研究，生成可用于论文的对比数据。
 
 ### 核心功能
 
@@ -23,7 +23,7 @@
 
 ```
 .
-├── benchmark_gui.py          # 主图形界面程序（入口点）
+├── benchmark_gui_modern.py   # 主图形界面程序（入口点）
 ├── run_benchmarks.py         # 命令行基准测试执行器
 ├── analyze_results.py        # 结果分析与报告生成器
 ├── launch_gui.py             # GUI 启动器
@@ -46,9 +46,11 @@
 │   ├── for_arcmap.py         # ArcMap Python 窗口专用脚本
 │   └── for_arcgis_pro.py     # ArcGIS Pro Python 窗格专用脚本
 ├── desktop_automation/       # 桌面软件自动化测试相关
-├── results/                  # 测试结果输出目录
-│   ├── raw/                  # 原始 JSON 结果
-│   └── tables/               # 报告文件（MD、TEX、CSV）
+├── C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\  # 测试结果输出根目录
+│   ├── data\py2              # Python 2.7 原始结果与数据
+│   ├── data\py3              # Python 3.x 原始结果与数据
+│   ├── data\os               # 开源库原始结果与数据
+│   └── comparison_report.md  # 根目录报告文件
 └── *.md                      # 各类文档
 ```
 
@@ -64,7 +66,7 @@
 
 ### Python 解释器路径
 
-在 `benchmark_gui.py` 中硬编码：
+在 `benchmark_gui_modern.py` 中硬编码：
 - Python 2.7: `C:\Python27\ArcGIS10.8\python.exe`
 - Python 3.x: `C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe`
 
@@ -73,7 +75,7 @@
 - **测试数据**: `C:\temp\arcgis_benchmark_data`（大文件，自动清理输出但不清理输入数据）
   - 数据库按规模命名：`benchmark_data_tiny.gdb`、`benchmark_data_small.gdb` 等
   - 支持数据复用：相同规模的数据库会被自动识别并复用
-- **测试结果**: `项目目录\results`（小文件，保留）
+  - **测试结果**: `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\`（小文件，保留）
 
 ### 数据规模配置 (`config/settings.py`)
 
@@ -102,7 +104,7 @@ launch_gui.bat
 python launch_gui.py
 
 # 或直接运行
-python benchmark_gui.py
+python benchmark_gui_modern.py
 ```
 
 ### 2. 命令行方式
@@ -234,7 +236,7 @@ class VX_NewTest(BaseBenchmark):
    - 无法解码的字符显示为 `�`，不影响结果
 
 3. **找不到 Python 环境**
-   - 检查 `benchmark_gui.py` 中的路径配置
+   - 检查 `benchmark_gui_modern.py` 中的路径配置
    - 确认 ArcGIS 已正确安装
 
 4. **内存不足**
@@ -271,7 +273,7 @@ class VX_NewTest(BaseBenchmark):
 
 ## 输出文件说明
 
-测试完成后在 `results/tables/` 生成：
+测试完成后在 `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\` 生成：
 
 - `comparison_report.md` - Markdown 格式完整报告
 - `comparison_table.tex` - LaTeX 表格（可直接插入论文）

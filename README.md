@@ -1,8 +1,8 @@
-# ArcGIS Python 2.7 vs Python 3.x 性能对比测试工具
+# ArcGIS Python2、3 与开源库性能对比测试工具
 
 ## 项目简介
 
-本工具用于对比分析 ArcGIS Desktop (Python 2.7) 与 ArcGIS Pro (Python 3.x) 在相同硬件环境下处理 GIS 数据的性能差异。
+本工具用于对比分析 ArcGIS Desktop (Python 2.7)、ArcGIS Pro (Python 3.x) 以及开源库方案在相同硬件环境下处理 GIS 数据的性能差异。
 
 **新增功能**：支持开源库（GeoPandas/Rasterio）三向性能对比，评估使用开源方案替代 ArcGIS/arcpy 的可行性。
 
@@ -13,7 +13,7 @@
 ├── 📄 README.md              ← 本文件，项目说明
 ├── 📄 QUICKSTART.md          ← 快速上手指南（先看这个）
 ├── 📄 requirements.txt       ← Python依赖包清单
-├── 🖥️ benchmark_gui.py       ← 【主要】图形界面工具
+├── 🖥️ benchmark_gui_modern.py ← 【主要】图形界面工具
 ├── ⚡ run_benchmarks.py      ← 【主要】命令行测试脚本
 ├── 📊 analyze_results.py     ← 【主要】生成对比报告（支持三向对比）
 ├── 🚀 launch_gui.bat         ← 快速启动GUI（带窗口）
@@ -32,10 +32,11 @@
 📁 config/                    ← 配置文件
 │   └── settings.py           ← 测试参数配置（五级数据规模）
 📁 data/                      ← 测试数据生成代码
-📁 results/                   ← 测试结果输出目录
-│   ├── raw/                  ← 原始JSON/CSV数据
-│   ├── tables/               ← 生成的对比报告
-│   └── figures/              ← 生成的图表
+📁 C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\  ← 运行时生成的测试结果目录
+│   ├── data\py2             ← Python 2.7 原始数据与结果
+│   ├── data\py3             ← Python 3.x 原始数据与结果
+│   ├── data\os              ← 开源库原始数据与结果
+│   └── comparison_report.md  ← 最终对比报告（根目录输出）
 📁 utils/                     ← 工具函数库
 └── desktop_automation/       ← 桌面自动化测试代码
 ```
@@ -51,7 +52,7 @@
 
 或命令行方式：
 ```bash
-python benchmark_gui.py
+python benchmark_gui_modern.py
 ```
 
 ### 2. 运行测试
@@ -64,7 +65,7 @@ python benchmark_gui.py
 
 ### 3. 查看报告
 
-测试完成后，报告会自动保存到 `results/tables/comparison_report.md`，包含：
+测试完成后，报告会自动保存到 `C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\comparison_report.md`，包含：
 - **两向对比**：Python 2.7 vs Python 3.x
 - **三向对比**：Python 2.7 vs Python 3.x vs 开源库
 
@@ -158,7 +159,7 @@ python run_benchmarks.py --scale medium --runs 3 --warmup 1 --opensource --multi
 python analyze_results.py
 
 # 指定结果目录
-python analyze_results.py --results-dir results/raw --output-dir results/tables
+python analyze_results.py --results-dir C:\temp\arcgis_benchmark_data\<时间戳>\<规模> --output-dir C:\temp\arcgis_benchmark_data\<时间戳>\<规模>
 ```
 
 ## 输出报告
@@ -231,7 +232,7 @@ pip install geopandas rasterio shapely pyogrio numpy
 
 **解决：**
 - 确保 ArcGIS Desktop 和 ArcGIS Pro 已正确安装
-- 检查 `benchmark_gui.py` 中的路径配置
+- 检查 `benchmark_gui_modern.py` 中的路径配置
 - 或创建 `python_paths.config` 文件指定路径：
 ```
 PYTHON27=C:\Python27\ArcGIS10.8\python.exe

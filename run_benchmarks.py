@@ -162,6 +162,13 @@ Examples:
         default=None,
         help='Data scale for testing (default: from settings.py)'
     )
+
+    parser.add_argument(
+        '--scale-config-json',
+        type=str,
+        default=None,
+        help='JSON string with custom data scale overrides (used by the GUI)'
+    )
     
     parser.add_argument(
         '--runs',
@@ -794,13 +801,26 @@ def main():
     else:
         print("\n[环境] 跳过 ArcGIS 环境信息 (arcpy 不可用)")
     
-    # Print configuration
-    settings.print_config()
+    scale_overrides = None
+    if args.scale_config_json:
+        try:
+            scale_overrides = json.loads(args.scale_config_json)
+            if not isinstance(scale_overrides, dict):
+                raise ValueError("scale config JSON must be an object")
+        except Exception as e:
+            print("\nERROR: Failed to parse --scale-config-json: {}".format(e))
+            return 1
 
     # Apply scale setting if specified
+    effective_scale = args.scale or settings.DATA_SCALE
+    settings.set_scale(effective_scale, scale_overrides)
     if args.scale:
-        settings.set_scale(args.scale)
         print("\n[信息] 数据规模已设置为: {}".format(args.scale.upper()))
+    if scale_overrides is not None:
+        print("\n[信息] 已应用自定义数据规模参数")
+
+    # Print configuration after scale overrides are applied
+    settings.print_config()
 
     # Propagate multiprocess worker count to benchmark classes.
     # The benchmark constructors read from settings at instantiation time.
@@ -822,8 +842,14 @@ def main():
                 settings.set_timestamped_dirs(timestamp, base_data_dir=base_data_dir)
                 output_dir = settings.DATA_DIR
                 print("\n[Info] Using timestamped root directory: {}".format(settings.DATA_DIR))
+            else:
+                settings.set_output_root(output_dir)
+                output_dir = settings.DATA_DIR
+                print("\n[Info] Using custom output root directory: {}".format(settings.DATA_DIR))
         except Exception:
-            pass  # If extraction fails, just use the provided output_dir
+            settings.set_output_root(output_dir)
+            output_dir = settings.DATA_DIR
+            print("\n[Info] Using custom output root directory: {}".format(settings.DATA_DIR))
     else:
         # Use timestamped directory in temp folder
         settings.set_timestamped_dirs()

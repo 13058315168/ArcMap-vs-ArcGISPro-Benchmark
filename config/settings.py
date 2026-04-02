@@ -6,6 +6,7 @@ Compatible with both Python 2.7 and Python 3.x
 from __future__ import print_function, division, absolute_import
 import os
 import sys
+import copy
 
 # ============================================================================
 # Test Configuration
@@ -231,6 +232,29 @@ def set_timestamped_dirs(timestamp=None, base_data_dir=None):
 
     return TIMESTAMPED_RESULTS_DIR
 
+
+def set_output_root(output_root):
+    """Set the benchmark output root to an exact directory."""
+    global TIMESTAMPED_RESULTS_DIR, RAW_RESULTS_DIR, TABLES_DIR, FIGURES_DIR, RESULTS_DIR
+    global DATA_DIR, DEFAULT_GDB_NAME, SCRATCH_WORKSPACE, CURRENT_TIMESTAMP
+
+    output_root = os.path.abspath(output_root)
+    RESULTS_DIR = output_root
+    TIMESTAMPED_RESULTS_DIR = output_root
+    RAW_RESULTS_DIR = os.path.join(output_root, 'data')
+    TABLES_DIR = output_root
+    FIGURES_DIR = output_root
+    DATA_DIR = output_root
+    CURRENT_TIMESTAMP = os.path.basename(output_root)
+    DEFAULT_GDB_NAME = 'benchmark_data_{}.gdb'.format(DATA_SCALE)
+    SCRATCH_WORKSPACE = os.path.join(output_root, 'scratch')
+
+    for dir_path in [RESULTS_DIR, RAW_RESULTS_DIR, TABLES_DIR, FIGURES_DIR, DATA_DIR, SCRATCH_WORKSPACE]:
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+    return RESULTS_DIR
+
 def reset_to_default_dirs():
     """Reset to default project-based results directories"""
     global TIMESTAMPED_RESULTS_DIR, RAW_RESULTS_DIR, TABLES_DIR, FIGURES_DIR, RESULTS_DIR
@@ -335,7 +359,7 @@ for category in TEST_CATEGORIES.values():
 # ============================================================================
 
 ENABLE_MEMORY_MONITORING = True
-MEMORY_SAMPLE_INTERVAL = 0.5  # seconds
+MEMORY_SAMPLE_INTERVAL = 0.1  # seconds, fine-grained enough for short GIS tasks
 
 # Progress heartbeat interval for long-running tasks.
 # Set to 0 or a negative value to disable heartbeat logs.
@@ -367,7 +391,7 @@ def cleanup_data():
         shutil.rmtree(DATA_DIR)
         print("Cleaned up: {}".format(DATA_DIR))
 
-def set_scale(scale):
+def set_scale(scale, scale_overrides=None):
     """Set data scale dynamically"""
     global DATA_SCALE, VECTOR_CONFIG, RASTER_CONFIG, DEFAULT_GDB_NAME
     
@@ -375,30 +399,47 @@ def set_scale(scale):
         raise ValueError("Invalid scale: {}. Must be one of: {}".format(scale, ALL_SCALES))
     
     DATA_SCALE = scale
-    
+
     # Update VECTOR_CONFIG
     if scale == 'tiny':
-        VECTOR_CONFIG = VECTOR_CONFIG_TINY
+        VECTOR_CONFIG = copy.deepcopy(VECTOR_CONFIG_TINY)
+        RASTER_CONFIG = copy.deepcopy(RASTER_CONFIG_TINY)
     elif scale == 'small':
-        VECTOR_CONFIG = VECTOR_CONFIG_SMALL
+        VECTOR_CONFIG = copy.deepcopy(VECTOR_CONFIG_SMALL)
+        RASTER_CONFIG = copy.deepcopy(RASTER_CONFIG_SMALL)
     elif scale == 'standard':
-        VECTOR_CONFIG = VECTOR_CONFIG_STANDARD
+        VECTOR_CONFIG = copy.deepcopy(VECTOR_CONFIG_STANDARD)
+        RASTER_CONFIG = copy.deepcopy(RASTER_CONFIG_STANDARD)
     elif scale == 'medium':
-        VECTOR_CONFIG = VECTOR_CONFIG_MEDIUM
+        VECTOR_CONFIG = copy.deepcopy(VECTOR_CONFIG_MEDIUM)
+        RASTER_CONFIG = copy.deepcopy(RASTER_CONFIG_MEDIUM)
     elif scale == 'large':
-        VECTOR_CONFIG = VECTOR_CONFIG_LARGE
-    
-    # Update RASTER_CONFIG
-    if scale == 'tiny':
-        RASTER_CONFIG = RASTER_CONFIG_TINY
-    elif scale == 'small':
-        RASTER_CONFIG = RASTER_CONFIG_SMALL
-    elif scale == 'standard':
-        RASTER_CONFIG = RASTER_CONFIG_STANDARD
-    elif scale == 'medium':
-        RASTER_CONFIG = RASTER_CONFIG_MEDIUM
-    elif scale == 'large':
-        RASTER_CONFIG = RASTER_CONFIG_LARGE
+        VECTOR_CONFIG = copy.deepcopy(VECTOR_CONFIG_LARGE)
+        RASTER_CONFIG = copy.deepcopy(RASTER_CONFIG_LARGE)
+
+    if isinstance(scale_overrides, dict) and scale_overrides:
+        if 'vector' in scale_overrides or 'raster' in scale_overrides:
+            vector_overrides = scale_overrides.get('vector', {}) or {}
+            raster_overrides = scale_overrides.get('raster', {}) or {}
+            if isinstance(vector_overrides, dict) and 'intersect_features' in vector_overrides:
+                legacy_value = vector_overrides.pop('intersect_features')
+                vector_overrides.setdefault('intersect_features_a', legacy_value)
+                vector_overrides.setdefault('intersect_features_b', legacy_value)
+        else:
+            vector_overrides = {}
+            raster_overrides = {}
+            for key, value in scale_overrides.items():
+                if key == 'intersect_features':
+                    vector_overrides['intersect_features_a'] = value
+                    vector_overrides['intersect_features_b'] = value
+                elif key in VECTOR_CONFIG:
+                    vector_overrides[key] = value
+                elif key in RASTER_CONFIG:
+                    raster_overrides[key] = value
+        if isinstance(vector_overrides, dict):
+            VECTOR_CONFIG.update(vector_overrides)
+        if isinstance(raster_overrides, dict):
+            RASTER_CONFIG.update(raster_overrides)
     
     # Update DEFAULT_GDB_NAME
     DEFAULT_GDB_NAME = 'benchmark_data_{}.gdb'.format(DATA_SCALE)
@@ -418,6 +459,8 @@ def print_config():
     print("Memory Monitoring: {}".format("Enabled" if ENABLE_MEMORY_MONITORING else "Disabled"))
     print("Data Directory: {}".format(DATA_DIR))
     print("Results Directory: {}".format(RESULTS_DIR))
+    print("Vector Config: {}".format(VECTOR_CONFIG))
+    print("Raster Config: {}".format(RASTER_CONFIG))
     print("=" * 60)
 
 if __name__ == '__main__':
