@@ -59,14 +59,14 @@ C:\Python27\ArcGIS10.8\python.exe test_setup.py
 ### 2. 单独运行某个版本
 
 ```bash
-C:\Python27\ArcGIS10.8\python.exe run_benchmarks.py --scale medium
-"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale medium
+C:\Python27\ArcGIS10.8\python.exe run_benchmarks.py --scale standard
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale standard
 ```
 
 ### 3. 启用开源库对比
 
 ```bash
-"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale medium --opensource
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale standard --opensource
 ```
 
 ### 4. 自动跑双版本
@@ -112,23 +112,25 @@ python analyze_results.py --results-dir C:\temp\arcgis_benchmark_data\<时间戳
 
 ## 数据规模
 
+当前梯度已经重新校准：**新版 `large` 的上限等于旧版 `medium` 的一半**，其余 `small / standard / medium` 也按这个上限重新排列。
+
 | 规模 | 预计时间 | 典型用途 | 典型磁盘需求 |
 |------|----------|----------|--------------|
-| `tiny` | 1-2 分钟 | 快速验证、调试 | 约 500MB |
-| `small` | 5-10 分钟 | 功能测试 | 约 2GB |
-| `standard` | 15-30 分钟 | 日常验证 | 约 5GB |
-| `medium` | 30-60 分钟 | 性能对比、论文主结果 | 约 10GB |
-| `large` | 2-4 小时 | 学术研究大样本 | 约 30GB |
+| `tiny` | 5-10 分钟 | 快速验证、调试 | 约 500MB |
+| `small` | 20-40 分钟 | 功能测试、小规模完整对比 | 约 2GB |
+| `standard` | 1-3 小时 | 常规完整运行（推荐） | 约 4-6GB |
+| `medium` | 3-8 小时 | 重负载完整对比 | 约 8-12GB |
+| `large` | 6-16 小时 | 压力测试 / 过夜运行 | 约 12-20GB |
 
 ### 关键参数概览
 
 | 规模 | 渔网行列 | 随机点 | 叠加要素 | 常量栅格尺寸 |
 |------|----------|--------|----------|--------------|
 | `tiny` | 50 × 50 | 1,000 | 10,000 + 10,000 | 500 |
-| `small` | 100 × 100 | 10,000 | 100,000 + 100,000 | 1,000 |
-| `standard` | 500 × 500 | 50,000 | 300,000 + 300,000 | 5,000 |
-| `medium` | 1000 × 1000 | 100,000 | 1,000,000 + 1,000,000 | 10,000 |
-| `large` | 5000 × 5000 | 500,000 | 5,000,000 + 5,000,000 | 30,000 |
+| `small` | 125 × 125 | 12,500 | 125,000 + 125,000 | 1,250 |
+| `standard` | 250 × 250 | 25,000 | 250,000 + 250,000 | 2,500 |
+| `medium` | 375 × 375 | 37,500 | 375,000 + 375,000 | 3,750 |
+| `large` | 500 × 500 | 50,000 | 500,000 + 500,000 | 5,000 |
 
 ## 输出目录结构
 
@@ -182,8 +184,8 @@ C:\temp\arcgis_benchmark_data\
 | 场景 | 建议内存 | 备注 |
 |------|----------|------|
 | `tiny` / `small` | 8GB | 验证与快速测试 |
-| `standard` / `medium` | 16GB | 推荐日常环境 |
-| `large` | 32GB 及以上 | 适合论文最终实验 |
+| `standard` | 16GB | 常规完整运行 |
+| `medium` / `large` | 32GB 及以上 | 重负载与过夜运行 |
 
 ## 项目结构
 
@@ -208,6 +210,7 @@ C:\temp\arcgis_benchmark_data\
 - 启动入口统一为现代 GUI，推荐使用 `启动工具.vbs`。
 - 文档统一为当前界面口径，不再描述旧版“五步向导”界面。
 - 结果目录统一为 `<时间戳>\<规模>\data\py2|py3|os` 布局。
+- 规模梯度已按“旧中型减半封顶”重新校准，避免 `medium` 继续失控。
 - GUI 支持多规模勾选、语言切换、字体缩放、日志保存/复制。
 - 三向对比报告与中文输出说明已同步完善。
 

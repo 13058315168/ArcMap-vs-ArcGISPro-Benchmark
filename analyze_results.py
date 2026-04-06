@@ -16,6 +16,7 @@ import argparse
 import platform
 import subprocess
 import glob
+import copy
 from datetime import datetime
 
 # Python 2/3 compatibility for file open
@@ -30,6 +31,96 @@ def open_text_file(filepath, mode):
 
 # Alias for CSV compatibility
 open_csv_file = open_text_file
+
+
+def _get_scale_configs(scale_name):
+    """Return configured vector/raster presets for a named scale"""
+    presets = {
+        'tiny': (settings.VECTOR_CONFIG_TINY, settings.RASTER_CONFIG_TINY),
+        'small': (settings.VECTOR_CONFIG_SMALL, settings.RASTER_CONFIG_SMALL),
+        'standard': (settings.VECTOR_CONFIG_STANDARD, settings.RASTER_CONFIG_STANDARD),
+        'medium': (settings.VECTOR_CONFIG_MEDIUM, settings.RASTER_CONFIG_MEDIUM),
+        'large': (settings.VECTOR_CONFIG_LARGE, settings.RASTER_CONFIG_LARGE)
+    }
+
+    vector_config, raster_config = presets.get(
+        (scale_name or '').lower(),
+        (settings.VECTOR_CONFIG, settings.RASTER_CONFIG)
+    )
+    return copy.deepcopy(vector_config), copy.deepcopy(raster_config)
+
+
+def _infer_scale_from_results_dir(results_dir):
+    """Infer data scale from benchmark geodatabase names under a result root"""
+    detected_scales = []
+
+    for dirpath, dirnames, _ in os.walk(results_dir):
+        for dirname in dirnames:
+            lower_name = dirname.lower()
+            if lower_name.startswith('benchmark_data_') and lower_name.endswith('.gdb'):
+                scale_name = lower_name[len('benchmark_data_'):-4]
+                if scale_name in ['tiny', 'small', 'standard', 'medium', 'large']:
+                    detected_scales.append(scale_name)
+
+    if not detected_scales:
+        return None
+
+    scale_counts = {}
+    for scale_name in detected_scales:
+        scale_counts[scale_name] = scale_counts.get(scale_name, 0) + 1
+
+    return sorted(scale_counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+
+
+def _infer_total_runs(results):
+    """Infer configured formal run count from exported benchmark statistics"""
+    counts = [r.get('total_runs') for r in (results or []) if r.get('success') and r.get('total_runs')]
+    if not counts:
+        return None
+
+    count_freq = {}
+    for count in counts:
+        count_freq[count] = count_freq.get(count, 0) + 1
+
+    return sorted(count_freq.items(), key=lambda item: (-item[1], item[0]))[0][0]
+
+
+def _build_report_context(results_dir, metadata_groups, results_py2, results_py3, results_os):
+    """Build report metadata from exported JSON metadata or on-disk inference"""
+    metadata_groups = metadata_groups or {}
+    py2_meta = metadata_groups.get('py2') or {}
+    py3_meta = metadata_groups.get('py3') or {}
+    os_meta = metadata_groups.get('os') or {}
+
+    data_scale = (
+        py3_meta.get('data_scale') or
+        py2_meta.get('data_scale') or
+        os_meta.get('data_scale') or
+        _infer_scale_from_results_dir(results_dir) or
+        settings.DATA_SCALE
+    )
+    vector_config = py3_meta.get('vector_config') or py2_meta.get('vector_config') or os_meta.get('vector_config')
+    raster_config = py3_meta.get('raster_config') or py2_meta.get('raster_config') or os_meta.get('raster_config')
+
+    if not isinstance(vector_config, dict) or not isinstance(raster_config, dict):
+        default_vector, default_raster = _get_scale_configs(data_scale)
+        if not isinstance(vector_config, dict):
+            vector_config = default_vector
+        if not isinstance(raster_config, dict):
+            raster_config = default_raster
+
+    py2_runs = py2_meta.get('test_runs') or _infer_total_runs(results_py2) or settings.TEST_RUNS
+    py3_runs = py3_meta.get('test_runs') or _infer_total_runs(results_py3) or settings.TEST_RUNS
+    os_runs = os_meta.get('test_runs') or _infer_total_runs(results_os) or py3_runs
+
+    return {
+        'data_scale': str(data_scale).lower(),
+        'vector_config': vector_config,
+        'raster_config': raster_config,
+        'py2_runs': py2_runs,
+        'py3_runs': py3_runs,
+        'os_runs': os_runs
+    }
 
 
 def _is_timestamp_name(name):
@@ -155,6 +246,11 @@ def load_results(results_dir):
     results_py2 = None
     results_py3 = None
     results_os = None
+    metadata_groups = {
+        'py2': {},
+        'py3': {},
+        'os': {}
+    }
 
     candidate_files = sorted(list(_iter_result_files(results_dir)))
 
@@ -165,6 +261,9 @@ def load_results(results_dir):
             data = json.load(f)
 
         results = data.get('results', [])
+        metadata = data.get('metadata', {})
+        if not isinstance(metadata, dict):
+            metadata = {}
         lower_name = filename.lower()
 
         # Determine Python version from filename or content
@@ -172,6 +271,8 @@ def load_results(results_dir):
             if results_py2 is None:
                 results_py2 = []
             results_py2.extend(results)
+            if metadata:
+                metadata_groups['py2'].update(metadata)
             print("Loaded Python 2.7 results from: {}".format(filename))
         elif 'py3' in lower_name and 'benchmark_results_os' not in lower_name and 'opensource' not in lower_name:
             # Check if it's a dedicated open-source results file
@@ -184,16 +285,22 @@ def load_results(results_dir):
                 if results_py3 is None:
                     results_py3 = []
                 results_py3.extend(py3_results)
+                if metadata:
+                    metadata_groups['py3'].update(metadata)
                 print("Loaded Python 3.x results from: {} ({} tests)".format(filename, len(py3_results)))
             if os_results:
                 if results_os is None:
                     results_os = []
                 results_os.extend(os_results)
+                if metadata:
+                    metadata_groups['os'].update(metadata)
                 print("Loaded Open-Source results from: {} ({} tests)".format(filename, len(os_results)))
         elif 'benchmark_results_os' in lower_name or 'opensource' in lower_name or lower_name.endswith('_os.json'):
             if results_os is None:
                 results_os = []
             results_os.extend(results)
+            if metadata:
+                metadata_groups['os'].update(metadata)
             print("Loaded Open-Source results from: {}".format(filename))
         else:
             # Try to detect from content
@@ -203,6 +310,8 @@ def load_results(results_dir):
                     if results_py2 is None:
                         results_py2 = []
                     results_py2.extend(results)
+                    if metadata:
+                        metadata_groups['py2'].update(metadata)
                     print("Loaded Python 2.7 results from: {}".format(filename))
                 elif any(r.get('test_name', '').endswith('_OS') for r in results):
                     # Split results (OS tests have _OS suffix)
@@ -212,19 +321,25 @@ def load_results(results_dir):
                         if results_py3 is None:
                             results_py3 = []
                         results_py3.extend(new_py3_results)
+                        if metadata:
+                            metadata_groups['py3'].update(metadata)
                         print("Loaded Python 3.x results from: {}".format(filename))
                     if new_os_results:
                         if results_os is None:
                             results_os = []
                         results_os.extend(new_os_results)
+                        if metadata:
+                            metadata_groups['os'].update(metadata)
                         print("Loaded Open-Source results from: {}".format(filename))
                 else:
                     if results_py3 is None:
                         results_py3 = []
                     results_py3.extend(results)
+                    if metadata:
+                        metadata_groups['py3'].update(metadata)
                     print("Loaded Python 3.x results from: {}".format(filename))
     
-    return results_py2, results_py3, results_os
+    return results_py2, results_py3, results_os, metadata_groups
 
 
 def create_comparison(results_py2, results_py3, results_os=None):
@@ -543,9 +658,16 @@ def extract_multiprocess_data(results_py2, results_py3, results_os=None, compari
     return mp_data
 
 
-def generate_markdown_table(comparison, stats, results_py2=None, results_py3=None, has_os=False, results_os=None):
+def generate_markdown_table(comparison, stats, results_py2=None, results_py3=None, has_os=False, results_os=None, report_context=None):
     """生成全面优化的 Markdown 对比报告（支持三向对比）"""
     lines = []
+    report_context = report_context or {}
+    data_scale = str(report_context.get('data_scale') or settings.DATA_SCALE).upper()
+    vector_config = report_context.get('vector_config') or settings.VECTOR_CONFIG
+    raster_config = report_context.get('raster_config') or settings.RASTER_CONFIG
+    py2_runs = report_context.get('py2_runs', settings.TEST_RUNS)
+    py3_runs = report_context.get('py3_runs', settings.TEST_RUNS)
+    os_runs = report_context.get('os_runs', py3_runs)
     
     # 获取系统信息
     sys_info = get_system_info()
@@ -602,7 +724,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         
         lines.append("| **总体优胜者** | **{}** |".format(winner))
         lines.append("| 测试通过率 | {}/{} (100%) |".format(stats['total_tests'], stats['total_tests']))
-        lines.append("| 数据规模 | {} |".format(settings.DATA_SCALE.upper()))
+        lines.append("| 数据规模 | {} |".format(data_scale))
         lines.append("")
         
         lines.append("## 1.2 三向对比概览")
@@ -645,7 +767,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("| **总体优胜者** | **{}** |".format(winner))
         lines.append("| 性能优势 | {:.1f}% |".format((winner_speed - 1) * 100))
         lines.append("| 测试通过率 | {}/{} (100%) |".format(stats['total_tests'], stats['total_tests']))
-        lines.append("| 数据规模 | {} |".format(settings.DATA_SCALE.upper()))
+        lines.append("| 数据规模 | {} |".format(data_scale))
         lines.append("")
         
         lines.append("## 1.2 版本对比概览")
@@ -697,7 +819,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("| ArcGIS版本 | {} | {} | N/A |".format(py2_arcgis, py3_arcgis))
         lines.append("| Python版本 | 2.7.16 | 3.13.7 | 3.13.7 |")
         lines.append("| 核心库 | arcpy | arcpy | GeoPandas + Rasterio |")
-        lines.append("| 测试循环次数 | {} | {} | {} |".format(settings.TEST_RUNS, settings.TEST_RUNS, settings.TEST_RUNS))
+        lines.append("| 测试循环次数 | {} | {} | {} |".format(py2_runs, py3_runs, os_runs))
     else:
         lines.append("| 组件 | Python 2.7 | Python 3.x |")
         lines.append("|------|------------|------------|")
@@ -718,7 +840,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         
         lines.append("| ArcGIS版本 | {} | {} |".format(py2_arcgis, py3_arcgis))
         lines.append("| Python版本 | 2.7.16 | 3.13.7 |")
-        lines.append("| 测试循环次数 | {} | {} |".format(settings.TEST_RUNS, settings.TEST_RUNS))
+        lines.append("| 测试循环次数 | {} | {} |".format(py2_runs, py3_runs))
     lines.append("")
     
     lines.append("## 2.3 测试数据规模")
@@ -726,32 +848,32 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     lines.append("| 数据类型 | 规模 | 说明 |")
     lines.append("|----------|------|------|")
     lines.append("| 向量 - 渔网多边形 | {:,} | {}×{}网格 |".format(
-        settings.VECTOR_CONFIG['fishnet_rows'] * settings.VECTOR_CONFIG['fishnet_cols'],
-        settings.VECTOR_CONFIG['fishnet_rows'],
-        settings.VECTOR_CONFIG['fishnet_cols']
+        vector_config['fishnet_rows'] * vector_config['fishnet_cols'],
+        vector_config['fishnet_rows'],
+        vector_config['fishnet_cols']
     ))
-    lines.append("| 向量 - 随机点 | {:,} | 全球范围分布 |".format(settings.VECTOR_CONFIG['random_points']))
-    lines.append("| 向量 - 缓冲区测试点 | {:,} | 用于 V3 测试 |".format(settings.VECTOR_CONFIG['buffer_points']))
-    lines.append("| 向量 - 叠加分析图层 A | {:,} | 双图层叠加 |".format(settings.VECTOR_CONFIG['intersect_features_a']))
-    lines.append("| 向量 - 叠加分析图层 B | {:,} | 双图层叠加 |".format(settings.VECTOR_CONFIG['intersect_features_b']))
+    lines.append("| 向量 - 随机点 | {:,} | 全球范围分布 |".format(vector_config['random_points']))
+    lines.append("| 向量 - 缓冲区测试点 | {:,} | 用于 V3 测试 |".format(vector_config['buffer_points']))
+    lines.append("| 向量 - 叠加分析图层 A | {:,} | 双图层叠加 |".format(vector_config['intersect_features_a']))
+    lines.append("| 向量 - 叠加分析图层 B | {:,} | 双图层叠加 |".format(vector_config['intersect_features_b']))
     lines.append("| 向量 - 空间连接点 | {:,}点 | 点面关联 |".format(
-        settings.VECTOR_CONFIG['spatial_join_points'],
+        vector_config['spatial_join_points'],
     ))
-    lines.append("| 向量 - 空间连接面 | {:,}面 | 点面关联 |".format(settings.VECTOR_CONFIG['spatial_join_polygons']))
-    lines.append("| 向量 - 字段计算 | {:,}条 | 属性表计算 |".format(settings.VECTOR_CONFIG['calculate_field_records']))
+    lines.append("| 向量 - 空间连接面 | {:,}面 | 点面关联 |".format(vector_config['spatial_join_polygons']))
+    lines.append("| 向量 - 字段计算 | {:,}条 | 属性表计算 |".format(vector_config['calculate_field_records']))
     lines.append("| 栅格 - 常量栅格 | {:,}×{:,} | 基准栅格 |".format(
-        settings.RASTER_CONFIG['constant_raster_size'],
-        settings.RASTER_CONFIG['constant_raster_size']
+        raster_config['constant_raster_size'],
+        raster_config['constant_raster_size']
     ))
     lines.append("| 栅格 - 重采样源栅格 | {:,}×{:,} | R2 源数据 |".format(
-        settings.RASTER_CONFIG['resample_source_size'],
-        settings.RASTER_CONFIG['resample_source_size']
+        raster_config['resample_source_size'],
+        raster_config['resample_source_size']
     ))
     lines.append("| 栅格 - 重采样目标栅格 | {:,}×{:,} | R2 目标数据 |".format(
-        settings.RASTER_CONFIG['resample_target_size'],
-        settings.RASTER_CONFIG['resample_target_size']
+        raster_config['resample_target_size'],
+        raster_config['resample_target_size']
     ))
-    lines.append("| 栅格 - 裁剪比例 | {} | R3 裁剪范围 |".format("{:.0%}".format(settings.RASTER_CONFIG['clip_ratio'])))
+    lines.append("| 栅格 - 裁剪比例 | {} | R3 裁剪范围 |".format("{:.0%}".format(raster_config['clip_ratio'])))
     lines.append("")
     
     # ==================== 3. 单线程性能报告 ====================
@@ -1472,7 +1594,7 @@ def generate_csv(comparison, output_path):
     return output_path
 
 
-def save_outputs(comparison, stats, output_dir, results_py2=None, results_py3=None, has_os=False, results_os=None):
+def save_outputs(comparison, stats, output_dir, results_py2=None, results_py3=None, has_os=False, results_os=None, report_context=None):
     """Save all output formats (support 3-way comparison)"""
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -1480,7 +1602,7 @@ def save_outputs(comparison, stats, output_dir, results_py2=None, results_py3=No
     saved_files = {}
     
     # Markdown
-    md_content = generate_markdown_table(comparison, stats, results_py2, results_py3, has_os, results_os)
+    md_content = generate_markdown_table(comparison, stats, results_py2, results_py3, has_os, results_os, report_context)
     md_content = md_content.replace('#N/A', '-').replace('N/A', '-')
     md_path = os.path.join(output_dir, "comparison_report.md")
     with open_text_file(md_path, 'w') as f:
@@ -1508,6 +1630,7 @@ def save_outputs(comparison, stats, output_dir, results_py2=None, results_py3=No
         json.dump({
             'comparison': comparison,
             'statistics': stats,
+            'report_context': report_context or {},
             'generated': datetime.now().isoformat()
         }, f, indent=2)
     saved_files['json'] = json_path
@@ -1531,7 +1654,7 @@ def main():
     print("")
     
     # Load results (including open-source)
-    results_py2, results_py3, results_os = load_results(args.results_dir)
+    results_py2, results_py3, results_os, metadata_groups = load_results(args.results_dir)
     
     # Check if we have open-source results
     has_os = results_os is not None and len(results_os) > 0
@@ -1553,6 +1676,14 @@ def main():
     
     if has_os:
         print("\n[INFO] 检测到开源库测试结果，将生成三向对比报告")
+
+    report_context = _build_report_context(
+        args.results_dir,
+        metadata_groups,
+        results_py2,
+        results_py3,
+        results_os
+    )
     
     # Create comparison
     print("\nCreating comparison...")
@@ -1593,7 +1724,16 @@ def main():
     
     # Save outputs
     print("\nSaving output files...")
-    saved_files = save_outputs(comparison, stats, args.output_dir, results_py2, results_py3, has_os, results_os)
+    saved_files = save_outputs(
+        comparison,
+        stats,
+        args.output_dir,
+        results_py2,
+        results_py3,
+        has_os,
+        results_os,
+        report_context
+    )
     
     print("\n" + "=" * 70)
     print("Analysis Complete")

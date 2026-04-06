@@ -94,7 +94,7 @@ python benchmark_gui_modern.py
 2. 检查 Python 2.7 与 Python 3.x 路径。
 3. 如需开源库对比，先确认状态为“已安装，可启用”。
 4. 选择 `tiny` 规模做一次快速验证。
-5. 确认报告文件生成正常后，再跑 `medium` 或 `large`。
+5. 确认报告文件生成正常后，优先跑 `standard`；`medium` 和 `large` 更适合长时间重负载测试。
 
 ### 日常使用
 

@@ -44,81 +44,81 @@ RASTER_CONFIG_TINY = {
 
 # Small Scale (quick test for debugging)
 VECTOR_CONFIG_SMALL = {
-    'fishnet_rows': 100,
-    'fishnet_cols': 100,
-    'random_points': 10000,
-    'buffer_points': 10000,
-    'intersect_features_a': 100000,
-    'intersect_features_b': 100000,
-    'spatial_join_points': 50000,
-    'spatial_join_polygons': 1000,
-    'calculate_field_records': 100000,
+    'fishnet_rows': 125,
+    'fishnet_cols': 125,
+    'random_points': 12500,
+    'buffer_points': 12500,
+    'intersect_features_a': 125000,
+    'intersect_features_b': 125000,
+    'spatial_join_points': 62500,
+    'spatial_join_polygons': 1250,
+    'calculate_field_records': 125000,
 }
 
 RASTER_CONFIG_SMALL = {
-    'constant_raster_size': 1000,  # pixels (square)
-    'resample_source_size': 1000,
-    'resample_target_size': 500,
+    'constant_raster_size': 1250,  # pixels (square)
+    'resample_source_size': 1250,
+    'resample_target_size': 625,
     'clip_ratio': 0.5,
 }
 
-# Standard Scale (between small and medium, for moderate testing)
+# Standard Scale (balanced, for regular benchmark runs)
 VECTOR_CONFIG_STANDARD = {
+    'fishnet_rows': 250,
+    'fishnet_cols': 250,  # 250×250=62,500 polygons
+    'random_points': 25000,
+    'buffer_points': 25000,
+    'intersect_features_a': 250000,
+    'intersect_features_b': 250000,
+    'spatial_join_points': 125000,
+    'spatial_join_polygons': 2500,
+    'calculate_field_records': 250000,
+}
+
+RASTER_CONFIG_STANDARD = {
+    'constant_raster_size': 2500,  # pixels (square)
+    'resample_source_size': 2500,
+    'resample_target_size': 1250,
+    'clip_ratio': 0.5,
+}
+
+# Medium Scale (heavier than standard but still intended to be runnable)
+VECTOR_CONFIG_MEDIUM = {
+    'fishnet_rows': 375,
+    'fishnet_cols': 375,  # 375×375=140,625 polygons
+    'random_points': 37500,
+    'buffer_points': 37500,
+    'intersect_features_a': 375000,
+    'intersect_features_b': 375000,
+    'spatial_join_points': 187500,
+    'spatial_join_polygons': 3750,
+    'calculate_field_records': 375000,
+}
+
+RASTER_CONFIG_MEDIUM = {
+    'constant_raster_size': 3750,  # pixels (square)
+    'resample_source_size': 3750,
+    'resample_target_size': 1875,
+    'clip_ratio': 0.5,
+}
+
+# Large Scale (capped at half of the legacy medium profile)
+VECTOR_CONFIG_LARGE = {
     'fishnet_rows': 500,
     'fishnet_cols': 500,  # 500×500=250,000 polygons
     'random_points': 50000,
     'buffer_points': 50000,
-    'intersect_features_a': 300000,
-    'intersect_features_b': 300000,
-    'spatial_join_points': 200000,
+    'intersect_features_a': 500000,
+    'intersect_features_b': 500000,
+    'spatial_join_points': 250000,
     'spatial_join_polygons': 5000,
-    'calculate_field_records': 300000,
-}
-
-RASTER_CONFIG_STANDARD = {
-    'constant_raster_size': 5000,  # pixels (square)
-    'resample_source_size': 5000,
-    'resample_target_size': 2500,
-    'clip_ratio': 0.5,
-}
-
-# Medium Scale (original - 1M records for intensive testing)
-VECTOR_CONFIG_MEDIUM = {
-    'fishnet_rows': 1000,
-    'fishnet_cols': 1000,  # 1000×1000=1,000,000 polygons
-    'random_points': 100000,
-    'buffer_points': 100000,
-    'intersect_features_a': 1000000,
-    'intersect_features_b': 1000000,
-    'spatial_join_points': 500000,
-    'spatial_join_polygons': 10000,  # Use independent grid, not full fishnet
-    'calculate_field_records': 1000000,
-}
-
-RASTER_CONFIG_MEDIUM = {
-    'constant_raster_size': 10000,  # pixels (square)
-    'resample_source_size': 10000,
-    'resample_target_size': 5000,
-    'clip_ratio': 0.5,
-}
-
-# Large Scale (for academic paper)
-VECTOR_CONFIG_LARGE = {
-    'fishnet_rows': 5000,
-    'fishnet_cols': 5000,
-    'random_points': 500000,
-    'buffer_points': 500000,
-    'intersect_features_a': 5000000,
-    'intersect_features_b': 5000000,
-    'spatial_join_points': 2000000,
-    'spatial_join_polygons': 50000,
-    'calculate_field_records': 5000000,
+    'calculate_field_records': 500000,
 }
 
 RASTER_CONFIG_LARGE = {
-    'constant_raster_size': 30000,  # pixels (square)
-    'resample_source_size': 30000,
-    'resample_target_size': 15000,
+    'constant_raster_size': 5000,  # pixels (square)
+    'resample_source_size': 5000,
+    'resample_target_size': 2500,
     'clip_ratio': 0.5,
 }
 

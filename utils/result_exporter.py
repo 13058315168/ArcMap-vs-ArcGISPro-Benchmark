@@ -39,7 +39,7 @@ class ResultExporter(object):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
     
-    def export_json(self, results, filename):
+    def export_json(self, results, filename, metadata=None):
         """Export results to JSON file"""
         filepath = os.path.join(self.output_dir, filename)
         
@@ -51,11 +51,12 @@ class ResultExporter(object):
                 sys.version_info[1],
                 sys.version_info[2]
             ),
+            'metadata': metadata or {},
             'results': results
         }
         
-        with open(filepath, 'w') as f:
-            json.dump(export_data, f, indent=2)
+        with open_text_file(filepath, 'w') as f:
+            json.dump(export_data, f, indent=2, ensure_ascii=False)
         
         return filepath
     

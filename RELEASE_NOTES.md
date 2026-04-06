@@ -12,6 +12,7 @@
 - GUI 已支持多规模勾选、进度条、ETA、日志保存/复制、结果目录直开。
 - 开源库对比流程已纳入主界面，支持自动探测与安装。
 - 结果目录统一为 `<时间戳>\<规模>\data\py2|py3|os` 结构。
+- 数据规模梯度已重新校准，`large` 上限调整为旧版 `medium` 的一半。
 - 报告输出统一为 `comparison_report.md / comparison_table.tex / comparison_data.csv / comparison_data.json`。
 - README、快速开始、GUI 使用说明及扩展研究文档已按当前实现同步更新。
 

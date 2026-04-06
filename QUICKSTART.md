@@ -62,8 +62,8 @@ C:\Python27\ArcGIS10.8\python.exe test_setup.py
 ### 手动跑双版本
 
 ```bash
-C:\Python27\ArcGIS10.8\python.exe run_benchmarks.py --scale medium
-"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale medium
+C:\Python27\ArcGIS10.8\python.exe run_benchmarks.py --scale standard
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale standard
 python analyze_results.py --results-dir C:\temp\arcgis_benchmark_data\<时间戳>\<规模> --output-dir C:\temp\arcgis_benchmark_data\<时间戳>\<规模>
 ```
 
@@ -77,18 +77,20 @@ python scripts\run_both_versions.py
 
 ```bash
 "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" -m pip install geopandas rasterio shapely pyogrio numpy
-"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale medium --opensource
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" run_benchmarks.py --scale standard --opensource
 ```
 
 ## 常用参数
 
 ```bash
-python run_benchmarks.py --scale medium
-python run_benchmarks.py --scale medium --opensource
-python run_benchmarks.py --scale medium --multiprocess --mp-workers 4
+python run_benchmarks.py --scale standard
+python run_benchmarks.py --scale standard --opensource
+python run_benchmarks.py --scale standard --multiprocess --mp-workers 4
 python run_benchmarks.py --category vector --scale small
-python run_benchmarks.py --scale medium --generate-data
+python run_benchmarks.py --scale standard --generate-data
 ```
+
+当前建议先从 `standard` 起跑；`medium` 和 `large` 更适合长时间重负载测试。
 
 ## 常见问题
 

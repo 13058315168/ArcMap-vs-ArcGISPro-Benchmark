@@ -12,6 +12,7 @@ import sys
 import os
 import argparse
 import json
+import copy
 
 # Add project directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -328,7 +329,19 @@ def run_benchmarks(benchmarks, num_runs, warmup_runs):
     return results
 
 
-def save_results(results, output_dir, result_tag=None):
+def build_export_metadata(result_tag, num_runs, warmup_runs):
+    """Build metadata saved alongside grouped benchmark result files"""
+    return {
+        'result_tag': result_tag,
+        'data_scale': settings.DATA_SCALE,
+        'test_runs': num_runs,
+        'warmup_runs': warmup_runs,
+        'vector_config': copy.deepcopy(settings.VECTOR_CONFIG),
+        'raster_config': copy.deepcopy(settings.RASTER_CONFIG)
+    }
+
+
+def save_results(results, output_dir, result_tag=None, metadata=None):
     """Save results to files"""
     exporter = ResultExporter(output_dir)
     
@@ -336,6 +349,9 @@ def save_results(results, output_dir, result_tag=None):
     if not result_tag:
         result_tag = "py{}".format(sys.version_info[0])
     result_tag = result_tag.lower()
+    export_metadata = metadata or {}
+    if not export_metadata.get('result_tag'):
+        export_metadata['result_tag'] = result_tag
     if result_tag == 'os':
         title = "Open-Source Benchmark Results"
     else:
@@ -344,7 +360,8 @@ def save_results(results, output_dir, result_tag=None):
     # Export to JSON
     json_file = exporter.export_json(
         results,
-        "benchmark_results_{}.json".format(result_tag)
+        "benchmark_results_{}.json".format(result_tag),
+        metadata=export_metadata
     )
     print("\nJSON results saved to: {}".format(json_file))
     
@@ -902,7 +919,12 @@ def main():
             ))
 
         print("\nSaving results for group: {}".format(group_name))
-        save_results(group_results, group_output_dir, result_tag=group_name)
+        save_results(
+            group_results,
+            group_output_dir,
+            result_tag=group_name,
+            metadata=build_export_metadata(group_name, num_runs, warmup_runs)
+        )
         return group_results
 
     all_results = []
@@ -975,7 +997,11 @@ def main():
     
     # Save results
     print("\nSaving results...")
-    output_files = save_results(results, output_dir)
+    output_files = save_results(
+        results,
+        output_dir,
+        metadata=build_export_metadata("py{}".format(sys.version_info[0]), num_runs, warmup_runs)
+    )
     
     print("\n" + "=" * 70)
     print("Benchmark Complete")
