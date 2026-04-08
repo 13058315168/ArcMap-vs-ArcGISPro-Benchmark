@@ -43,7 +43,6 @@ class ResultExporter(object):
         """Export results to JSON file"""
         filepath = os.path.join(self.output_dir, filename)
         
-        # Add metadata
         export_data = {
             'export_timestamp': datetime.now().isoformat(),
             'python_version': "{}.{}.{}".format(
@@ -55,8 +54,15 @@ class ResultExporter(object):
             'results': results
         }
         
-        with open_text_file(filepath, 'w') as f:
-            json.dump(export_data, f, indent=2, ensure_ascii=False)
+        json_text = json.dumps(export_data, indent=2, ensure_ascii=False)
+        if sys.version_info[0] >= 3:
+            with open_text_file(filepath, 'w') as f:
+                f.write(json_text)
+        else:
+            if not isinstance(json_text, unicode):
+                json_text = json_text.decode('utf-8')
+            with io.open(filepath, 'w', encoding='utf-8') as f:
+                f.write(json_text)
         
         return filepath
     

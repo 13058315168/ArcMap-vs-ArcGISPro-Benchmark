@@ -121,13 +121,15 @@ results\tables\
 
 ## 推荐参数
 
-桌面窗口测试建议先用较小规模：
+桌面窗口测试建议先用 `small` 起步；这五档规模的含义与主 README 一致。
 
 ```python
 DATA_SCALE = 'small'
 TEST_RUNS = 1
 WARMUP_RUNS = 0
 ```
+
+其中 `standard` 仍是主流程推荐，`medium` / `large` 更适合更长时间的重负载测试。
 
 这样更适合人工操作，也能减少 ArcMap 内存压力。
 

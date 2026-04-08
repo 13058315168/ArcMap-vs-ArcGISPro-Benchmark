@@ -33,6 +33,8 @@
 
 ## 推荐参数
 
+这套扩展研究沿用主 README 的五档规模定义；如果只是跑窗口对比，建议先从 `small` 起步，主流程仍推荐 `standard`。
+
 - `DATA_SCALE = 'small'`
 - `TEST_RUNS = 1`
 - `WARMUP_RUNS = 0`

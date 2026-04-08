@@ -126,6 +126,44 @@ class MultiprocessBenchmark(BaseBenchmark):
     def run_multiprocess(self, num_workers):
         raise NotImplementedError("Subclasses must implement run_multiprocess()")
 
+    def _create_run_workspace(self, prefix):
+        """Create an isolated workspace for a single benchmark iteration."""
+        base_dir = getattr(self, 'temp_dir', None)
+        if base_dir and not os.path.exists(base_dir):
+            os.makedirs(base_dir)
+        if base_dir:
+            return tempfile.mkdtemp(prefix=prefix, dir=base_dir)
+        return tempfile.mkdtemp(prefix=prefix)
+
+    def _safe_delete_path(self, path):
+        """Delete a geoprocessing artifact or filesystem path if it exists."""
+        if not path:
+            return
+        try:
+            if arcpy and arcpy.Exists(path):
+                arcpy.Delete_management(path)
+                return
+        except Exception:
+            pass
+        try:
+            if os.path.isdir(path):
+                shutil.rmtree(path, ignore_errors=True)
+            elif os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass
+
+    def _create_run_gdb(self, workspace, gdb_name):
+        """Create a temporary file geodatabase inside a workspace."""
+        gdb_path = os.path.join(workspace, gdb_name)
+        if arcpy and arcpy.Exists(gdb_path):
+            try:
+                arcpy.Delete_management(gdb_path)
+            except Exception:
+                pass
+        arcpy.CreateFileGDB_management(workspace, gdb_name)
+        return gdb_path
+
 
 class MP_V1_CreateFishnet(MultiprocessBenchmark):
     """Multiprocess benchmark: Create Fishnet"""
@@ -483,55 +521,64 @@ class MP_V3_Buffer(MultiprocessBenchmark):
         total_count = int(arcpy.GetCount_management(self.input_fc)[0])
         count_per_worker = total_count // num_workers
         remainder = total_count % num_workers
-        
-        partition_outputs = []
-        oid_start = 1
-        oid_field = get_oid_field(self.input_fc)
-        
-        for worker_id in range(num_workers):
-            extra = 1 if worker_id < remainder else 0
-            oid_count = count_per_worker + extra
-            oid_end = oid_start + oid_count - 1
-            
-            output_path = os.path.join(self.temp_dir, "buffer_w%d.shp" % worker_id)
-            
-            try:
-                # Select by OID using correct field name
-                where_clause = "%s >= %d AND %s <= %d" % (oid_field, oid_start, oid_field, oid_end)
-                temp_layer = "buf_lyr_%d" % worker_id
-                arcpy.MakeFeatureLayer_management(self.input_fc, temp_layer, where_clause)
-                
-                arcpy.Buffer_analysis(
-                    in_features=temp_layer,
-                    out_feature_class=output_path,
-                    buffer_distance_or_field=self.buffer_distance,
-                    line_side="FULL",
-                    line_end_type="ROUND",
-                    dissolve_option="NONE"
-                )
-                
-                arcpy.Delete_management(temp_layer)
-                partition_outputs.append(output_path)
-            except Exception as e:
-                print("    Worker %d failed: %s" % (worker_id, str(e)[:50]))
-            
-            oid_start = oid_end + 1
-        
-        if not partition_outputs:
-            raise RuntimeError("All partitions failed")
-        
-        # Merge
-        if arcpy.Exists(self.output_fc):
-            arcpy.Delete_management(self.output_fc)
-        
-        arcpy.Merge_management(partition_outputs, self.output_fc)
-        
-        count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return {
-            'features_created': count,
-            'mode': 'multiprocess',
-            'workers': num_workers
-        }
+        run_workspace = self._create_run_workspace("mp_buffer_run_")
+        run_gdb = self._create_run_gdb(run_workspace, "mp_buffer_run.gdb")
+        run_token = "%d_%d" % (int(time.time() * 1000000), os.getpid())
+
+        try:
+            partition_outputs = []
+            oid_start = 1
+            oid_field = get_oid_field(self.input_fc)
+
+            for worker_id in range(num_workers):
+                extra = 1 if worker_id < remainder else 0
+                oid_count = count_per_worker + extra
+                if oid_count <= 0:
+                    break
+                oid_end = oid_start + oid_count - 1
+
+                output_path = os.path.join(run_gdb, "buffer_w%d" % worker_id)
+                temp_layer = "buf_lyr_%s_%d" % (run_token, worker_id)
+
+                try:
+                    # Select by OID using correct field name
+                    where_clause = "%s >= %d AND %s <= %d" % (oid_field, oid_start, oid_field, oid_end)
+                    arcpy.MakeFeatureLayer_management(self.input_fc, temp_layer, where_clause)
+
+                    self._safe_delete_path(output_path)
+                    arcpy.Buffer_analysis(
+                        in_features=temp_layer,
+                        out_feature_class=output_path,
+                        buffer_distance_or_field=self.buffer_distance,
+                        line_side="FULL",
+                        line_end_type="ROUND",
+                        dissolve_option="NONE"
+                    )
+
+                    partition_outputs.append(output_path)
+                except Exception as e:
+                    print("    Worker %d failed: %s" % (worker_id, str(e)[:50]))
+                finally:
+                    self._safe_delete_path(temp_layer)
+
+                oid_start = oid_end + 1
+
+            if not partition_outputs:
+                raise RuntimeError("All partitions failed")
+
+            # Merge
+            self._safe_delete_path(self.output_fc)
+            arcpy.Merge_management(partition_outputs, self.output_fc)
+
+            count = int(arcpy.GetCount_management(self.output_fc)[0])
+            return {
+                'features_created': count,
+                'mode': 'multiprocess',
+                'workers': num_workers
+            }
+        finally:
+            if run_workspace and os.path.exists(run_workspace):
+                shutil.rmtree(run_workspace, ignore_errors=True)
 
 
 class MP_V4_Intersect(MultiprocessBenchmark):
@@ -593,69 +640,85 @@ class MP_V4_Intersect(MultiprocessBenchmark):
         if arcpy.Exists(self.output_fc):
             arcpy.Delete_management(self.output_fc)
         
-        arcpy.Intersect_analysis(
-            in_features=[self.input_a, self.input_b],
-            out_feature_class=self.output_fc,
-            join_attributes="ALL",
-            output_type="INPUT"
-        )
-        
-        count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return {'features_created': count, 'mode': 'single'}
+        try:
+            arcpy.Intersect_analysis(
+                in_features=[self.input_a, self.input_b],
+                out_feature_class=self.output_fc,
+                join_attributes="ALL",
+                output_type="INPUT"
+            )
+
+            count = int(arcpy.GetCount_management(self.output_fc)[0])
+            return {'features_created': count, 'mode': 'single'}
+        except Exception as direct_error:
+            print("    Direct intersect failed, falling back to partitioned intersect: %s" % str(direct_error)[:80])
+            return self._run_partitioned_intersect(max(2, min(self.num_workers, 4)), mode_label="single_fallback")
     
     def run_multiprocess(self, num_workers):
-        # For intersect, we divide input A by OID and intersect each part with B
+        return self._run_partitioned_intersect(num_workers, mode_label="multiprocess")
+
+    def _run_partitioned_intersect(self, num_workers, mode_label="multiprocess"):
+        """Intersect by OID partitions and clip B to each chunk extent."""
         total_count = int(arcpy.GetCount_management(self.input_a)[0])
         count_per_worker = total_count // num_workers
         remainder = total_count % num_workers
-        
-        partition_outputs = []
-        oid_start = 1
         oid_field = get_oid_field(self.input_a)
-        
-        for worker_id in range(num_workers):
-            extra = 1 if worker_id < remainder else 0
-            oid_count = count_per_worker + extra
-            oid_end = oid_start + oid_count - 1
-            
-            output_path = os.path.join(self.temp_dir, "intersect_w%d.shp" % worker_id)
-            
-            try:
-                # Select subset of A using correct OID field
-                where_clause = "%s >= %d AND %s <= %d" % (oid_field, oid_start, oid_field, oid_end)
-                temp_a = os.path.join(self.temp_dir, "temp_a_%d.shp" % worker_id)
-                
-                arcpy.Select_analysis(self.input_a, temp_a, where_clause)
-                
-                arcpy.Intersect_analysis(
-                    in_features=[temp_a, self.input_b],
-                    out_feature_class=output_path,
-                    join_attributes="ALL",
-                    output_type="INPUT"
-                )
-                
-                arcpy.Delete_management(temp_a)
-                partition_outputs.append(output_path)
-            except Exception as e:
-                print("    Worker %d failed: %s" % (worker_id, str(e)[:50]))
-            
-            oid_start = oid_end + 1
-        
-        if not partition_outputs:
-            raise RuntimeError("All partitions failed")
-        
-        # Merge
-        if arcpy.Exists(self.output_fc):
-            arcpy.Delete_management(self.output_fc)
-        
-        arcpy.Merge_management(partition_outputs, self.output_fc)
-        
-        count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return {
-            'features_created': count,
-            'mode': 'multiprocess',
-            'workers': num_workers
-        }
+        run_workspace = self._create_run_workspace("mp_intersect_run_")
+        run_gdb = self._create_run_gdb(run_workspace, "mp_intersect_run.gdb")
+
+        try:
+            partition_outputs = []
+            oid_start = 1
+
+            for worker_id in range(num_workers):
+                extra = 1 if worker_id < remainder else 0
+                oid_count = count_per_worker + extra
+                if oid_count <= 0:
+                    break
+                oid_end = oid_start + oid_count - 1
+
+                output_path = os.path.join(run_gdb, "intersect_w%d" % worker_id)
+                temp_a = os.path.join(run_gdb, "temp_a_%d" % worker_id)
+
+                try:
+                    where_clause = "%s >= %d AND %s <= %d" % (oid_field, oid_start, oid_field, oid_end)
+                    self._safe_delete_path(temp_a)
+                    self._safe_delete_path(output_path)
+
+                    arcpy.Select_analysis(self.input_a, temp_a, where_clause)
+                    if int(arcpy.GetCount_management(temp_a)[0]) <= 0:
+                        continue
+
+                    arcpy.Intersect_analysis(
+                        in_features=[temp_a, self.input_b],
+                        out_feature_class=output_path,
+                        join_attributes="ALL",
+                        output_type="INPUT"
+                    )
+
+                    partition_outputs.append(output_path)
+                except Exception as e:
+                    print("    Worker %d failed: %s" % (worker_id, str(e)))
+                finally:
+                    self._safe_delete_path(temp_a)
+
+                oid_start = oid_end + 1
+
+            if not partition_outputs:
+                raise RuntimeError("All partitions failed")
+
+            self._safe_delete_path(self.output_fc)
+            arcpy.Merge_management(partition_outputs, self.output_fc)
+
+            count = int(arcpy.GetCount_management(self.output_fc)[0])
+            return {
+                'features_created': count,
+                'mode': mode_label,
+                'workers': num_workers
+            }
+        finally:
+            if run_workspace and os.path.exists(run_workspace):
+                shutil.rmtree(run_workspace, ignore_errors=True)
 
 
 class MP_R1_CreateConstantRaster(MultiprocessBenchmark):

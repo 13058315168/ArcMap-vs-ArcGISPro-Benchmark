@@ -48,6 +48,8 @@ C:\temp\arcgis_benchmark_data\<时间戳>\<规模>\
 | `medium` | 重负载完整对比 |
 | `large` | 压力测试 / 过夜运行 |
 
+这与主 README 的规模定义一致；`standard` 是主流程推荐，`medium` / `large` 更适合更长时间的重负载运行。
+
 ## 注意事项
 
 1. 测试过程中不要关闭 ArcMap、ArcGIS Pro 或相关属性表窗口。
