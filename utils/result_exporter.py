@@ -1,449 +1,451 @@
 # -*- coding: utf-8 -*-
 """
-Result export utilities for multiple formats
-Compatible with Python 2.7 and 3.x
+Result export utilities for benchmark outputs.
+
+This module keeps the public interface used by the repository:
+- ResultExporter
+- export_json
+- export_csv
+- export_markdown
+- export_latex
+- export_comparison_table
+
+It is compatible with Python 2.7 and Python 3.x.
 """
 from __future__ import print_function, division, absolute_import
+
+import csv
+import io
 import json
 import os
 import sys
-import csv
 from datetime import datetime
 
-# Python 2/3 compatibility for file open
-import io
+PY2 = sys.version_info[0] < 3
 
-def open_text_file(filepath, mode):
-    """Open file with UTF-8 encoding for both Python 2 and 3"""
-    if sys.version_info[0] >= 3:
-        return io.open(filepath, mode, encoding='utf-8', newline='')
+try:
+    text_type = unicode
+except NameError:  # Python 3
+    text_type = str
+
+
+def _ensure_text(value):
+    """Convert values to text for writing files safely."""
+    if value is None:
+        return u""
+
+    if PY2:
+        if isinstance(value, unicode):
+            return value
+        if isinstance(value, str):
+            try:
+                return value.decode('utf-8')
+            except Exception:
+                return value.decode('utf-8', 'ignore')
     else:
+        if isinstance(value, str):
+            return value
+        if isinstance(value, bytes):
+            return value.decode('utf-8', 'replace')
+
+    if isinstance(value, dict):
+        try:
+            return json.dumps(value, ensure_ascii=False, sort_keys=True)
+        except Exception:
+            return text_type(value)
+
+    if isinstance(value, (list, tuple, set)):
+        try:
+            return json.dumps(list(value), ensure_ascii=False)
+        except Exception:
+            return text_type(value)
+
+    return text_type(value)
+
+
+def _json_ready(value):
+    """Recursively prepare values for JSON serialization."""
+    if isinstance(value, dict):
+        return dict((k, _json_ready(v)) for k, v in value.items())
+    if isinstance(value, (list, tuple, set)):
+        return [_json_ready(v) for v in value]
+    return value
+
+
+def _escape_markdown_cell(value):
+    """Escape a single Markdown table cell."""
+    text = _ensure_text(value)
+    text = text.replace(u"\\", u"\\\\")
+    text = text.replace(u"|", u"\\|")
+    text = text.replace(u"\r\n", u"<br>")
+    text = text.replace(u"\n", u"<br>")
+    return text
+
+
+def _escape_latex(text):
+    """Escape text for a LaTeX table."""
+    text = _ensure_text(text)
+    replacements = [
+        (u"&", u"\\&"),
+        (u"%", u"\\%"),
+        (u"$", u"\\$"),
+        (u"#", u"\\#"),
+        (u"_", u"\\_"),
+        (u"{", u"\\{"),
+        (u"}", u"\\}"),
+        (u"~", u"\\textasciitilde{}"),
+        (u"^", u"\\textasciicircum{}"),
+        (u"\\", u"\\textbackslash{}"),
+    ]
+    for src, dst in replacements:
+        text = text.replace(src, dst)
+    return text
+
+
+def _format_number(value, digits=4):
+    """Format numeric values consistently."""
+    try:
+        if value is None or value == "":
+            return u""
+        return u"{:." + text_type(digits) + u"f}".format(float(value))
+    except Exception:
+        return _ensure_text(value)
+
+
+def _open_text_file(filepath, mode):
+    """Open a UTF-8 text file in a Python 2/3 friendly way."""
+    if PY2:
         return io.open(filepath, mode, encoding='utf-8')
+    return io.open(filepath, mode, encoding='utf-8', newline='')
 
-def open_csv_file(filepath, mode):
-    """Open CSV file with proper encoding"""
-    # CSV module needs different handling in Python 2
-    if sys.version_info[0] >= 3:
-        return io.open(filepath, mode, encoding='utf-8', newline='')
-    else:
-        # Python 2: use binary mode for csv module
-        import codecs
-        return codecs.open(filepath, mode, encoding='utf-8')
+
+def _open_csv_file(filepath):
+    """Open a CSV file in a Python 2/3 friendly way."""
+    if PY2:
+        return io.open(filepath, 'w', encoding='utf-8')
+    return io.open(filepath, 'w', encoding='utf-8', newline='')
+
 
 class ResultExporter(object):
-    """
-    Export benchmark results to various formats
-    """
+    """Export benchmark results to JSON, CSV, Markdown, and LaTeX."""
+
     def __init__(self, output_dir):
         self.output_dir = output_dir
-        if not os.path.exists(output_dir):
+        if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
-    
+
     def export_json(self, results, filename, metadata=None):
-        """Export results to JSON file"""
+        """Export results to JSON."""
         filepath = os.path.join(self.output_dir, filename)
-        
         export_data = {
             'export_timestamp': datetime.now().isoformat(),
             'python_version': "{}.{}.{}".format(
                 sys.version_info[0],
                 sys.version_info[1],
-                sys.version_info[2]
+                sys.version_info[2],
             ),
             'metadata': metadata or {},
-            'results': results
+            'results': _json_ready(results),
         }
-        
+
         json_text = json.dumps(export_data, indent=2, ensure_ascii=False)
-        if sys.version_info[0] >= 3:
-            with open_text_file(filepath, 'w') as f:
-                f.write(json_text)
-        else:
-            if not isinstance(json_text, unicode):
-                json_text = json_text.decode('utf-8')
-            with io.open(filepath, 'w', encoding='utf-8') as f:
-                f.write(json_text)
-        
+        if PY2 and not isinstance(json_text, unicode):
+            json_text = json_text.decode('utf-8')
+
+        with _open_text_file(filepath, 'w') as handle:
+            handle.write(json_text)
+
         return filepath
-    
-    def export_csv(self, results, filename):
-        """Export results to CSV file"""
-        filepath = os.path.join(self.output_dir, filename)
-        
-        if not results:
-            return filepath
-        
-        # Flatten results for CSV
-        flat_results = self._flatten_results(results)
-        
-        if not flat_results:
-            return filepath
-        
-        # Get all possible fieldnames from all results (not just first)
-        all_fields = set()
-        for row in flat_results:
-            all_fields.update(row.keys())
-        fieldnames = sorted(list(all_fields))
-        
-        # Use compatible file open
-        if sys.version_info[0] >= 3:
-            with open_csv_file(filepath, 'w') as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(flat_results)
-        else:
-            # Python 2: encode to UTF-8 manually
-            import codecs
-            with codecs.open(filepath, 'w', encoding='utf-8') as f:
-                # Write header
-                f.write(','.join(fieldnames) + '\n')
-                # Write rows
-                for row in flat_results:
-                    values = []
-                    for key in fieldnames:
-                        val = row.get(key, '')
-                        if isinstance(val, unicode):
-                            val = val.encode('utf-8')
-                        elif not isinstance(val, basestring):
-                            val = str(val)
-                        else:
-                            val = val.encode('utf-8')
-                        # Escape quotes and wrap in quotes if needed
-                        if ',' in val or '"' in val or '\n' in val:
-                            val = '"' + val.replace('"', '""') + '"'
-                        values.append(val)
-                    f.write(','.join(values) + '\n')
-        
-        return filepath
-    
-    def export_markdown(self, results, filename, title="Benchmark Results"):
-        """Export results to Markdown table"""
-        filepath = os.path.join(self.output_dir, filename)
-        
-        lines = []
-        lines.append("# {}\n".format(title))
-        lines.append("*Generated on {}*\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-        
-        # Summary table
-        lines.append("## Summary\n")
-        lines.append(self._create_markdown_table(results))
-        lines.append("")
-        
-        # Detailed results
-        lines.append("## Detailed Results\n")
-        for result in results:
-            lines.append("### {}\n".format(result.get('test_name', 'Unknown')))
-            for key, value in sorted(result.items()):
-                lines.append("- **{}**: {}".format(key, value))
-            lines.append("")
-        
-        content = '\n'.join(lines)
-        if sys.version_info[0] < 3 and isinstance(content, str):
-            content = content.decode('utf-8')
-        with open_text_file(filepath, 'w') as f:
-            f.write(content)
-        
-        return filepath
-    
-    def export_latex(self, results, filename, caption="Benchmark Results"):
-        """Export results to LaTeX table"""
-        filepath = os.path.join(self.output_dir, filename)
-        
-        lines = []
-        lines.append("% Benchmark Results")
-        lines.append("% Generated on {}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-        lines.append("")
-        
-        # Create LaTeX table
-        if results:
-            # Get columns
-            columns = ['test_name', 'python_version', 'mean_time', 'std_time', 'speedup']
-            available_cols = [c for c in columns if c in results[0]]
-            
-            lines.append("\\begin{table}[htbp]")
-            lines.append("\\centering")
-            lines.append("\\caption{{{}}}".format(caption))
-            lines.append("\\begin{tabular}{" + "l" * len(available_cols) + "}")
-            lines.append("\\hline")
-            
-            # Header
-            header = " & ".join([c.replace('_', ' ').title() for c in available_cols]) + " \\\\"
-            lines.append(header)
-            lines.append("\\hline")
-            
-            # Data rows
-            for result in results:
-                row_values = []
-                for col in available_cols:
-                    val = result.get(col, '')
-                    # Format numbers
-                    if isinstance(val, float):
-                        if col in ['mean_time', 'std_time']:
-                            val = "{:.4f}".format(val)
-                        elif col == 'speedup':
-                            val = "{:.2f}x".format(val)
-                    row_values.append(str(val))
-                lines.append(" & ".join(row_values) + " \\\\")
-            
-            lines.append("\\hline")
-            lines.append("\\end{tabular}")
-            lines.append("\\label{tab:benchmark_results}")
-            lines.append("\\end{table}")
-        
-        with open_text_file(filepath, 'w') as f:
-            f.write('\n'.join(lines))
-        
-        return filepath
-    
-    def export_comparison_table(self, results_py2, results_py3, filename):
-        """Export side-by-side comparison table"""
-        filepath = os.path.join(self.output_dir, filename)
-        
-        # Combine results
-        comparison = self._create_comparison(results_py2, results_py3)
-        
-        # Export as Markdown
-        md_content = self._format_comparison_markdown(comparison)
-        
-        with open_text_file(filepath, 'w') as f:
-            f.write(md_content)
-        
-        return filepath
-    
+
     def _flatten_results(self, results):
-        """Flatten nested result dictionaries"""
-        flat = []
-        for result in results:
-            flat_result = {}
+        """Flatten nested dictionaries one level deep."""
+        flat_results = []
+        for result in results or []:
+            flat_row = {}
+            if not isinstance(result, dict):
+                flat_row['value'] = result
+                flat_results.append(flat_row)
+                continue
+
             for key, value in result.items():
                 if isinstance(value, dict):
                     for subkey, subvalue in value.items():
-                        flat_result["{}_{}".format(key, subkey)] = subvalue
+                        flat_row["{}_{}".format(key, subkey)] = subvalue
                 else:
-                    flat_result[key] = value
-            flat.append(flat_result)
-        return flat
-    
-    def _create_markdown_table(self, results):
-        """Create a Markdown table from results"""
-        if not results:
-            return ""
+                    flat_row[key] = value
+            flat_results.append(flat_row)
+        return flat_results
 
-        # Select key columns - check all results, not just first one
-        key_cols = ['test_name', 'mean_time', 'std_time', 'min_time', 'max_time']
-        # Find columns that exist in ANY result
-        available_cols = []
-        for col in key_cols:
+    def export_csv(self, results, filename):
+        """Export results to CSV."""
+        filepath = os.path.join(self.output_dir, filename)
+
+        flat_results = self._flatten_results(results)
+        if not flat_results:
+            with _open_csv_file(filepath):
+                pass
+            return filepath
+
+        fieldnames = sorted(set().union(*[set(row.keys()) for row in flat_results]))
+
+        if PY2:
+            with _open_csv_file(filepath) as handle:
+                handle.write(u",".join(fieldnames) + u"\n")
+                for row in flat_results:
+                    values = []
+                    for field in fieldnames:
+                        cell = _ensure_text(row.get(field, u""))
+                        if u"," in cell or u"\"" in cell or u"\n" in cell or u"\r" in cell:
+                            cell = u"\"{}\"".format(cell.replace(u"\"", u"\"\""))
+                        values.append(cell)
+                    handle.write(u",".join(values) + u"\n")
+        else:
+            with _open_csv_file(filepath) as handle:
+                writer = csv.DictWriter(handle, fieldnames=fieldnames)
+                writer.writeheader()
+                for row in flat_results:
+                    writer.writerow(dict((k, _ensure_text(row.get(k, u""))) for k in fieldnames))
+
+        return filepath
+
+    def _markdown_table(self, rows, preferred_columns=None):
+        """Create a Markdown table from rows."""
+        if not rows:
+            return u""
+
+        columns = []
+        if preferred_columns:
+            for column in preferred_columns:
+                if any(column in row and row.get(column) not in (None, u"") for row in rows):
+                    columns.append(column)
+
+        if not columns:
+            columns = sorted(set().union(*[set(row.keys()) for row in rows]))
+
+        if not columns:
+            return u""
+
+        lines = []
+        lines.append(u"| " + u" | ".join(_escape_markdown_cell(c) for c in columns) + u" |")
+        lines.append(u"|" + u"|".join([u"---" for _ in columns]) + u"|")
+
+        for row in rows:
+            values = []
+            failed = not row.get('success', True)
+            for column in columns:
+                value = row.get(column, u"")
+                if value in (None, u"") and failed:
+                    value = u"N/A"
+                values.append(_escape_markdown_cell(value))
+            lines.append(u"| " + u" | ".join(values) + u" |")
+
+        return u"\n".join(lines)
+
+    def export_markdown(self, results, filename, title="Benchmark Results"):
+        """Export results to Markdown."""
+        filepath = os.path.join(self.output_dir, filename)
+        results = results or []
+
+        lines = []
+        lines.append(u"# {}".format(_ensure_text(title)))
+        lines.append(u"")
+        lines.append(u"*Generated on {}*".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        lines.append(u"")
+
+        summary_table = self._markdown_table(
+            results,
+            preferred_columns=['test_name', 'mean_time', 'std_time', 'min_time', 'max_time', 'speedup']
+        )
+        if summary_table:
+            lines.append(u"## Summary")
+            lines.append(u"")
+            lines.append(summary_table)
+            lines.append(u"")
+
+        if results:
+            lines.append(u"## Detailed Results")
+            lines.append(u"")
             for result in results:
-                if col in result and result[col] != '':
-                    available_cols.append(col)
-                    break
+                if not isinstance(result, dict):
+                    result = {'value': result}
+                lines.append(u"### {}".format(_ensure_text(result.get('test_name', 'Unknown'))))
+                lines.append(u"")
+                for key in sorted(result.keys()):
+                    lines.append(u"- **{}**: {}".format(_ensure_text(key), _ensure_text(result.get(key))))
+                lines.append(u"")
+        else:
+            lines.append(u"_No results available._")
+            lines.append(u"")
+
+        content = u"\n".join(lines)
+        if PY2 and not isinstance(content, unicode):
+            content = content.decode('utf-8')
+
+        with _open_text_file(filepath, 'w') as handle:
+            handle.write(content)
+
+        return filepath
+
+    def export_latex(self, results, filename, caption="Benchmark Results"):
+        """Export results to a small LaTeX table."""
+        filepath = os.path.join(self.output_dir, filename)
+        results = results or []
 
         lines = []
+        lines.append(u"% Benchmark Results")
+        lines.append(u"% Generated on {}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        lines.append(u"")
 
-        # Header
-        header = "| " + " | ".join([c.replace('_', ' ').title() for c in available_cols]) + " |"
-        lines.append(header)
+        if results:
+            preferred_columns = ['test_name', 'python_version', 'mean_time', 'std_time', 'speedup']
+            columns = []
+            for column in preferred_columns:
+                if any(column in row for row in results if isinstance(row, dict)):
+                    columns.append(column)
+            if not columns:
+                columns = sorted(set().union(*[set(row.keys()) for row in results if isinstance(row, dict)]))
 
-        # Separator
-        separator = "|" + "|".join(["---" for _ in available_cols]) + "|"
-        lines.append(separator)
+            lines.append(u"\\begin{table}[htbp]")
+            lines.append(u"\\centering")
+            lines.append(u"\\caption{{{}}}".format(_escape_latex(caption)))
+            lines.append(u"\\begin{tabular}{" + u"l" * len(columns) + u"}")
+            lines.append(u"\\hline")
+            lines.append(u" & ".join(_escape_latex(col.replace('_', ' ').title()) for col in columns) + u" \\\\")
+            lines.append(u"\\hline")
 
-        # Data rows
-        for result in results:
-            row_values = []
-            for col in available_cols:
-                val = result.get(col, '')
-                if val == '' or val is None:
-                    # For failed tests, show N/A
-                    if not result.get('success', True):
-                        row_values.append('N/A')
-                    else:
-                        row_values.append('')
-                else:
-                    row_values.append(self._format_cell(val))
-            row = "| " + " | ".join(row_values) + " |"
-            lines.append(row)
+            for result in results:
+                if not isinstance(result, dict):
+                    result = {'value': result}
+                row_values = []
+                for column in columns:
+                    value = result.get(column, u"")
+                    if column in ('mean_time', 'std_time', 'min_time', 'max_time'):
+                        value = _format_number(value, 4)
+                    elif column == 'speedup':
+                        value = u"{}x".format(_format_number(value, 2)) if value not in (None, u"") else u""
+                    row_values.append(_escape_latex(value))
+                lines.append(u" & ".join(row_values) + u" \\\\")
 
-        return '\n'.join(lines)
-    
-    def _format_cell(self, value):
-        """Format a cell value for display"""
-        if isinstance(value, float):
-            return "{:.4f}".format(value)
-        return str(value)
-    
+            lines.append(u"\\hline")
+            lines.append(u"\\end{tabular}")
+            lines.append(u"\\label{tab:benchmark_results}")
+            lines.append(u"\\end{table}")
+        else:
+            lines.append(u"No results available.")
+
+        content = u"\n".join(lines)
+        if PY2 and not isinstance(content, unicode):
+            content = content.decode('utf-8')
+
+        with _open_text_file(filepath, 'w') as handle:
+            handle.write(content)
+
+        return filepath
+
     def _create_comparison(self, results_py2, results_py3):
-        """Create comparison between Python 2 and 3 results"""
+        """Create a simple side-by-side comparison."""
+        py2_lookup = {}
+        py3_lookup = {}
+
+        for result in results_py2 or []:
+            if isinstance(result, dict) and result.get('test_name') and result.get('success', True):
+                py2_lookup[result['test_name']] = result
+
+        for result in results_py3 or []:
+            if isinstance(result, dict) and result.get('test_name') and result.get('success', True):
+                py3_lookup[result['test_name']] = result
+
+        test_names = sorted(set(py2_lookup.keys()) | set(py3_lookup.keys()))
         comparison = []
-        
-        # Create lookup by test name
-        py2_lookup = {r['test_name']: r for r in results_py2}
-        py3_lookup = {r['test_name']: r for r in results_py3}
-        
-        all_tests = set(py2_lookup.keys()) | set(py3_lookup.keys())
-        
-        for test in sorted(all_tests):
-            py2_result = py2_lookup.get(test, {})
-            py3_result = py3_lookup.get(test, {})
-            
-            py2_time = py2_result.get('mean_time', 0)
-            py3_time = py3_result.get('mean_time', 0)
-            
-            speedup = py2_time / py3_time if py3_time > 0 else 0
-            
-            faster_val = 'Python 3.x' if speedup > 1.05 else ('Python 2.7' if speedup < 0.95 else '相当')
-            comparison.append({
-                'test_name': test,
-                'py2_time': py2_time,
-                'py2_std': py2_result.get('std_time', 0),
-                'py3_time': py3_time,
-                'py3_std': py3_result.get('std_time', 0),
-                'speedup': speedup,
-                'faster': faster_val
-            })
-        
-        return comparison
-    
-    def _format_comparison_markdown(self, comparison):
-        """Format comparison as Markdown (Chinese)"""
-        from config import settings
-        
-        lines = []
-        lines.append("# ArcGIS Python 2.7 vs Python 3.x 性能对比报告\n")
-        lines.append("*生成时间：{}*\n".format(datetime.now().strftime('%Y年%m月%d日 %H:%M:%S')))
-        
-        # 数据规模信息
-        lines.append("## 测试数据规模\n")
-        lines.append("| 配置项 | 数值 |")
-        lines.append("|--------|------|")
-        lines.append("| 数据规模 | **{}** |".format(settings.DATA_SCALE.upper()))
-        lines.append("| 渔网多边形 | {:,} ({:,}×{:,}) |".format(
-            settings.VECTOR_CONFIG['fishnet_rows'] * settings.VECTOR_CONFIG['fishnet_cols'],
-            settings.VECTOR_CONFIG['fishnet_rows'],
-            settings.VECTOR_CONFIG['fishnet_cols']
-        ))
-        lines.append("| 随机点数量 | {:,} |".format(settings.VECTOR_CONFIG['random_points']))
-        lines.append("| 缓冲区测试点 | {:,} |".format(settings.VECTOR_CONFIG['buffer_points']))
-        lines.append("| 叠加分析要素 | {:,} × {:,} |".format(
-            settings.VECTOR_CONFIG['intersect_features_a'],
-            settings.VECTOR_CONFIG['intersect_features_b']
-        ))
-        lines.append("| 空间连接 | {:,}点 + {:,}多边形 |".format(
-            settings.VECTOR_CONFIG['spatial_join_points'],
-            settings.VECTOR_CONFIG['spatial_join_polygons']
-        ))
-        lines.append("| 字段计算记录 | {:,} |".format(settings.VECTOR_CONFIG['calculate_field_records']))
-        lines.append("| 栅格大小 | {:,}×{:,} ({:,}像素) |".format(
-            settings.RASTER_CONFIG['constant_raster_size'],
-            settings.RASTER_CONFIG['constant_raster_size'],
-            settings.RASTER_CONFIG['constant_raster_size'] ** 2
-        ))
-        lines.append("")
-        
-        # 规模说明
-        scale_desc = {
-            'tiny': '超小规模 - 快速验证/调试（约1-2分钟）',
-            'small': '小型规模 - 功能测试（约5-10分钟）',
-            'standard': '标准规模 - 常规测试（约15-30分钟）',
-            'medium': '中型规模 - 性能对比（约30-60分钟）',
-            'large': '大型规模 - 学术研究（约2-4小时）'
-        }
-        lines.append("**规模说明**: {}\n".format(scale_desc.get(settings.DATA_SCALE, '未知')))
-        
-        # Calculate summary statistics
-        total_tests = len(comparison)
-        py3_faster = sum(1 for item in comparison if item['speedup'] > 1.05)
-        py2_faster = sum(1 for item in comparison if item['speedup'] < 0.95)
-        equal = total_tests - py3_faster - py2_faster
-        
-        lines.append("## 统计摘要\n")
-        lines.append("- **测试项目总数**: {}".format(total_tests))
-        lines.append("- **Python 3.x 更快**: {} 项 ({:.1f}%)".format(py3_faster, py3_faster*100.0/total_tests if total_tests else 0))
-        lines.append("- **Python 2.7 更快**: {} 项 ({:.1f}%)".format(py2_faster, py2_faster*100.0/total_tests if total_tests else 0))
-        lines.append("- **性能相当**: {} 项 ({:.1f}%)".format(equal, equal*100.0/total_tests if total_tests else 0))
-        lines.append("")
-        
-        # Average speedup
-        if comparison:
-            avg_speedup = sum(item['speedup'] for item in comparison) / len(comparison)
-            lines.append("- **平均加速比**: {:.2f}x".format(avg_speedup))
-            if avg_speedup > 1:
-                lines.append("  - 总体趋势：Python 3.x 比 Python 2.7 快 {:.1f}%".format((avg_speedup-1)*100))
-            elif avg_speedup < 1:
-                lines.append("  - 总体趋势：Python 2.7 比 Python 3.x 快 {:.1f}%".format((1-avg_speedup)*100))
+
+        for test_name in test_names:
+            py2_result = py2_lookup.get(test_name, {})
+            py3_result = py3_lookup.get(test_name, {})
+            py2_time = py2_result.get('mean_time', 0) or 0
+            py3_time = py3_result.get('mean_time', 0) or 0
+            speedup = (py2_time / py3_time) if (py2_time > 0 and py3_time > 0) else 0
+
+            if py2_time <= 0 or py3_time <= 0:
+                faster = 'N/A'
+            elif speedup > 1.05:
+                faster = 'Python 3.x'
+            elif speedup < 0.95:
+                faster = 'Python 2.7'
             else:
-                lines.append("  - 总体趋势：两者性能相当")
-        lines.append("")
-        
-        lines.append("## 详细对比表\n")
-        lines.append("| 测试项目 | Python 2.7 (秒) | Python 3.x (秒) | 加速比 | 更快 |")
-        lines.append("|---------|----------------|----------------|--------|------|")
-        
-        for item in comparison:
-            faster_text = "Py3" if item['speedup'] > 1.05 else ("Py2" if item['speedup'] < 0.95 else "相当")
-            lines.append("| {} | {:.4f} ± {:.4f} | {:.4f} ± {:.4f} | {:.2f}x | {} |".format(
-                item['test_name'],
-                item['py2_time'], item['py2_std'],
-                item['py3_time'], item['py3_std'],
-                item['speedup'],
-                faster_text
+                faster = 'Tie'
+
+            comparison.append({
+                'test_name': test_name,
+                'py2_time': py2_time,
+                'py2_std': py2_result.get('std_time', 0) or 0,
+                'py3_time': py3_time,
+                'py3_std': py3_result.get('std_time', 0) or 0,
+                'speedup': speedup,
+                'faster': faster,
+            })
+
+        return comparison
+
+    def _format_comparison_markdown(self, comparison):
+        """Format the comparison data as Markdown."""
+        lines = []
+        lines.append(u"# Benchmark Comparison")
+        lines.append(u"")
+        lines.append(u"*Generated on {}*".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        lines.append(u"")
+        lines.append(u"| Test | Python 2.7 (s) | Python 3.x (s) | Speedup | Faster |")
+        lines.append(u"|---|---|---|---|---|")
+
+        for row in comparison:
+            lines.append(u"| {} | {} | {} | {} | {} |".format(
+                _escape_markdown_cell(row.get('test_name', u"")),
+                _escape_markdown_cell(_format_number(row.get('py2_time', 0))),
+                _escape_markdown_cell(_format_number(row.get('py3_time', 0))),
+                _escape_markdown_cell(u"{:.2f}x".format(row.get('speedup', 0)) if row.get('speedup', 0) else u"N/A"),
+                _escape_markdown_cell(row.get('faster', u"N/A")),
             ))
-        
-        lines.append("")
-        lines.append("## 说明")
-        lines.append("- **时间格式**: 平均值 ± 标准差（秒）")
-        lines.append("- **加速比**: Python 2.7 时间 / Python 3.x 时间")
-        lines.append("- **加速比 > 1**: Python 3.x 更快")
-        lines.append("- **加速比 < 1**: Python 2.7 更快")
-        lines.append("- **加速比 ≈ 1**: 两者性能相当（差异 < 5%）")
-        lines.append("")
-        lines.append("## 测试项目说明")
-        lines.append("### 矢量数据测试 (V1-V6)")
-        lines.append("- **V1_CreateFishnet**: 创建渔网多边形")
-        lines.append("- **V2_CreateRandomPoints**: 生成随机点")
-        lines.append("- **V3_Buffer**: 缓冲区分析")
-        lines.append("- **V4_Intersect**: 叠加分析")
-        lines.append("- **V5_SpatialJoin**: 空间连接")
-        lines.append("- **V6_CalculateField**: 字段计算")
-        lines.append("")
-        lines.append("### 栅格数据测试 (R1-R4)")
-        lines.append("- **R1_CreateConstantRaster**: 创建常量栅格")
-        lines.append("- **R2_Resample**: 栅格重采样")
-        lines.append("- **R3_Clip**: 栅格裁剪")
-        lines.append("- **R4_RasterCalculator**: 栅格计算")
-        lines.append("")
-        lines.append("### 混合测试 (M1-M2)")
-        lines.append("- **M1_PolygonToRaster**: 矢转栅")
-        lines.append("- **M2_RasterToPoint**: 栅转矢")
-        lines.append("")
-        lines.append("---")
-        lines.append("*报告由 ArcGIS Python2、3 与开源库性能对比测试工具自动生成*")
-        
-        return '\n'.join(lines)
 
+        return u"\n".join(lines)
 
-if __name__ == '__main__':
-    # Test exporter
-    test_results = [
-        {
-            'test_name': 'V1_CreateFishnet',
-            'mean_time': 12.3456,
-            'std_time': 0.5678,
-            'min_time': 11.2345,
-            'max_time': 13.4567
-        },
-        {
-            'test_name': 'V2_RandomPoints',
-            'mean_time': 8.9012,
-            'std_time': 0.3456,
-            'min_time': 8.1234,
-            'max_time': 9.5678
-        }
-    ]
-    
-    exporter = ResultExporter('./test_output')
-    print("Exporting to JSON...")
-    print(exporter.export_json(test_results, 'test.json'))
-    print("Exporting to Markdown...")
-    print(exporter.export_markdown(test_results, 'test.md'))
+    def _format_comparison_latex(self, comparison):
+        """Format the comparison data as LaTeX."""
+        lines = []
+        lines.append(u"\\begin{table}[htbp]")
+        lines.append(u"\\centering")
+        lines.append(u"\\caption{Benchmark Comparison}")
+        lines.append(u"\\begin{tabular}{lllll}")
+        lines.append(u"\\hline")
+        lines.append(u"Test & Python 2.7 (s) & Python 3.x (s) & Speedup & Faster \\\\")
+        lines.append(u"\\hline")
+
+        for row in comparison:
+            lines.append(u"{} & {} & {} & {} & {} \\\\".format(
+                _escape_latex(row.get('test_name', u"")),
+                _escape_latex(_format_number(row.get('py2_time', 0))),
+                _escape_latex(_format_number(row.get('py3_time', 0))),
+                _escape_latex(u"{:.2f}x".format(row.get('speedup', 0)) if row.get('speedup', 0) else u"N/A"),
+                _escape_latex(row.get('faster', u"N/A")),
+            ))
+
+        lines.append(u"\\hline")
+        lines.append(u"\\end{tabular}")
+        lines.append(u"\\end{table}")
+        return u"\n".join(lines)
+
+    def export_comparison_table(self, results_py2, results_py3, filename):
+        """Export a side-by-side comparison table."""
+        filepath = os.path.join(self.output_dir, filename)
+        comparison = self._create_comparison(results_py2, results_py3)
+
+        if filename.lower().endswith('.tex'):
+            content = self._format_comparison_latex(comparison)
+        else:
+            content = self._format_comparison_markdown(comparison)
+
+        if PY2 and not isinstance(content, unicode):
+            content = content.decode('utf-8')
+
+        with _open_text_file(filepath, 'w') as handle:
+            handle.write(content)
+
+        return filepath
