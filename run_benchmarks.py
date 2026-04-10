@@ -36,12 +36,14 @@ except ImportError:
     get_multiprocess_benchmarks = None
 
 # Import open-source benchmarks (Python 3.x only)
+# NOTE: These modules may contain Python-3-only syntax. Catch SyntaxError so
+# Python 2.x runners can still execute ArcPy benchmarks.
 try:
     from benchmarks.vector_benchmarks_os import VectorBenchmarksOS
     from benchmarks.raster_benchmarks_os import RasterBenchmarksOS
     from benchmarks.mixed_benchmarks_os import MixedBenchmarksOS
     HAS_OS_BENCHMARKS = True
-except ImportError:
+except Exception:
     HAS_OS_BENCHMARKS = False
 
 
@@ -215,6 +217,13 @@ Examples:
         '--opensource',
         action='store_true',
         help='Run open-source library benchmarks (Python 3.x only)'
+    )
+
+    parser.add_argument(
+        '--tests',
+        type=str,
+        default=None,
+        help='Comma-separated list of benchmark test names to run (e.g. "M2_RasterToPoint")'
     )
     
     # Python 2/3 compatibility for argparse
@@ -886,6 +895,24 @@ def main():
 
     # Group benchmarks so each version gets its own folder.
     benchmarks = get_benchmarks(args.category, include_opensource)
+
+    # Optional: filter by explicit test names.
+    if args.tests:
+        requested = [t.strip() for t in args.tests.split(',') if t.strip()]
+        requested_set = set(requested)
+        if requested_set:
+            before_count = len(benchmarks)
+            benchmarks = [b for b in benchmarks if getattr(b, 'name', None) in requested_set]
+            after_count = len(benchmarks)
+            print("\n[信息] 指定测试过滤: {} -> {} 项".format(before_count, after_count))
+            print("  tests={}".format(", ".join(requested)))
+
+            if after_count == 0:
+                available = sorted([getattr(b, 'name', '') for b in get_benchmarks(args.category, include_opensource)])
+                print("\nERROR: 未匹配到任何测试。可用测试:")
+                for name in available:
+                    print("  - {}".format(name))
+                return 1
     arcpy_benchmarks, opensource_benchmarks = _split_benchmark_groups(benchmarks)
 
     if not arcpy_benchmarks and not opensource_benchmarks:

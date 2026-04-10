@@ -36,6 +36,53 @@ class BaseBenchmark(object):
         except ImportError:
             # arcpy is optional - open-source benchmarks don't need it
             pass
+
+    def _stat_passthrough_keys(self, successful_results):
+        """Return result keys that should be promoted into summary statistics."""
+        skip_keys = set([
+            'success',
+            'error',
+            'error_type',
+            'traceback',
+            'elapsed_seconds',
+            'memory_mb',
+        ])
+
+        keys = []
+        for result in successful_results:
+            for key in result.keys():
+                if key in skip_keys or key.startswith('_'):
+                    continue
+                if key not in keys:
+                    keys.append(key)
+        return keys
+
+    def _promote_result_fields(self, stats, successful_results):
+        """Promote stable validation/result fields from raw runs to summary stats."""
+        for key in self._stat_passthrough_keys(successful_results):
+            values = [result.get(key) for result in successful_results if key in result]
+            if not values:
+                continue
+
+            if key == 'validation_passed':
+                stats[key] = len(values) == len(successful_results) and all(bool(v) for v in values)
+                continue
+
+            first_value = values[0]
+            is_consistent = True
+            for value in values[1:]:
+                if value != first_value:
+                    is_consistent = False
+                    break
+
+            if is_consistent:
+                stats[key] = first_value
+            else:
+                stats[key] = first_value
+                stats[key + '_consistent'] = False
+                stats[key + '_values'] = values
+
+        return stats
     
     def setup(self):
         """Setup before benchmark - override in subclass"""
@@ -217,8 +264,8 @@ class BaseBenchmark(object):
                 sys.version_info[2]
             )
         }
-        
-        return stats
+
+        return self._promote_result_fields(stats, successful)
     
     def get_raw_results(self):
         """Get all raw results"""

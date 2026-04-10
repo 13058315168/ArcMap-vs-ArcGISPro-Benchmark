@@ -26,6 +26,51 @@ from config import settings
 from benchmarks.base_benchmark import BaseBenchmark
 
 
+def _constant_raster_bounds(size):
+    """Return the synthetic local bounds used by raster benchmarks."""
+    size = int(size)
+    return 0.0, 0.0, float(size), float(size)
+
+
+def _validated_raster_result(array, expected_width, expected_height, metric_name, expected_min=None, expected_max=None):
+    """Validate array dimensions and optional value range."""
+    actual_height = int(array.shape[0])
+    actual_width = int(array.shape[1])
+
+    if actual_width != int(expected_width) or actual_height != int(expected_height):
+        raise RuntimeError(
+            "{} 鏍￠獙澶辫触: 鏈熸湜 {}x{}锛屽疄闄?{}x{}".format(
+                metric_name, int(expected_width), int(expected_height), actual_width, actual_height
+            )
+        )
+
+    observed_value = "{}x{}".format(actual_width, actual_height)
+    expected_value = "{}x{}".format(int(expected_width), int(expected_height))
+
+    if expected_min is not None or expected_max is not None:
+        min_value = float(np.min(array))
+        max_value = float(np.max(array))
+        if expected_min is not None and abs(min_value - float(expected_min)) > 1e-6:
+            raise RuntimeError(
+                "{} 鏍￠獙澶辫触: MINIMUM 鏈熸湜 {}锛屽疄闄?{}".format(metric_name, float(expected_min), min_value)
+            )
+        if expected_max is not None and abs(max_value - float(expected_max)) > 1e-6:
+            raise RuntimeError(
+                "{} 鏍￠獙澶辫触: MAXIMUM 鏈熸湜 {}锛屽疄闄?{}".format(metric_name, float(expected_max), max_value)
+            )
+        expected_value = "{}; value={}..{}".format(expected_value, expected_min, expected_max)
+        observed_value = "{}; value={:.1f}..{:.1f}".format(observed_value, min_value, max_value)
+
+    return {
+        'output_width': actual_width,
+        'output_height': actual_height,
+        'validation_metric': metric_name,
+        'validation_expected': expected_value,
+        'validation_observed': observed_value,
+        'validation_passed': True,
+    }
+
+
 class RasterBenchmarksOS(object):
     """Collection of raster data benchmarks using open-source libraries"""
     
@@ -66,7 +111,7 @@ class R1_CreateConstantRaster_OS(BaseBenchmark):
         width = self.size
         
         # Create transform (georeferencing)
-        transform = from_bounds(-180, -90, 180, 90, width, height)
+        transform = from_bounds(*_constant_raster_bounds(self.size), width, height)
         
         # Create constant data
         data = np.ones((height, width), dtype=np.uint8)
@@ -86,7 +131,14 @@ class R1_CreateConstantRaster_OS(BaseBenchmark):
         with rasterio.open(self.output_path, 'w', **profile) as dst:
             dst.write(data, 1)
         
-        return {'width': width, 'height': height}
+        return _validated_raster_result(
+            data,
+            width,
+            height,
+            "constant_raster_dimensions",
+            expected_min=1,
+            expected_max=1
+        )
 
 
 class R2_Resample_OS(BaseBenchmark):
@@ -100,9 +152,7 @@ class R2_Resample_OS(BaseBenchmark):
         self.output_path = None
     
     def setup(self):
-        gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
-        # Use the constant raster as input
-        self.input_path = os.path.join(settings.DATA_DIR, "R1_constant_raster_os.tif")
+        self.input_path = os.path.join(settings.DATA_DIR, "constant_raster.tif")
         self.output_path = os.path.join(settings.DATA_DIR, "R2_resample_output_os.tif")
         
         # Create input if not exists (don't teardown - keep for other tests)
@@ -110,6 +160,7 @@ class R2_Resample_OS(BaseBenchmark):
             r1 = R1_CreateConstantRaster_OS()
             r1.setup()
             r1.run_single()  # Keep the file, don't call teardown()
+            self.input_path = r1.output_path
     
     def teardown(self):
         if self.output_path and os.path.exists(self.output_path):
@@ -126,7 +177,7 @@ class R2_Resample_OS(BaseBenchmark):
             src_transform = src.transform
             
             # Calculate new transform
-            dst_transform = from_bounds(-180, -90, 180, 90, self.target_size, self.target_size)
+            dst_transform = from_bounds(*src.bounds, self.target_size, self.target_size)
             
             # Create output array
             dst_data = np.empty((self.target_size, self.target_size), dtype=data.dtype)
@@ -157,7 +208,14 @@ class R2_Resample_OS(BaseBenchmark):
         with rasterio.open(self.output_path, 'w', **profile) as dst:
             dst.write(dst_data, 1)
         
-        return {'output_width': self.target_size, 'output_height': self.target_size}
+        return _validated_raster_result(
+            dst_data,
+            self.target_size,
+            self.target_size,
+            "resample_raster_dimensions",
+            expected_min=1,
+            expected_max=1
+        )
 
 
 class R3_Clip_OS(BaseBenchmark):
@@ -170,7 +228,7 @@ class R3_Clip_OS(BaseBenchmark):
         self.output_path = None
     
     def setup(self):
-        self.input_path = os.path.join(settings.DATA_DIR, "R1_constant_raster_os.tif")
+        self.input_path = os.path.join(settings.DATA_DIR, "constant_raster.tif")
         self.output_path = os.path.join(settings.DATA_DIR, "R3_clip_output_os.tif")
         
         # Create input if not exists (don't teardown - keep for other tests)
@@ -178,6 +236,7 @@ class R3_Clip_OS(BaseBenchmark):
             r1 = R1_CreateConstantRaster_OS()
             r1.setup()
             r1.run_single()  # Keep the file, don't call teardown()
+            self.input_path = r1.output_path
     
     def teardown(self):
         if self.output_path and os.path.exists(self.output_path):
@@ -187,20 +246,15 @@ class R3_Clip_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Define clip extent (center 50%)
-        x_range = 360 * self.clip_ratio
-        y_range = 180 * self.clip_ratio
-        x_min = -x_range / 2
-        y_min = -y_range / 2
-        x_max = x_range / 2
-        y_max = y_range / 2
-        
-        # Create clip geometry
-        from shapely.geometry import box
-        clip_geom = box(x_min, y_min, x_max, y_max)
-        
         # Clip raster
         with rasterio.open(self.input_path) as src:
+            input_width = int(src.width)
+            x_min = src.bounds.left + (src.bounds.right - src.bounds.left) * (1.0 - self.clip_ratio) / 2.0
+            y_min = src.bounds.bottom + (src.bounds.top - src.bounds.bottom) * (1.0 - self.clip_ratio) / 2.0
+            x_max = src.bounds.right - (src.bounds.right - src.bounds.left) * (1.0 - self.clip_ratio) / 2.0
+            y_max = src.bounds.top - (src.bounds.top - src.bounds.bottom) * (1.0 - self.clip_ratio) / 2.0
+            from shapely.geometry import box
+            clip_geom = box(x_min, y_min, x_max, y_max)
             out_image, out_transform = mask(src, [clip_geom], crop=True)
             out_meta = src.meta.copy()
             
@@ -217,7 +271,16 @@ class R3_Clip_OS(BaseBenchmark):
         with rasterio.open(self.output_path, 'w', **out_meta) as dst:
             dst.write(out_image)
         
-        return {'output_width': out_image.shape[2], 'output_height': out_image.shape[1]}
+        clipped = out_image[0]
+        expected_size = int(round(input_width * self.clip_ratio))
+        return _validated_raster_result(
+            clipped,
+            expected_size,
+            expected_size,
+            "clip_raster_dimensions",
+            expected_min=1,
+            expected_max=1
+        )
 
 
 class R4_RasterCalculator_OS(BaseBenchmark):
@@ -229,7 +292,7 @@ class R4_RasterCalculator_OS(BaseBenchmark):
         self.output_path = None
     
     def setup(self):
-        self.input_path = os.path.join(settings.DATA_DIR, "R1_constant_raster_os.tif")
+        self.input_path = os.path.join(settings.DATA_DIR, "constant_raster.tif")
         self.output_path = os.path.join(settings.DATA_DIR, "R4_calc_output_os.tif")
         
         # Create input if not exists (don't teardown - keep for other tests)
@@ -237,6 +300,7 @@ class R4_RasterCalculator_OS(BaseBenchmark):
             r1 = R1_CreateConstantRaster_OS()
             r1.setup()
             r1.run_single()  # Keep the file, don't call teardown()
+            self.input_path = r1.output_path
     
     def teardown(self):
         if self.output_path and os.path.exists(self.output_path):
@@ -250,6 +314,8 @@ class R4_RasterCalculator_OS(BaseBenchmark):
         with rasterio.open(self.input_path) as src:
             data = src.read(1).astype(np.float32)
             meta = src.meta.copy()
+            input_width = int(src.width)
+            input_height = int(src.height)
             
             # Perform calculation: Int(raster * 2)
             result = (data * 2).astype(np.uint8)
@@ -264,7 +330,14 @@ class R4_RasterCalculator_OS(BaseBenchmark):
         with rasterio.open(self.output_path, 'w', **meta) as dst:
             dst.write(result, 1)
         
-        return {'output_width': result.shape[1], 'output_height': result.shape[0]}
+        return _validated_raster_result(
+            result,
+            input_width,
+            input_height,
+            "raster_calculator_dimensions",
+            expected_min=2,
+            expected_max=2
+        )
 
 
 if __name__ == '__main__':

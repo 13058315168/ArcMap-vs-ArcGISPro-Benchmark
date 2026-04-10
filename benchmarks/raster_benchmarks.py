@@ -23,6 +23,58 @@ from benchmarks.base_benchmark import BaseBenchmark
 from utils.raster_utils import create_constant_raster, double_raster, spatial_analyst_available
 
 
+def _constant_raster_extent(size):
+    """Return the synthetic local extent used by raster benchmarks."""
+    size = int(size)
+    return "0 0 {0} {0}".format(size)
+
+
+def _get_raster_min_max(raster_path):
+    """Return raster min/max values as floats."""
+    min_value = float(arcpy.GetRasterProperties_management(raster_path, "MINIMUM")[0])
+    max_value = float(arcpy.GetRasterProperties_management(raster_path, "MAXIMUM")[0])
+    return min_value, max_value
+
+
+def _validated_raster_result(raster_path, expected_width, expected_height, metric_name, expected_min=None, expected_max=None):
+    """Validate raster dimensions and optional value range."""
+    desc = arcpy.Describe(raster_path)
+    actual_width = int(desc.width)
+    actual_height = int(desc.height)
+
+    if actual_width != int(expected_width) or actual_height != int(expected_height):
+        raise RuntimeError(
+            "{} 鏍￠獙澶辫触: 鏈熸湜 {}x{}锛屽疄闄?{}x{}".format(
+                metric_name, int(expected_width), int(expected_height), actual_width, actual_height
+            )
+        )
+
+    observed_value = "{}x{}".format(actual_width, actual_height)
+    expected_value = "{}x{}".format(int(expected_width), int(expected_height))
+
+    if expected_min is not None or expected_max is not None:
+        min_value, max_value = _get_raster_min_max(raster_path)
+        if expected_min is not None and abs(min_value - float(expected_min)) > 1e-6:
+            raise RuntimeError(
+                "{} 鏍￠獙澶辫触: MINIMUM 鏈熸湜 {}锛屽疄闄?{}".format(metric_name, float(expected_min), min_value)
+            )
+        if expected_max is not None and abs(max_value - float(expected_max)) > 1e-6:
+            raise RuntimeError(
+                "{} 鏍￠獙澶辫触: MAXIMUM 鏈熸湜 {}锛屽疄闄?{}".format(metric_name, float(expected_max), max_value)
+            )
+        expected_value = "{}; value={}..{}".format(expected_value, expected_min, expected_max)
+        observed_value = "{}; value={:.1f}..{:.1f}".format(observed_value, min_value, max_value)
+
+    return {
+        'output_width': actual_width,
+        'output_height': actual_height,
+        'validation_metric': metric_name,
+        'validation_expected': expected_value,
+        'validation_observed': observed_value,
+        'validation_passed': True,
+    }
+
+
 class RasterBenchmarks(object):
     """Collection of raster data benchmarks"""
 
@@ -68,8 +120,8 @@ class R1_CreateConstantRaster(BaseBenchmark):
         if arcpy.Exists(self.output_raster):
             arcpy.Delete_management(self.output_raster)
         
-        cell_size = 360.0 / self.size
-        extent = "-180 -90 180 90"
+        cell_size = 1
+        extent = _constant_raster_extent(self.size)
         sr = arcpy.SpatialReference(settings.SPATIAL_REFERENCE)
         create_constant_raster(
             self.output_raster,
@@ -77,16 +129,17 @@ class R1_CreateConstantRaster(BaseBenchmark):
             extent=extent,
             value=1,
             spatial_reference=sr,
-            use_spatial_analyst=False
+            use_spatial_analyst=spatial_analyst_available()
         )
-        
-        # Get raster info
-        desc = arcpy.Describe(self.output_raster)
-        return {
-            'width': desc.width,
-            'height': desc.height,
-            'cell_size': desc.meanCellWidth
-        }
+
+        return _validated_raster_result(
+            self.output_raster,
+            self.size,
+            self.size,
+            "constant_raster_dimensions",
+            expected_min=1,
+            expected_max=1
+        )
 
 
 class R2_Resample(BaseBenchmark):
@@ -112,8 +165,8 @@ class R2_Resample(BaseBenchmark):
         if not arcpy.Exists(self.input_raster):
             print("    Warning: input raster not found, creating fallback constant raster...")
             try:
-                cell_size = 360.0 / self.source_size
-                extent = "-180 -90 180 90"
+                cell_size = 1
+                extent = _constant_raster_extent(self.source_size)
                 sr = arcpy.SpatialReference(settings.SPATIAL_REFERENCE)
                 create_constant_raster(
                     self.input_raster,
@@ -121,7 +174,7 @@ class R2_Resample(BaseBenchmark):
                     extent=extent,
                     value=1,
                     spatial_reference=sr,
-                    use_spatial_analyst=False
+                    use_spatial_analyst=spatial_analyst_available()
                 )
             except Exception as e:
                 # Python 2/3 compatible error printing
@@ -144,7 +197,7 @@ class R2_Resample(BaseBenchmark):
             arcpy.Delete_management(self.output_raster)
         
         # Calculate new cell size
-        new_cell_size = 360.0 / self.target_size
+        new_cell_size = float(self.source_size) / float(self.target_size)
         
         # Resample
         arcpy.Resample_management(
@@ -154,13 +207,16 @@ class R2_Resample(BaseBenchmark):
             resampling_type="NEAREST"
         )
         
-        # Get raster info
-        desc = arcpy.Describe(self.output_raster)
-        return {
-            'output_width': desc.width,
-            'output_height': desc.height,
-            'cell_size': desc.meanCellWidth
-        }
+        result = _validated_raster_result(
+            self.output_raster,
+            self.target_size,
+            self.target_size,
+            "resample_raster_dimensions",
+            expected_min=1,
+            expected_max=1
+        )
+        result['cell_size'] = new_cell_size
+        return result
 
 
 class R3_Clip(BaseBenchmark):
@@ -181,15 +237,7 @@ class R3_Clip(BaseBenchmark):
         self.input_raster = os.path.join(settings.DATA_DIR, "constant_raster.tif")
         self.output_raster = os.path.join(settings.DATA_DIR, "R3_clip_output.tif")
         
-        # Calculate clip extent (center 50%)
-        # Original: -180, -90, 180, 90
-        x_range = 360 * self.clip_ratio
-        y_range = 180 * self.clip_ratio
-        x_min = -x_range / 2
-        y_min = -y_range / 2
-        x_max = x_range / 2
-        y_max = y_range / 2
-        self.clip_extent = "{} {} {} {}".format(x_min, y_min, x_max, y_max)
+        self.clip_extent = None
     
     def teardown(self):
         if self.output_raster and arcpy.Exists(self.output_raster):
@@ -203,6 +251,20 @@ class R3_Clip(BaseBenchmark):
         if arcpy.Exists(self.output_raster):
             arcpy.Delete_management(self.output_raster)
         
+        input_desc = arcpy.Describe(self.input_raster)
+        input_width = int(input_desc.width)
+        input_height = int(input_desc.height)
+        extent = input_desc.extent
+        x_range = float(extent.XMax) - float(extent.XMin)
+        y_range = float(extent.YMax) - float(extent.YMin)
+        clip_width = x_range * self.clip_ratio
+        clip_height = y_range * self.clip_ratio
+        x_min = float(extent.XMin) + (x_range - clip_width) / 2.0
+        y_min = float(extent.YMin) + (y_range - clip_height) / 2.0
+        x_max = x_min + clip_width
+        y_max = y_min + clip_height
+        self.clip_extent = "{} {} {} {}".format(x_min, y_min, x_max, y_max)
+
         # Clip raster
         arcpy.Clip_management(
             in_raster=self.input_raster,
@@ -212,13 +274,17 @@ class R3_Clip(BaseBenchmark):
             clipping_geometry="NONE",
             maintain_clipping_extent="NO_MAINTAIN_EXTENT"
         )
-        
-        # Get raster info
-        desc = arcpy.Describe(self.output_raster)
-        return {
-            'output_width': desc.width,
-            'output_height': desc.height
-        }
+
+        expected_width = int(round(input_width * self.clip_ratio))
+        expected_height = int(round(input_height * self.clip_ratio))
+        return _validated_raster_result(
+            self.output_raster,
+            expected_width,
+            expected_height,
+            "clip_raster_dimensions",
+            expected_min=1,
+            expected_max=1
+        )
 
 
 class R4_RasterCalculator(BaseBenchmark):
@@ -248,14 +314,17 @@ class R4_RasterCalculator(BaseBenchmark):
         # Delete if exists
         if arcpy.Exists(self.output_raster):
             arcpy.Delete_management(self.output_raster)
-        double_raster(self.input_raster, self.output_raster, use_spatial_analyst=False)
+        double_raster(self.input_raster, self.output_raster, use_spatial_analyst=spatial_analyst_available())
 
-        # Get raster info
-        desc = arcpy.Describe(self.output_raster)
-        return {
-            'output_width': desc.width,
-            'output_height': desc.height
-        }
+        input_desc = arcpy.Describe(self.input_raster)
+        return _validated_raster_result(
+            self.output_raster,
+            int(input_desc.width),
+            int(input_desc.height),
+            "raster_calculator_dimensions",
+            expected_min=2,
+            expected_max=2
+        )
 
 
 if __name__ == '__main__':

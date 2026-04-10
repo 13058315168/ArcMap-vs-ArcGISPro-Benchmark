@@ -105,8 +105,7 @@ def create_constant_raster(output_path, cell_size, extent, value=1, spatial_refe
         array,
         lower_left,
         float(cell_size),
-        float(cell_size),
-        int(value)
+        float(cell_size)
     )
     raster.save(output_path)
     if spatial_reference is not None:

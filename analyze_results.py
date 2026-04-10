@@ -42,6 +42,9 @@ def _get_scale_configs(scale_name):
         'medium': (settings.VECTOR_CONFIG_MEDIUM, settings.RASTER_CONFIG_MEDIUM),
         'large': (settings.VECTOR_CONFIG_LARGE, settings.RASTER_CONFIG_LARGE)
     }
+    stats['py3_faster'] = len([c for c in valid_two_way if c['faster'] == "Python 3.x 鏇村揩"])
+    stats['py2_faster'] = len([c for c in valid_two_way if c['faster'] == "Python 2.7 鏇村揩"])
+    stats['equal'] = len([c for c in valid_two_way if c['faster'] == "鎬ц兘鐩稿綋"])
 
     vector_config, raster_config = presets.get(
         (scale_name or '').lower(),
@@ -342,6 +345,23 @@ def load_results(results_dir):
     return results_py2, results_py3, results_os, metadata_groups
 
 
+def _is_result_valid(result):
+    """Return True when a benchmark result both executed and passed validation."""
+    return bool(result) and bool(result.get('success')) and bool(result.get('validation_passed'))
+
+
+def _impl_validation_fields(result):
+    """Extract normalized validation fields for a single implementation result."""
+    result = result or {}
+    return {
+        'success': bool(result.get('success')),
+        'valid': _is_result_valid(result),
+        'metric': result.get('validation_metric', ''),
+        'expected': result.get('validation_expected', ''),
+        'observed': result.get('validation_observed', ''),
+    }
+
+
 def create_comparison(results_py2, results_py3, results_os=None):
     """Create side-by-side comparison (2-way or 3-way)"""
     comparison = []
@@ -372,6 +392,9 @@ def create_comparison(results_py2, results_py3, results_os=None):
         py2_result = py2_lookup.get(test_name, {})
         py3_result = py3_lookup.get(test_name, {})
         os_result = os_lookup.get(test_name + '_OS', {})
+        py2_validation = _impl_validation_fields(py2_result)
+        py3_validation = _impl_validation_fields(py3_result)
+        os_validation = _impl_validation_fields(os_result)
         
         py2_time = py2_result.get('mean_time', 0)
         py2_std = py2_result.get('std_time', 0)
@@ -388,16 +411,26 @@ def create_comparison(results_py2, results_py3, results_os=None):
         os_memory = os_result.get('avg_memory_mb', 0)
         os_memory_min = os_result.get('min_memory_mb', os_memory)
         os_memory_max = os_result.get('max_memory_mb', os_memory)
+        input_width = py2_result.get('input_width', 0) or py3_result.get('input_width', 0) or os_result.get('input_width', 0)
+        input_height = py2_result.get('input_height', 0) or py3_result.get('input_height', 0) or os_result.get('input_height', 0)
+        expected_features = py2_result.get('expected_features', 0) or py3_result.get('expected_features', 0) or os_result.get('expected_features', 0)
+        validation_passed = (
+            py2_validation['valid'] and
+            py3_validation['valid'] and
+            (not has_os or not os_result or os_validation['valid'])
+        )
         
         # Calculate speedup (Py3 vs Py2)
-        if py3_time > 0 and py2_time > 0:
+        if py2_validation['valid'] and py3_validation['valid'] and py3_time > 0 and py2_time > 0:
             speedup = py2_time / py3_time
         else:
             speedup = 0
         
         # 判断哪个版本更快 (Py2 vs Py3)
-        if py2_time <= 0 or py3_time <= 0:
+        if not py2_validation['success'] or not py3_validation['success']:
             faster = "数据不完整"
+        elif not py2_validation['valid'] or not py3_validation['valid']:
+            faster = "缁撴灉鏈€氳繃鏍￠獙"
         elif speedup > 1.05:
             faster = "Python 3.x 更快"
         elif speedup < 0.95:
@@ -406,8 +439,13 @@ def create_comparison(results_py2, results_py3, results_os=None):
             faster = "性能相当"
         
         # Determine fastest among all three
-        times = {'Python 2.7': py2_time, 'Python 3.x': py3_time, 'Open-Source': os_time}
-        valid_times = {k: v for k, v in times.items() if v > 0}
+        valid_times = {}
+        if py2_validation['valid'] and py2_time > 0:
+            valid_times['Python 2.7'] = py2_time
+        if py3_validation['valid'] and py3_time > 0:
+            valid_times['Python 3.x'] = py3_time
+        if os_validation['valid'] and os_time > 0:
+            valid_times['Open-Source'] = os_time
         if valid_times:
             fastest = min(valid_times, key=valid_times.get)
         else:
@@ -434,12 +472,28 @@ def create_comparison(results_py2, results_py3, results_os=None):
             'os_memory_mb': os_memory,
             'os_memory_min_mb': os_memory_min,
             'os_memory_max_mb': os_memory_max,
+            'input_width': input_width,
+            'input_height': input_height,
+            'expected_features': expected_features,
+            'validation_passed': validation_passed,
             'speedup': speedup,
             'faster': faster,
             'fastest': fastest,
             'py2_success': test_name in py2_lookup,
             'py3_success': test_name in py3_lookup,
-            'os_success': test_name + '_OS' in os_lookup
+            'os_success': test_name + '_OS' in os_lookup,
+            'py2_valid': py2_validation['valid'],
+            'py3_valid': py3_validation['valid'],
+            'os_valid': os_validation['valid'],
+            'py2_validation_metric': py2_validation['metric'],
+            'py2_validation_expected': py2_validation['expected'],
+            'py2_validation_observed': py2_validation['observed'],
+            'py3_validation_metric': py3_validation['metric'],
+            'py3_validation_expected': py3_validation['expected'],
+            'py3_validation_observed': py3_validation['observed'],
+            'os_validation_metric': os_validation['metric'],
+            'os_validation_expected': os_validation['expected'],
+            'os_validation_observed': os_validation['observed'],
         })
     
     return comparison, has_os
@@ -447,8 +501,12 @@ def create_comparison(results_py2, results_py3, results_os=None):
 
 def calculate_statistics(comparison, has_os=False):
     """计算统计摘要（支持三向对比）"""
+    valid_two_way = [c for c in comparison if c.get('py2_valid') and c.get('py3_valid')]
+    valid_three_way = [c for c in comparison if c.get('py2_valid') and c.get('py3_valid') and c.get('os_valid')]
     stats = {
         'total_tests': len(comparison),
+        'valid_two_way_tests': len(valid_two_way),
+        'invalid_two_way_tests': len(comparison) - len(valid_two_way),
         'py3_faster': len([c for c in comparison if c['faster'] == "Python 3.x 更快"]),
         'py2_faster': len([c for c in comparison if c['faster'] == "Python 2.7 更快"]),
         'equal': len([c for c in comparison if c['faster'] == "性能相当"]),
@@ -457,17 +515,22 @@ def calculate_statistics(comparison, has_os=False):
         'max_speedup': 0,
         'min_speedup': 0
     }
-    
+    stats['py3_faster'] = len([c for c in valid_two_way if c['faster'] == "Python 3.x 鏇村揩"])
+    stats['py2_faster'] = len([c for c in valid_two_way if c['faster'] == "Python 2.7 鏇村揩"])
+    stats['equal'] = len([c for c in valid_two_way if c['faster'] == "鎬ц兘鐩稿綋"])
+
     # 3-way statistics
     if has_os:
-        stats['os_faster'] = len([c for c in comparison if c['fastest'] == "Open-Source"])
-        stats['py2_wins'] = len([c for c in comparison if c['fastest'] == "Python 2.7"])
-        stats['py3_wins'] = len([c for c in comparison if c['fastest'] == "Python 3.x"])
+        stats['valid_three_way_tests'] = len(valid_three_way)
+        stats['invalid_three_way_tests'] = len(comparison) - len(valid_three_way)
+        stats['os_faster'] = len([c for c in valid_three_way if c['fastest'] == "Open-Source"])
+        stats['py2_wins'] = len([c for c in valid_three_way if c['fastest'] == "Python 2.7"])
+        stats['py3_wins'] = len([c for c in valid_three_way if c['fastest'] == "Python 3.x"])
         
         # Calculate OS speedups
         os_speedups_vs_py2 = []
         os_speedups_vs_py3 = []
-        for c in comparison:
+        for c in valid_three_way:
             if c['os_time'] > 0 and c['py2_time'] > 0:
                 os_speedups_vs_py2.append(c['py2_time'] / c['os_time'])
             if c['os_time'] > 0 and c['py3_time'] > 0:
@@ -478,7 +541,7 @@ def calculate_statistics(comparison, has_os=False):
         if os_speedups_vs_py3:
             stats['os_vs_py3_avg'] = sum(os_speedups_vs_py3) / len(os_speedups_vs_py3)
     
-    speedups = [c['speedup'] for c in comparison if c['speedup'] > 0]
+    speedups = [c['speedup'] for c in valid_two_way if c['speedup'] > 0]
     
     if speedups:
         stats['average_speedup'] = sum(speedups) / len(speedups)
@@ -681,6 +744,12 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     regular_tests = [c for c in comparison if not c['test_name'].startswith('Py') or not any(x in c['test_name'] for x in ['_MP_', '_single', '_multiprocess'])]
     # 只保留真正常规的测试（通过类别过滤掉多进程测试）
     single_thread_tests = [c for c in regular_tests if c['category'] in ['vector', 'raster', 'mixed']]
+    valid_two_way_tests = [c for c in single_thread_tests if c.get('py2_valid') and c.get('py3_valid')]
+    valid_three_way_tests = [c for c in single_thread_tests if c.get('py2_valid') and c.get('py3_valid') and c.get('os_valid')]
+    validation_tests = [
+        c for c in single_thread_tests
+        if c.get('py2_validation_metric') or c.get('py3_validation_metric') or c.get('os_validation_metric')
+    ]
     
     # 按类别分组（常规测试 6+4+2）
     vector_tests = sorted([c for c in single_thread_tests if c['category'] == 'vector'], key=lambda x: x['test_name'])
@@ -723,7 +792,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
             winner = "性能相当"
         
         lines.append("| **总体优胜者** | **{}** |".format(winner))
-        lines.append("| 测试通过率 | {}/{} (100%) |".format(stats['total_tests'], stats['total_tests']))
+        lines.append("| 有效三向对比 | {}/{} |".format(stats.get('valid_three_way_tests', 0), stats['total_tests']))
         lines.append("| 数据规模 | {} |".format(data_scale))
         lines.append("")
         
@@ -733,14 +802,14 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("|------|-----------|------|-----------|")
         lines.append("| Python 2.7 (ArcMap) | {} | {:.1f}% | 基准 |".format(
             stats.get('py2_wins', 0), 
-            stats.get('py2_wins', 0)/stats['total_tests']*100 if stats['total_tests'] > 0 else 0))
+            stats.get('py2_wins', 0)/stats.get('valid_three_way_tests', 1)*100 if stats.get('valid_three_way_tests', 0) > 0 else 0))
         lines.append("| Python 3.x (Pro) | {} | {:.1f}% | {:.2f}x |".format(
             stats.get('py3_wins', 0), 
-            stats.get('py3_wins', 0)/stats['total_tests']*100 if stats['total_tests'] > 0 else 0,
+            stats.get('py3_wins', 0)/stats.get('valid_three_way_tests', 1)*100 if stats.get('valid_three_way_tests', 0) > 0 else 0,
             stats['average_speedup']))
         lines.append("| 开源库 (OS) | {} | {:.1f}% | {:.2f}x (vs Py2) |".format(
             stats.get('os_faster', 0), 
-            stats.get('os_faster', 0)/stats['total_tests']*100 if stats['total_tests'] > 0 else 0,
+            stats.get('os_faster', 0)/stats.get('valid_three_way_tests', 1)*100 if stats.get('valid_three_way_tests', 0) > 0 else 0,
             stats.get('os_vs_py2_avg', 0)))
         lines.append("")
         
@@ -766,7 +835,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("|------|------|")
         lines.append("| **总体优胜者** | **{}** |".format(winner))
         lines.append("| 性能优势 | {:.1f}% |".format((winner_speed - 1) * 100))
-        lines.append("| 测试通过率 | {}/{} (100%) |".format(stats['total_tests'], stats['total_tests']))
+        lines.append("| 有效双向对比 | {}/{} |".format(stats.get('valid_two_way_tests', 0), stats['total_tests']))
         lines.append("| 数据规模 | {} |".format(data_scale))
         lines.append("")
         
@@ -774,9 +843,9 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("")
         lines.append("| Python版本 | 获胜测试数 | 占比 | 平均加速比 |")
         lines.append("|-----------|-----------|------|-----------|")
-        lines.append("| Python 2.7 | {} | {:.1f}% | - |".format(stats['py2_faster'], stats['py2_faster']/stats['total_tests']*100 if stats['total_tests'] > 0 else 0))
-        lines.append("| Python 3.x | {} | {:.1f}% | {:.2f}x |".format(stats['py3_faster'], stats['py3_faster']/stats['total_tests']*100 if stats['total_tests'] > 0 else 0, stats['average_speedup']))
-        lines.append("| 性能相当 | {} | {:.1f}% | - |".format(stats['equal'], stats['equal']/stats['total_tests']*100 if stats['total_tests'] > 0 else 0))
+        lines.append("| Python 2.7 | {} | {:.1f}% | - |".format(stats['py2_faster'], stats['py2_faster']/stats.get('valid_two_way_tests', 1)*100 if stats.get('valid_two_way_tests', 0) > 0 else 0))
+        lines.append("| Python 3.x | {} | {:.1f}% | {:.2f}x |".format(stats['py3_faster'], stats['py3_faster']/stats.get('valid_two_way_tests', 1)*100 if stats.get('valid_two_way_tests', 0) > 0 else 0, stats['average_speedup']))
+        lines.append("| 性能相当 | {} | {:.1f}% | - |".format(stats['equal'], stats['equal']/stats.get('valid_two_way_tests', 1)*100 if stats.get('valid_two_way_tests', 0) > 0 else 0))
         lines.append("")
     
     # ==================== 2. 测试环境 ====================
@@ -815,9 +884,13 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
             py_ver = results_py3[0].get('python_version', '')
             if py_ver.startswith('3.13'):
                 py3_arcgis = "ArcGIS Pro 3.6"
-        
+
+        py2_python = results_py2[0].get('python_version', 'N/A') if results_py2 else 'N/A'
+        py3_python = results_py3[0].get('python_version', 'N/A') if results_py3 else 'N/A'
+        os_python = results_os[0].get('python_version', 'N/A') if results_os else 'N/A'
+
         lines.append("| ArcGIS版本 | {} | {} | N/A |".format(py2_arcgis, py3_arcgis))
-        lines.append("| Python版本 | 2.7.16 | 3.13.7 | 3.13.7 |")
+        lines.append("| Python版本 | {} | {} | {} |".format(py2_python, py3_python, os_python))
         lines.append("| 核心库 | arcpy | arcpy | GeoPandas + Rasterio |")
         lines.append("| 测试循环次数 | {} | {} | {} |".format(py2_runs, py3_runs, os_runs))
     else:
@@ -837,9 +910,12 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
             py_ver = results_py3[0].get('python_version', '')
             if py_ver.startswith('3.13'):
                 py3_arcgis = "ArcGIS Pro 3.6"
-        
+
+        py2_python = results_py2[0].get('python_version', 'N/A') if results_py2 else 'N/A'
+        py3_python = results_py3[0].get('python_version', 'N/A') if results_py3 else 'N/A'
+
         lines.append("| ArcGIS版本 | {} | {} |".format(py2_arcgis, py3_arcgis))
-        lines.append("| Python版本 | 2.7.16 | 3.13.7 |")
+        lines.append("| Python版本 | {} | {} |".format(py2_python, py3_python))
         lines.append("| 测试循环次数 | {} | {} |".format(py2_runs, py3_runs))
     lines.append("")
     
@@ -1162,7 +1238,10 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     lines.append("")
     
     # 只分析常规测试（非多进程测试）
-    regular_comparison = [c for c in comparison if c['category'] in ['vector', 'raster', 'mixed']]
+    regular_comparison = [
+        c for c in comparison
+        if c['category'] in ['vector', 'raster', 'mixed'] and c.get('py2_valid') and c.get('py3_valid')
+    ]
     
     # 找出 Py3 最快的测试
     py3_wins = [c for c in regular_comparison if c['speedup'] > 1.0 and c['py2_time'] > 0 and c['py3_time'] > 0]
@@ -1170,7 +1249,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     
     # 找出 OS 最快的测试
     if has_os:
-        os_wins = [c for c in regular_comparison if c.get('os_time', 0) > 0 and c['py2_time'] > 0 and (c['py2_time'] / c['os_time']) > 1.05]
+        os_wins = [c for c in regular_comparison if c.get('os_valid') and c.get('os_time', 0) > 0 and c['py2_time'] > 0 and (c['py2_time'] / c['os_time']) > 1.05]
     
     if py3_wins:
         lines.append("### Python 3.x 优势项目（相比 Py2.7 更快 {:.1f}%）".format((stats['average_speedup']-1)*100 if stats['average_speedup'] > 1 else 0))
@@ -1373,6 +1452,24 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("")
 
     # ==================== 6. 结论与建议 ====================
+    if validation_tests:
+        lines.append("## 1.4 Data Validation")
+        lines.append("")
+        if has_os:
+            lines.append("| Test | Py2 | Py3 | OS |")
+            lines.append("|------|-----|-----|----|")
+        else:
+            lines.append("| Test | Py2 | Py3 |")
+            lines.append("|------|-----|-----|")
+        for item in sorted(validation_tests, key=lambda x: (x['category'], x['test_name'])):
+            py2_text = "PASS" if item.get('py2_valid') else "FAIL"
+            py3_text = "PASS" if item.get('py3_valid') else "FAIL"
+            if has_os:
+                os_text = "PASS" if item.get('os_valid') else "FAIL"
+                lines.append("| {} | {} | {} | {} |".format(item['test_name'], py2_text, py3_text, os_text))
+            else:
+                lines.append("| {} | {} | {} |".format(item['test_name'], py2_text, py3_text))
+        lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("# 六、结论与建议")
@@ -1400,7 +1497,16 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         else:
             lines.append("1. **总体性能**：Python 2.7 在本测试环境中整体性能优于 Python 3.x，平均快 {:.1f}%。".format((1/stats['average_speedup']-1)*100))
     
-    lines.append("2. **测试覆盖**：共执行 {} 个测试项目，全部成功，覆盖矢量、栅格、混合处理三大类操作。".format(stats['total_tests']))
+    if has_os:
+        lines.append("2. **测试覆盖**：共执行 {} 个测试项目，其中有效三向对比 {} 项，覆盖矢量、栅格、混合处理三大类操作。".format(
+            stats['total_tests'],
+            stats.get('valid_three_way_tests', 0)
+        ))
+    else:
+        lines.append("2. **测试覆盖**：共执行 {} 个测试项目，其中有效双向对比 {} 项，覆盖矢量、栅格、混合处理三大类操作。".format(
+            stats['total_tests'],
+            stats.get('valid_two_way_tests', 0)
+        ))
     
     if py3_wins:
         best_py3 = max(py3_wins, key=lambda x: x['speedup'])
@@ -1580,8 +1686,13 @@ def generate_csv(comparison, output_path):
     """Generate CSV file"""
     fieldnames = [
         'test_name', 'category',
-        'py2_time', 'py2_std', 'py2_success',
-        'py3_time', 'py3_std', 'py3_success',
+        'py2_time', 'py2_std', 'py2_success', 'py2_valid',
+        'py2_validation_metric', 'py2_validation_expected', 'py2_validation_observed',
+        'py3_time', 'py3_std', 'py3_success', 'py3_valid',
+        'py3_validation_metric', 'py3_validation_expected', 'py3_validation_observed',
+        'os_time', 'os_std', 'os_success', 'os_valid',
+        'os_validation_metric', 'os_validation_expected', 'os_validation_observed',
+        'input_width', 'input_height', 'expected_features', 'validation_passed',
         'speedup', 'faster'
     ]
     

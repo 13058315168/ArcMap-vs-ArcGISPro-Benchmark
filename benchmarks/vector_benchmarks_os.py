@@ -25,6 +25,7 @@ except ImportError:
 
 from config import settings
 from benchmarks.base_benchmark import BaseBenchmark
+from utils.benchmark_shapes import factor_grid_dimensions, expected_offset_grid_intersections
 
 
 BUFFER_PROJECTED_CRS = "EPSG:3857"
@@ -39,6 +40,23 @@ def buffer_in_projected_crs(gdf, buffer_distance_meters, projected_crs=BUFFER_PR
     projected = gdf.to_crs(projected_crs)
     projected['geometry'] = projected.buffer(buffer_distance_meters)
     return projected.to_crs(source_crs)
+
+
+def _validated_count_result(actual_count, expected_count, metric_name):
+    """Return a validated benchmark payload for deterministic feature counts."""
+    if int(actual_count) != int(expected_count):
+        raise RuntimeError(
+            "{} 鏍￠獙澶辫触: 鏈熸湜 {}锛屽疄闄?{}".format(metric_name, int(expected_count), int(actual_count))
+        )
+
+    return {
+        'features_created': int(actual_count),
+        'expected_features': int(expected_count),
+        'validation_metric': metric_name,
+        'validation_expected': int(expected_count),
+        'validation_observed': int(actual_count),
+        'validation_passed': True,
+    }
 
 
 class VectorBenchmarksOS(object):
@@ -102,7 +120,7 @@ class V1_CreateFishnet_OS(BaseBenchmark):
         # Save to GeoPackage
         gdf.to_file(self.output_path, driver="GPKG")
         
-        return {'features_created': len(polygons)}
+        return _validated_count_result(len(polygons), self.rows * self.cols, "fishnet_feature_count")
 
 
 class V2_CreateRandomPoints_OS(BaseBenchmark):
@@ -135,7 +153,7 @@ class V2_CreateRandomPoints_OS(BaseBenchmark):
         # Save to GeoPackage
         gdf.to_file(self.output_path, driver="GPKG")
         
-        return {'features_created': len(points)}
+        return _validated_count_result(len(points), self.num_points, "random_point_count")
 
 
 class V3_Buffer_OS(BaseBenchmark):
@@ -163,6 +181,7 @@ class V3_Buffer_OS(BaseBenchmark):
     def run_single(self):
         # Read input points from GDB (using layer parameter)
         gdf = gpd.read_file(self.gdb_path, layer=self.input_layer)
+        expected_count = len(gdf)
         
         # Buffer in a projected CRS so the 1 km distance matches the ArcPy benchmark.
         gdf = buffer_in_projected_crs(gdf, self.buffer_distance)
@@ -170,7 +189,7 @@ class V3_Buffer_OS(BaseBenchmark):
         # Save output
         gdf.to_file(self.output_path, driver="GPKG")
         
-        return {'features_created': len(gdf)}
+        return _validated_count_result(len(gdf), expected_count, "buffer_feature_count")
 
 
 class V4_Intersect_OS(BaseBenchmark):
@@ -182,6 +201,9 @@ class V4_Intersect_OS(BaseBenchmark):
         self.input_a_layer = None
         self.input_b_layer = None
         self.output_path = None
+        rows_a, cols_a = factor_grid_dimensions(settings.VECTOR_CONFIG['intersect_features_a'])
+        rows_b, cols_b = factor_grid_dimensions(settings.VECTOR_CONFIG['intersect_features_b'])
+        self.expected_features = expected_offset_grid_intersections(rows_a, cols_a, rows_b, cols_b)
     
     def setup(self):
         self.gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
@@ -207,7 +229,7 @@ class V4_Intersect_OS(BaseBenchmark):
         # Save output
         result.to_file(self.output_path, driver="GPKG")
         
-        return {'features_created': len(result)}
+        return _validated_count_result(len(result), self.expected_features, "intersect_feature_count")
 
 
 class V5_SpatialJoin_OS(BaseBenchmark):
@@ -244,7 +266,7 @@ class V5_SpatialJoin_OS(BaseBenchmark):
         # Save output
         result.to_file(self.output_path, driver="GPKG")
         
-        return {'features_created': len(result)}
+        return _validated_count_result(len(result), len(target), "spatial_join_feature_count")
 
 
 class V6_CalculateField_OS(BaseBenchmark):
@@ -278,7 +300,27 @@ class V6_CalculateField_OS(BaseBenchmark):
         # Save output
         gdf.to_file(self.output_path, driver="GPKG")
         
-        return {'features_processed': len(gdf)}
+        sample_values = []
+        for _, row in gdf[['poly_id', 'calc_field']].head(5).iterrows():
+            poly_id = int(row['poly_id'])
+            calc_value = float(row['calc_field'])
+            expected_value = poly_id * 2.5 + 100.0
+            if abs(calc_value - expected_value) > 1e-6:
+                raise RuntimeError(
+                    "calculate_field_sample 鏍￠獙澶辫触: poly_id={} 鏈熸湜 {}锛屽疄闄?{}".format(
+                        poly_id, expected_value, calc_value
+                    )
+                )
+            sample_values.append("{}->{:.1f}".format(poly_id, calc_value))
+
+        return {
+            'features_processed': len(gdf),
+            'expected_features': len(gdf),
+            'validation_metric': 'calculate_field_samples',
+            'validation_expected': "{} records; sample formula matches".format(len(gdf)),
+            'validation_observed': "; ".join(sample_values),
+            'validation_passed': True,
+        }
 
 
 if __name__ == '__main__':

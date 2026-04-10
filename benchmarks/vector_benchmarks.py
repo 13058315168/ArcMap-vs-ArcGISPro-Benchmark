@@ -20,6 +20,24 @@ except ImportError:
 
 from config import settings
 from benchmarks.base_benchmark import BaseBenchmark
+from utils.benchmark_shapes import factor_grid_dimensions, expected_offset_grid_intersections
+
+
+def _validated_count_result(actual_count, expected_count, metric_name):
+    """Return a validated benchmark payload for deterministic feature counts."""
+    if int(actual_count) != int(expected_count):
+        raise RuntimeError(
+            "{} 鏍￠獙澶辫触: 鏈熸湜 {}锛屽疄闄?{}".format(metric_name, int(expected_count), int(actual_count))
+        )
+
+    return {
+        'features_created': int(actual_count),
+        'expected_features': int(expected_count),
+        'validation_metric': metric_name,
+        'validation_expected': int(expected_count),
+        'validation_observed': int(actual_count),
+        'validation_passed': True,
+    }
 
 
 class VectorBenchmarks(object):
@@ -89,7 +107,7 @@ class V1_CreateFishnet(BaseBenchmark):
         arcpy.DefineProjection_management(self.output_fc, sr)
         
         count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return {'features_created': count}
+        return _validated_count_result(count, self.rows * self.cols, "fishnet_feature_count")
 
 
 class V2_CreateRandomPoints(BaseBenchmark):
@@ -130,7 +148,7 @@ class V2_CreateRandomPoints(BaseBenchmark):
         )
         
         count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return {'features_created': count}
+        return _validated_count_result(count, self.num_points, "random_point_count")
 
 
 class V3_Buffer(BaseBenchmark):
@@ -188,8 +206,9 @@ class V3_Buffer(BaseBenchmark):
             dissolve_option="NONE"
         )
         
+        expected_count = int(arcpy.GetCount_management(self.input_fc)[0])
         count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return {'features_created': count}
+        return _validated_count_result(count, expected_count, "buffer_feature_count")
 
 
 class V4_Intersect(BaseBenchmark):
@@ -200,6 +219,9 @@ class V4_Intersect(BaseBenchmark):
         self.input_a = None
         self.input_b = None
         self.output_fc = None
+        rows_a, cols_a = factor_grid_dimensions(settings.VECTOR_CONFIG['intersect_features_a'])
+        rows_b, cols_b = factor_grid_dimensions(settings.VECTOR_CONFIG['intersect_features_b'])
+        self.expected_features = expected_offset_grid_intersections(rows_a, cols_a, rows_b, cols_b)
     
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
@@ -232,7 +254,7 @@ class V4_Intersect(BaseBenchmark):
         )
         
         count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return {'features_created': count}
+        return _validated_count_result(count, self.expected_features, "intersect_feature_count")
 
 
 class V5_SpatialJoin(BaseBenchmark):
@@ -276,8 +298,9 @@ class V5_SpatialJoin(BaseBenchmark):
             join_type="KEEP_ALL"
         )
         
+        expected_count = int(arcpy.GetCount_management(self.target_features)[0])
         count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return {'features_created': count}
+        return _validated_count_result(count, expected_count, "spatial_join_feature_count")
 
 
 class V6_CalculateField(BaseBenchmark):
@@ -303,7 +326,11 @@ class V6_CalculateField(BaseBenchmark):
                 arcpy.AddField_management(self.input_fc, "calc_field", "DOUBLE")
     
     def teardown(self):
-        pass
+        if self.working_fc and arcpy.Exists(self.working_fc):
+            try:
+                arcpy.Delete_management(self.working_fc)
+            except Exception:
+                pass
     
     def run_single(self):
         # Copy to working feature class
@@ -325,12 +352,34 @@ class V6_CalculateField(BaseBenchmark):
             expression=expression,
             expression_type="PYTHON"
         )
-        
-        # Clean up
+
+        count = int(arcpy.GetCount_management(self.working_fc)[0])
+        sample_values = []
+        with arcpy.da.SearchCursor(self.working_fc, ["poly_id", "calc_field"]) as cursor:
+            for index, row in enumerate(cursor):
+                poly_id = int(row[0])
+                calc_value = float(row[1])
+                expected_value = poly_id * 2.5 + 100.0
+                if abs(calc_value - expected_value) > 1e-6:
+                    raise RuntimeError(
+                        "calculate_field_sample 鏍￠獙澶辫触: poly_id={} 鏈熸湜 {}锛屽疄闄?{}".format(
+                            poly_id, expected_value, calc_value
+                        )
+                    )
+                sample_values.append("{}->{:.1f}".format(poly_id, calc_value))
+                if index >= 4:
+                    break
+
         arcpy.Delete_management(self.working_fc)
-        
-        count = int(arcpy.GetCount_management(self.input_fc)[0])
-        return {'features_processed': count}
+
+        return {
+            'features_processed': count,
+            'expected_features': count,
+            'validation_metric': 'calculate_field_samples',
+            'validation_expected': "{} records; sample formula matches".format(count),
+            'validation_observed': "; ".join(sample_values),
+            'validation_passed': True,
+        }
 
 
 if __name__ == '__main__':

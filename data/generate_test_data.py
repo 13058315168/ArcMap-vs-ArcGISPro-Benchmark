@@ -16,7 +16,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import arcpy
 from config import settings
 from utils.timer import ProgressHeartbeat
-from utils.raster_utils import create_constant_raster
+from utils.raster_utils import create_constant_raster, spatial_analyst_available
+from utils.benchmark_shapes import factor_grid_dimensions
 
 
 class TestDataGenerator(object):
@@ -82,11 +83,11 @@ class TestDataGenerator(object):
         checks = [
             ("fishnet", "polygon", self.vector_config['fishnet_rows'] * self.vector_config['fishnet_cols']),
             ("random_points", "point", self.vector_config['random_points']),
-            ("buffer_points", "point", int(self.vector_config['buffer_points'] ** 0.5) ** 2),  # Grid layout
-            ("test_polygons_a", "polygon", int(self.vector_config['intersect_features_a'] ** 0.5) ** 2),
-            ("test_polygons_b", "polygon", int(self.vector_config['intersect_features_b'] ** 0.5) ** 2),
+            ("buffer_points", "point", self.vector_config['buffer_points']),
+            ("test_polygons_a", "polygon", self.vector_config['intersect_features_a']),
+            ("test_polygons_b", "polygon", self.vector_config['intersect_features_b']),
             ("spatial_join_points", "point", self.vector_config['spatial_join_points']),
-            ("spatial_join_polygons", "polygon", int(self.vector_config.get('spatial_join_polygons', 0) ** 0.5) ** 2),
+            ("spatial_join_polygons", "polygon", self.vector_config.get('spatial_join_polygons', 0)),
             ("calculate_field_fc", "polygon", self.vector_config['calculate_field_records']),
         ]
         
@@ -98,11 +99,10 @@ class TestDataGenerator(object):
                     all_valid = False
                     continue
                 
-                # Check feature count (with 10% tolerance)
+                # Deterministic synthetic inputs should match exactly.
                 actual_count = int(arcpy.GetCount_management(dataset_name)[0])
-                tolerance = max(1, expected_count * 0.1)
-                
-                if abs(actual_count - expected_count) <= tolerance:
+
+                if actual_count == expected_count:
                     print("    [OK] {}: {} {} (符合要求)".format(dataset_name, actual_count, expected_type))
                 else:
                     print("    [不符] {}: {} vs 期望 {}".format(dataset_name, actual_count, expected_count))
@@ -118,7 +118,24 @@ class TestDataGenerator(object):
             if arcpy.Exists(raster_path):
                 desc = arcpy.Describe(raster_path)
                 expected_size = self.raster_config['constant_raster_size']
-                if desc.width == expected_size and desc.height == expected_size:
+                min_value = float(arcpy.GetRasterProperties_management(raster_path, "MINIMUM")[0])
+                max_value = float(arcpy.GetRasterProperties_management(raster_path, "MAXIMUM")[0])
+                extent = desc.extent
+                extent_ok = (
+                    abs(float(extent.XMin) - 0.0) < 1e-6 and
+                    abs(float(extent.YMin) - 0.0) < 1e-6 and
+                    abs(float(extent.XMax) - float(expected_size)) < 1e-6 and
+                    abs(float(extent.YMax) - float(expected_size)) < 1e-6
+                )
+                if (
+                    desc.width == expected_size and
+                    desc.height == expected_size and
+                    abs(float(desc.meanCellWidth) - 1.0) < 1e-6 and
+                    abs(float(desc.meanCellHeight) - 1.0) < 1e-6 and
+                    min_value == 1.0 and
+                    max_value == 1.0 and
+                    extent_ok
+                ):
                     print("    [OK] constant_raster: {}x{} (符合要求)".format(desc.width, desc.height))
                 else:
                     print("    [不符] constant_raster: {}x{} vs 期望 {}x{}".format(
@@ -260,9 +277,9 @@ class TestDataGenerator(object):
         if step < 1:
             step = 1
         
-        rows = int(num_points ** 0.5)
+        rows, cols = factor_grid_dimensions(num_points)
         for i in range(rows):
-            for j in range(rows):
+            for j in range(cols):
                 x = i * step + 5
                 y = j * step + 5
                 points.append((x, y))
@@ -300,8 +317,7 @@ class TestDataGenerator(object):
         print("  参数: 图层A={} 个多边形, 图层B={} 个多边形".format(num_a, num_b))
         
         # Create grid A
-        rows_a = int(num_a ** 0.5)
-        cols_a = int(num_a ** 0.5)
+        rows_a, cols_a = factor_grid_dimensions(num_a)
         print("  创建图层A (渔网 {}x{})...".format(rows_a, cols_a))
         arcpy.CreateFishnet_management(
             out_feature_class="test_polygons_a",
@@ -312,8 +328,8 @@ class TestDataGenerator(object):
             number_rows=rows_a,
             number_columns=cols_a,
             corner_coord="{} {}".format(
-                rows_a * 20,
-                cols_a * 20
+                cols_a * 20,
+                rows_a * 20
             ),
             labels="NO_LABELS",
             geometry_type="POLYGON"
@@ -335,8 +351,7 @@ class TestDataGenerator(object):
                     cursor.updateRow(row)
         
         # Create offset grid B
-        rows_b = int(num_b ** 0.5)
-        cols_b = int(num_b ** 0.5)
+        rows_b, cols_b = factor_grid_dimensions(num_b)
         print("  创建图层B (偏移渔网 {}x{})...".format(rows_b, cols_b))
         arcpy.CreateFishnet_management(
             out_feature_class="test_polygons_b",
@@ -347,8 +362,8 @@ class TestDataGenerator(object):
             number_rows=rows_b,
             number_columns=cols_b,
             corner_coord="{} {}".format(
-                rows_b * 20 + 10,
-                cols_b * 20 + 10
+                cols_b * 20 + 10,
+                rows_b * 20 + 10
             ),
             labels="NO_LABELS",
             geometry_type="POLYGON"
@@ -372,8 +387,7 @@ class TestDataGenerator(object):
         # Create a smaller grid for spatial join instead of copying full fishnet
         # This avoids the slow update cursor on millions of records
         print("  创建独立的多边形网格 ({} 个)...".format(num_polygons))
-        grid_rows = int(num_polygons ** 0.5)
-        grid_cols = int(num_polygons ** 0.5)
+        grid_rows, grid_cols = factor_grid_dimensions(num_polygons)
         
         # 使用有效的地理坐标范围，避免 WGS84 下出现非简单几何
         origin_x = -180.0
@@ -477,14 +491,14 @@ class TestDataGenerator(object):
         
         # Create simple polygons
         print("  正在创建 {} 个多边形...".format(num_records))
-        grid_size = int(num_records ** 0.5)
+        grid_rows, grid_cols = factor_grid_dimensions(num_records)
         cell_size = 10
         batch_size = max(1, num_records // 10)
         created = 0
         with arcpy.da.InsertCursor("calculate_field_fc", ["SHAPE@", "poly_id", "calc_field"]) as cursor:
             poly_id = 1
-            for i in range(grid_size):
-                for j in range(grid_size):
+            for i in range(grid_rows):
+                for j in range(grid_cols):
                     if poly_id > num_records:
                         break
                     # Create a simple square polygon
@@ -528,7 +542,7 @@ class TestDataGenerator(object):
                 extent=extent,
                 value=1,
                 spatial_reference=self.spatial_ref,
-                use_spatial_analyst=False
+                use_spatial_analyst=spatial_analyst_available()
             )
             print("  [OK] 完成: {}x{} 栅格".format(size, size))
             return raster_path

@@ -20,6 +20,14 @@ except ImportError:
 
 from config import settings
 from benchmarks.base_benchmark import BaseBenchmark
+from utils.raster_utils import create_constant_raster, spatial_analyst_available
+
+
+def _get_raster_min_max(raster_path):
+    """Return raster min/max values as floats."""
+    min_value = float(arcpy.GetRasterProperties_management(raster_path, "MINIMUM")[0])
+    max_value = float(arcpy.GetRasterProperties_management(raster_path, "MAXIMUM")[0])
+    return min_value, max_value
 
 
 class MixedBenchmarks(object):
@@ -70,6 +78,15 @@ class M1_PolygonToRaster(BaseBenchmark):
         # Delete if exists
         if arcpy.Exists(self.output_raster):
             arcpy.Delete_management(self.output_raster)
+
+        input_desc = arcpy.Describe(self.input_fc)
+        input_extent = input_desc.extent
+        input_width = float(input_extent.XMax) - float(input_extent.XMin)
+        input_height = float(input_extent.YMax) - float(input_extent.YMin)
+        raster_size = int(settings.RASTER_CONFIG['constant_raster_size'])
+        self.cell_size = max(input_width, input_height) / float(raster_size)
+        expected_width = int(round(input_width / self.cell_size))
+        expected_height = int(round(input_height / self.cell_size))
         
         # Polygon to raster conversion
         arcpy.PolygonToRaster_conversion(
@@ -80,13 +97,29 @@ class M1_PolygonToRaster(BaseBenchmark):
             priority_field="NONE",
             cellsize=self.cell_size
         )
-        
-        # Get raster info
+
         desc = arcpy.Describe(self.output_raster)
+        output_width = int(desc.width)
+        output_height = int(desc.height)
+        if output_width != expected_width or output_height != expected_height:
+            raise RuntimeError(
+                "M1_PolygonToRaster 鏍￠獙澶辫触: 鏈熸湜 {}x{}锛屽疄闄?{}x{}".format(
+                    expected_width, expected_height, output_width, output_height
+                )
+            )
+
+        _, max_value = _get_raster_min_max(self.output_raster)
+        if max_value <= 0:
+            raise RuntimeError("M1_PolygonToRaster 鏍￠獙澶辫触: 杈撳嚭鏍呮牸涓虹┖鎴栧叏閮?0")
+
         return {
-            'output_width': desc.width,
-            'output_height': desc.height,
-            'cell_size': desc.meanCellWidth
+            'output_width': output_width,
+            'output_height': output_height,
+            'cell_size': desc.meanCellWidth,
+            'validation_metric': 'polygon_to_raster_dimensions',
+            'validation_expected': "{}x{}; max>0".format(expected_width, expected_height),
+            'validation_observed': "{}x{}; max={:.1f}".format(output_width, output_height, max_value),
+            'validation_passed': True,
         }
 
 
@@ -105,6 +138,52 @@ class M2_RasterToPoint(BaseBenchmark):
         # Use file-based raster instead of GDB raster
         self.input_raster = os.path.join(settings.DATA_DIR, "constant_raster.tif")
         self.output_fc = os.path.join(settings.DATA_DIR, "M2_ras_to_point.shp")
+
+        # Keep this benchmark runnable without generating the full vector dataset.
+        expected_size = int(settings.RASTER_CONFIG['constant_raster_size'])
+        needs_regen = True
+        if arcpy.Exists(self.input_raster):
+            try:
+                desc = arcpy.Describe(self.input_raster)
+                if int(getattr(desc, 'width', 0) or 0) == expected_size and int(getattr(desc, 'height', 0) or 0) == expected_size:
+                    needs_regen = False
+            except Exception:
+                needs_regen = True
+
+        if needs_regen:
+            raster_size = int(settings.RASTER_CONFIG['constant_raster_size'])
+            extent = "0 0 {0} {0}".format(raster_size)
+            sr = arcpy.SpatialReference(settings.SPATIAL_REFERENCE)
+            create_constant_raster(
+                self.input_raster,
+                cell_size=1,
+                extent=extent,
+                value=1,
+                spatial_reference=sr,
+                use_spatial_analyst=spatial_analyst_available()
+            )
+
+    def _get_input_raster_stats(self):
+        """Return input raster dimensions and the expected output count."""
+        desc = arcpy.Describe(self.input_raster)
+        input_width = int(getattr(desc, 'width', 0) or 0)
+        input_height = int(getattr(desc, 'height', 0) or 0)
+
+        if input_width <= 0 or input_height <= 0:
+            raise RuntimeError(
+                "M2_RasterToPoint 无法读取输入栅格尺寸: {}".format(self.input_raster)
+            )
+
+        expected_size = int(settings.RASTER_CONFIG['constant_raster_size'])
+        if input_width != expected_size or input_height != expected_size:
+            raise RuntimeError(
+                "M2_RasterToPoint 输入栅格尺寸不符合当前规模: 实际 {}x{}, 期望 {}x{}".format(
+                    input_width, input_height, expected_size, expected_size
+                )
+            )
+
+        expected_features = input_width * input_height
+        return input_width, input_height, expected_features
     
     def teardown(self):
         if self.output_fc and arcpy.Exists(self.output_fc):
@@ -117,10 +196,10 @@ class M2_RasterToPoint(BaseBenchmark):
         # Delete if exists
         if arcpy.Exists(self.output_fc):
             arcpy.Delete_management(self.output_fc)
+
+        input_width, input_height, expected_features = self._get_input_raster_stats()
         
-        # Raster to point conversion
-        # Note: This can create a lot of points for large rasters
-        # Using SAMPLE to reduce the number of points for performance
+        # Raster to point conversion. This should emit one point per valid raster cell.
         arcpy.RasterToPoint_conversion(
             in_raster=self.input_raster,
             out_point_features=self.output_fc,
@@ -128,7 +207,26 @@ class M2_RasterToPoint(BaseBenchmark):
         )
         
         count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return {'features_created': count}
+        if count != expected_features:
+            raise RuntimeError(
+                "M2_RasterToPoint 输出数量校验失败: 输入 {}x{} 期望 {} 个点, 实际 {} 个点".format(
+                    input_width,
+                    input_height,
+                    expected_features,
+                    count
+                )
+            )
+
+        return {
+            'features_created': count,
+            'expected_features': expected_features,
+            'input_width': input_width,
+            'input_height': input_height,
+            'validation_metric': 'raster_to_point_feature_count',
+            'validation_expected': expected_features,
+            'validation_observed': count,
+            'validation_passed': True,
+        }
 
 
 if __name__ == '__main__':
