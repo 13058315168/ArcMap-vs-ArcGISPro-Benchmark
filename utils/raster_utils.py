@@ -98,7 +98,7 @@ def create_constant_raster(output_path, cell_size, extent, value=1, spatial_refe
 
     width = max(1, int(round((x_max - x_min) / float(cell_size))))
     height = max(1, int(round((y_max - y_min) / float(cell_size))))
-    array = np.ones((height, width), dtype=np.int16) * int(value)
+    array = np.ones((height, width), dtype=np.uint8) * int(value)
     lower_left = arcpy.Point(x_min, y_min)
     raster = arcpy.NumPyArrayToRaster(
         array,

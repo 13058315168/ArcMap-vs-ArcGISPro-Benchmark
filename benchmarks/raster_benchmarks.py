@@ -240,7 +240,7 @@ class R2_Resample(BaseBenchmark):
             in_raster=self.input_raster,
             out_raster=self.output_raster,
             cell_size=new_cell_size,
-            resampling_type="NEAREST"
+            resampling_type="BILINEAR"
         )
         
         result = _validated_raster_result(

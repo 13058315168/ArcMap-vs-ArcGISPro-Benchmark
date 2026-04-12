@@ -262,13 +262,14 @@ class RunnerEngine(object):
                 else:
                     print("\n  [FAILED] {}: {}".format(benchmark.name, stats.get("error", "Unknown")))
             except Exception as e:
-                print("\n  [ERROR] {}: {}".format(benchmark.name, str(e)))
+                error_msg = str(e) or type(e).__name__
+                print("\n  [ERROR] {}: {}".format(benchmark.name, error_msg))
                 import traceback
                 traceback.print_exc()
                 self.results.append({
                     "test_name": getattr(benchmark, "name", "unknown"),
                     "success": False,
-                    "error": str(e)
+                    "error": error_msg
                 })
 
         self._write_manifest()

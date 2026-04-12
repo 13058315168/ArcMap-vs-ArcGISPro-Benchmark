@@ -119,7 +119,7 @@ def build_block_pattern_array(height, width=None, block_size=8, levels=6):
     if height <= 0 or width <= 0:
         raise ValueError("height and width must be positive")
 
-    array = np.zeros((height, width), dtype=np.int16)
+    array = np.zeros((height, width), dtype=np.uint8)
     for row_start in range(0, height, block_size):
         row_block = row_start // block_size
         row_end = min(height, row_start + block_size)

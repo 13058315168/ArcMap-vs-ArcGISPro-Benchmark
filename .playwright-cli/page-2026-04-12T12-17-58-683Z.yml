@@ -1,0 +1,196 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 本地验证控制台
+      - heading "ArcGIS 基准测试调度器" [level=1] [ref=e6]
+      - paragraph [ref=e7]: 通过浏览器统一驱动现有基准脚本，默认验证 tiny 与 small 两档，并同时检查开源库与多进程结果。
+    - generic [ref=e8]:
+      - generic [ref=e9]: 完成
+      - generic [ref=e10]: Py2：已检测到 | Py3：已检测到 | 开源库：可用 | 输出根目录：C:\temp\arcgis_benchmark_data
+  - generic [ref=e11]: 快速预设会将正式循环数设为 1、预热数设为 0，适合先做一轮轻量验证。
+  - main [ref=e12]:
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - heading "运行设置" [level=2] [ref=e16]
+          - paragraph [ref=e17]: 这里控制的是命令行脚本，不会改动原有的桌面 GUI。
+        - generic [ref=e18]:
+          - button "默认 tiny+small" [ref=e19] [cursor=pointer]
+          - button "快速预设" [ref=e20] [cursor=pointer]
+          - button "刷新" [ref=e21] [cursor=pointer]
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Python 2 解释器
+          - textbox "Python 2 解释器" [ref=e25]: C:\Python27\ArcGIS10.8\python.exe
+        - generic [ref=e26]:
+          - generic [ref=e27]: Python 3 解释器
+          - textbox "Python 3 解释器" [ref=e28]: C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe
+        - generic [ref=e29]:
+          - generic [ref=e30]: 输出根目录
+          - textbox "输出根目录" [ref=e31]: C:\temp\arcgis_benchmark_data
+        - generic [ref=e32]:
+          - generic [ref=e33]: 正式循环次数
+          - spinbutton "正式循环次数" [ref=e34]: "1"
+        - generic [ref=e35]:
+          - generic [ref=e36]: 预热次数
+          - spinbutton "预热次数" [ref=e37]: "0"
+        - generic [ref=e38]:
+          - generic [ref=e39]: 多进程 worker 数
+          - spinbutton "多进程 worker 数" [ref=e40]: "4"
+      - generic [ref=e41]:
+        - generic [ref=e42]: 选择规模
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - checkbox "tiny（推荐）" [ref=e45]
+            - text: tiny（推荐）
+          - generic [ref=e46]:
+            - checkbox "small（推荐）" [active] [ref=e47]
+            - text: small（推荐）
+          - generic [ref=e48]:
+            - checkbox "standard" [checked] [ref=e49]
+            - text: standard
+          - generic [ref=e50]:
+            - checkbox "medium" [ref=e51]
+            - text: medium
+          - generic [ref=e52]:
+            - checkbox "large" [ref=e53]
+            - text: large
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - checkbox "生成数据" [checked] [ref=e56]
+          - generic [ref=e57]: 生成数据
+        - generic [ref=e58]:
+          - checkbox "包含开源库" [checked] [ref=e59]
+          - generic [ref=e60]: 包含开源库
+        - generic [ref=e61]:
+          - checkbox "多进程" [checked] [ref=e62]
+          - generic [ref=e63]: 多进程
+      - generic [ref=e64]:
+        - button "开始验证" [ref=e65] [cursor=pointer]
+        - button "停止" [disabled] [ref=e66]
+    - generic [ref=e67]:
+      - generic [ref=e69]:
+        - heading "状态" [level=2] [ref=e70]
+        - paragraph [ref=e71]: 实时查看每个规模的阶段、结果目录和校验进度。
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - generic [ref=e74]: 当前规模
+          - generic [ref=e75]: "-"
+        - generic [ref=e76]:
+          - generic [ref=e77]: 当前阶段
+          - generic [ref=e78]: "-"
+        - generic [ref=e79]:
+          - generic [ref=e80]: 会话根目录
+          - generic [ref=e81]: C:\temp\arcgis_benchmark_data\20260412_184233
+        - generic [ref=e82]:
+          - generic [ref=e83]: 进度
+          - generic [ref=e84]: 3 / 3 个规模已完成
+      - generic [ref=e88]: All selected scales passed validation
+      - table [ref=e89]:
+        - rowgroup [ref=e90]:
+          - row "规模 目录 Py2 Py3 开源库 分析 校验" [ref=e91]:
+            - columnheader "规模" [ref=e92]
+            - columnheader "目录" [ref=e93]
+            - columnheader "Py2" [ref=e94]
+            - columnheader "Py3" [ref=e95]
+            - columnheader "开源库" [ref=e96]
+            - columnheader "分析" [ref=e97]
+            - columnheader "校验" [ref=e98]
+        - rowgroup [ref=e99]:
+          - row "tiny 通过 C:\\temp\\arcgis_benchmark_data\\20260412_184233\\tiny 通过 返回码 0 | 68.5 秒 | 结果 6 条 | Completed successfully 通过 返回码 0 | 28.6 秒 | 结果 6 条 | Completed successfully 通过 返回码 0 | 0.0 秒 | 结果 6 条 | Validated 6 result(s) 通过 返回码 0 | 0.6 秒 | 结果 6 条 | Completed successfully 通过 返回码 0 | 0.0 秒 | All artifacts validated" [ref=e385]:
+            - cell "tiny 通过" [ref=e386]:
+              - strong [ref=e387]: tiny
+              - generic [ref=e388]: 通过
+            - cell "C:\\temp\\arcgis_benchmark_data\\20260412_184233\\tiny" [ref=e389]
+            - cell "通过 返回码 0 | 68.5 秒 | 结果 6 条 | Completed successfully" [ref=e390]:
+              - 'generic "====================================================================== [Info] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\tiny [Info] Benchmark run log: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\tiny\\benchmark_run.log" [ref=e391]': 通过
+              - generic [ref=e392]: 返回码 0 | 68.5 秒 | 结果 6 条 | Completed successfully
+            - cell "通过 返回码 0 | 28.6 秒 | 结果 6 条 | Completed successfully" [ref=e393]:
+              - 'generic "====================================================================== [Info] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\tiny [Info] Benchmark run log: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\tiny\\benchmark_run.log" [ref=e394]': 通过
+              - generic [ref=e395]: 返回码 0 | 28.6 秒 | 结果 6 条 | Completed successfully
+            - cell "通过 返回码 0 | 0.0 秒 | 结果 6 条 | Validated 6 result(s)" [ref=e396]:
+              - generic [ref=e397]: 通过
+              - generic [ref=e398]: 返回码 0 | 0.0 秒 | 结果 6 条 | Validated 6 result(s)
+            - cell "通过 返回码 0 | 0.6 秒 | 结果 6 条 | Completed successfully" [ref=e399]:
+              - 'generic "- LATEX: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\tiny\\comparison_table.tex - CSV: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\tiny\\comparison_data.csv - JSON: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\tiny\\comparison_data.json" [ref=e400]': 通过
+              - generic [ref=e401]: 返回码 0 | 0.6 秒 | 结果 6 条 | Completed successfully
+            - cell "通过 返回码 0 | 0.0 秒 | All artifacts validated" [ref=e402]:
+              - generic [ref=e403]: 通过
+              - generic [ref=e404]: 返回码 0 | 0.0 秒 | All artifacts validated
+          - row "small 通过 C:\\temp\\arcgis_benchmark_data\\20260412_184233\\small 通过 返回码 0 | 106.3 秒 | 结果 6 条 | Completed successfully 通过 返回码 0 | 41.2 秒 | 结果 6 条 | Completed successfully 通过 返回码 0 | 0.0 秒 | 结果 6 条 | Validated 6 result(s) 通过 返回码 0 | 0.7 秒 | 结果 6 条 | Completed successfully 通过 返回码 0 | 0.0 秒 | All artifacts validated" [ref=e405]:
+            - cell "small 通过" [ref=e406]:
+              - strong [ref=e407]: small
+              - generic [ref=e408]: 通过
+            - cell "C:\\temp\\arcgis_benchmark_data\\20260412_184233\\small" [ref=e409]
+            - cell "通过 返回码 0 | 106.3 秒 | 结果 6 条 | Completed successfully" [ref=e410]:
+              - 'generic "====================================================================== [Info] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\small [Info] Benchmark run log: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\small\\benchmark_run.log" [ref=e411]': 通过
+              - generic [ref=e412]: 返回码 0 | 106.3 秒 | 结果 6 条 | Completed successfully
+            - cell "通过 返回码 0 | 41.2 秒 | 结果 6 条 | Completed successfully" [ref=e413]:
+              - 'generic "====================================================================== [Info] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\small [Info] Benchmark run log: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\small\\benchmark_run.log" [ref=e414]': 通过
+              - generic [ref=e415]: 返回码 0 | 41.2 秒 | 结果 6 条 | Completed successfully
+            - cell "通过 返回码 0 | 0.0 秒 | 结果 6 条 | Validated 6 result(s)" [ref=e416]:
+              - generic [ref=e417]: 通过
+              - generic [ref=e418]: 返回码 0 | 0.0 秒 | 结果 6 条 | Validated 6 result(s)
+            - cell "通过 返回码 0 | 0.7 秒 | 结果 6 条 | Completed successfully" [ref=e419]:
+              - 'generic "- LATEX: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\small\\comparison_table.tex - CSV: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\small\\comparison_data.csv - JSON: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\small\\comparison_data.json" [ref=e420]': 通过
+              - generic [ref=e421]: 返回码 0 | 0.7 秒 | 结果 6 条 | Completed successfully
+            - cell "通过 返回码 0 | 0.0 秒 | All artifacts validated" [ref=e422]:
+              - generic [ref=e423]: 通过
+              - generic [ref=e424]: 返回码 0 | 0.0 秒 | All artifacts validated
+          - row "standard 通过 C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard 通过 返回码 0 | 683.8 秒 | 结果 6 条 | Completed successfully 通过 返回码 0 | 367.7 秒 | 结果 6 条 | Completed successfully 通过 返回码 0 | 0.0 秒 | 结果 6 条 | Validated 6 result(s) 通过 返回码 0 | 0.6 秒 | 结果 6 条 | Completed successfully 通过 返回码 0 | 0.0 秒 | All artifacts validated" [ref=e425]:
+            - cell "standard 通过" [ref=e426]:
+              - strong [ref=e427]: standard
+              - generic [ref=e428]: 通过
+            - cell "C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard" [ref=e429]
+            - cell "通过 返回码 0 | 683.8 秒 | 结果 6 条 | Completed successfully" [ref=e430]:
+              - 'generic "====================================================================== [Info] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard [Info] Benchmark run log: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\benchmark_run.log" [ref=e431]': 通过
+              - generic [ref=e432]: 返回码 0 | 683.8 秒 | 结果 6 条 | Completed successfully
+            - cell "通过 返回码 0 | 367.7 秒 | 结果 6 条 | Completed successfully" [ref=e433]:
+              - 'generic "====================================================================== [Info] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard [Info] Benchmark run log: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\benchmark_run.log" [ref=e434]': 通过
+              - generic [ref=e435]: 返回码 0 | 367.7 秒 | 结果 6 条 | Completed successfully
+            - cell "通过 返回码 0 | 0.0 秒 | 结果 6 条 | Validated 6 result(s)" [ref=e436]:
+              - generic [ref=e437]: 通过
+              - generic [ref=e438]: 返回码 0 | 0.0 秒 | 结果 6 条 | Validated 6 result(s)
+            - cell "通过 返回码 0 | 0.6 秒 | 结果 6 条 | Completed successfully" [ref=e439]:
+              - 'generic "- LATEX: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_table.tex - CSV: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_data.csv - JSON: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_data.json" [ref=e440]': 通过
+              - generic [ref=e441]: 返回码 0 | 0.6 秒 | 结果 6 条 | Completed successfully
+            - cell "通过 返回码 0 | 0.0 秒 | All artifacts validated" [ref=e442]:
+              - generic [ref=e443]: 通过
+              - generic [ref=e444]: 返回码 0 | 0.0 秒 | All artifacts validated
+    - generic [ref=e160]:
+      - generic [ref=e161]:
+        - generic [ref=e162]:
+          - heading "结果" [level=2] [ref=e163]
+          - paragraph [ref=e164]: 验证完成后，可在此预览报告、下载数据或打开结果文件夹。
+        - generic [ref=e165]:
+          - button "打开结果文件夹" [ref=e445] [cursor=pointer]
+          - link "下载 report.md" [ref=e446] [cursor=pointer]:
+            - /url: file:///C:/temp/arcgis_benchmark_data/20260412_184233/tiny/comparison_report.md
+          - link "下载 data.json" [ref=e447] [cursor=pointer]:
+            - /url: file:///C:/temp/arcgis_benchmark_data/20260412_184233/tiny/comparison_data.json
+      - generic [ref=e169]: 报告文件存在但无法预览，请使用下载按钮打开。
+    - generic [ref=e170]:
+      - generic [ref=e172]:
+        - heading "实时日志" [level=2] [ref=e173]
+        - paragraph [ref=e174]: 调度器和脚本输出会按时间顺序显示在这里。
+      - generic [ref=e175]:
+        - textbox "搜索日志..." [ref=e176]
+        - generic [ref=e177]:
+          - generic [ref=e178] [cursor=pointer]: 1/6
+          - generic [ref=e179] [cursor=pointer]: 2/6
+          - generic [ref=e180] [cursor=pointer]: 3/6
+          - generic [ref=e181] [cursor=pointer]: 4/6
+          - generic [ref=e182] [cursor=pointer]: 5/6
+          - generic [ref=e183] [cursor=pointer]: 6/6
+          - generic [ref=e184] [cursor=pointer]: INFO
+          - generic [ref=e185] [cursor=pointer]: Info
+          - generic [ref=e186] [cursor=pointer]: OK
+          - generic [ref=e187] [cursor=pointer]: Py3.13
+          - generic [ref=e188] [cursor=pointer]: standard:analysis
+          - generic [ref=e189] [cursor=pointer]: standard:os
+          - generic [ref=e190] [cursor=pointer]: standard:py3
+          - generic [ref=e191] [cursor=pointer]: 进度
+        - generic [ref=e192]:
+          - button "复制全部" [ref=e193] [cursor=pointer]
+          - button "清空" [ref=e194] [cursor=pointer]
+      - generic [ref=e195]: "[19:01:13] [OK] setup() 完成 [19:01:13] 正式测试运行 (1 次)... [19:01:13] 运行 1/1... [19:01:16] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 2.0s [19:01:18] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 4.0s [19:01:20] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 6.0s [19:01:22] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 8.0s [19:01:24] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 10.1s [19:01:26] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 12.1s [19:01:28] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 14.1s [19:01:30] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 16.1s [19:01:32] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 18.1s [19:01:34] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 20.1s [19:01:36] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 22.1s [19:01:38] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 24.1s [19:01:40] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 26.1s [19:01:42] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 28.1s [19:01:44] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 30.1s [19:01:46] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 32.2s [19:01:48] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 34.2s [19:01:50] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 36.2s [19:01:52] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 38.2s [19:01:54] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 40.2s [19:01:56] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 42.2s [19:01:58] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 44.2s [19:02:00] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 46.2s [19:02:02] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 48.2s [19:02:04] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 50.2s [19:02:06] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 52.2s [19:02:08] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 54.2s [19:02:10] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 56.3s [19:02:12] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 58.3s [19:02:14] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 60.3s [19:02:16] [进度] V4_Intersect - 正式 1/1 仍在运行... 已用时 62.3s [19:02:17] [OK] 耗时: 63.3319秒 [内存峰值: 1315.6MB] [19:02:17] 执行 teardown()... [19:02:17] [OK] teardown() 完成 [19:02:17] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\V4_Intersect_py3.json [19:02:17] [OK] V4_Intersect: mean=63.3319s std=0.0000s [19:02:17] ---------------------------------------------------------------------- [19:02:17] [3/6] Running: V5_SpatialJoin (category: vector) [19:02:17] ---------------------------------------------------------------------- [19:02:17] [Py3.13] 初始化测试: V5_SpatialJoin [19:02:17] 类别: vector [19:02:17] 执行 setup()... [19:02:17] [OK] setup() 完成 [19:02:17] 正式测试运行 (1 次)... [19:02:17] 运行 1/1... [19:02:19] [进度] V5_SpatialJoin - 正式 1/1 仍在运行... 已用时 2.0s [19:02:21] [进度] V5_SpatialJoin - 正式 1/1 仍在运行... 已用时 4.0s [19:02:23] [进度] V5_SpatialJoin - 正式 1/1 仍在运行... 已用时 6.0s [19:02:25] [进度] V5_SpatialJoin - 正式 1/1 仍在运行... 已用时 8.0s [19:02:27] [进度] V5_SpatialJoin - 正式 1/1 仍在运行... 已用时 10.1s [19:02:28] [OK] 耗时: 10.8317秒 [内存峰值: 479.1MB] [19:02:28] 执行 teardown()... [19:02:28] [OK] teardown() 完成 [19:02:28] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\V5_SpatialJoin_py3.json [19:02:28] [OK] V5_SpatialJoin: mean=10.8317s std=0.0000s [19:02:28] ---------------------------------------------------------------------- [19:02:28] [4/6] Running: R2_Resample (category: raster) [19:02:28] ---------------------------------------------------------------------- [19:02:28] [Py3.13] 初始化测试: R2_Resample [19:02:28] 类别: raster [19:02:28] 执行 setup()... [19:02:31] [进度] R2_Resample setup() 仍在运行... 已用时 2.3s [19:02:53] [进度] R2_Resample setup() 仍在运行... 已用时 24.8s [19:02:53] [OK] setup() 完成 [19:02:53] 正式测试运行 (1 次)... [19:02:53] 运行 1/1... [19:02:55] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 2.0s [19:02:57] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 4.0s [19:02:59] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 6.0s [19:03:01] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 8.0s [19:03:03] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 10.0s [19:03:05] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 12.1s [19:03:07] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 14.1s [19:03:09] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 16.1s [19:03:11] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 18.1s [19:03:13] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 20.1s [19:03:15] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 22.1s [19:03:17] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 24.1s [19:03:19] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 26.1s [19:03:21] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 28.1s [19:03:23] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 30.1s [19:03:25] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 32.1s [19:03:27] [进度] R2_Resample - 正式 1/1 仍在运行... 已用时 34.1s [19:03:28] [OK] 耗时: 34.8661秒 [内存峰值: 1017.5MB] [19:03:28] 执行 teardown()... [19:03:28] [OK] teardown() 完成 [19:03:28] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\R2_Resample_py3.json [19:03:28] [OK] R2_Resample: mean=34.8661s std=0.0000s [19:03:28] ---------------------------------------------------------------------- [19:03:28] [5/6] Running: R3_Clip (category: raster) [19:03:28] ---------------------------------------------------------------------- [19:03:28] [Py3.13] 初始化测试: R3_Clip [19:03:28] 类别: raster [19:03:28] 执行 setup()... [19:03:31] [进度] R3_Clip setup() 仍在运行... 已用时 2.5s [19:03:55] [OK] setup() 完成 [19:03:55] 正式测试运行 (1 次)... [19:03:55] 运行 1/1... [19:04:00] [进度] R3_Clip - 正式 1/1 仍在运行... 已用时 4.8s [19:04:27] [OK] 耗时: 32.1746秒 [内存峰值: 4447.1MB] [19:04:27] 执行 teardown()... [19:04:27] [OK] teardown() 完成 [19:04:27] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\R3_Clip_py3.json [19:04:27] [OK] R3_Clip: mean=32.1746s std=0.0000s [19:04:27] ---------------------------------------------------------------------- [19:04:27] [6/6] Running: M1_PolygonToRaster (category: mixed) [19:04:27] ---------------------------------------------------------------------- [19:04:27] [Py3.13] 初始化测试: M1_PolygonToRaster [19:04:27] 类别: mixed [19:04:27] 执行 setup()... [19:04:27] [OK] setup() 完成 [19:04:27] 正式测试运行 (1 次)... [19:04:27] 运行 1/1... [19:04:29] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 2.0s [19:04:31] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 4.0s [19:04:33] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 6.0s [19:04:35] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 8.0s [19:04:37] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 10.0s [19:04:39] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 12.0s [19:04:41] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 14.1s [19:04:43] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 16.1s [19:04:45] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 18.1s [19:04:47] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 20.1s [19:04:49] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 22.1s [19:04:51] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 24.1s [19:04:53] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 26.1s [19:04:55] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 28.1s [19:04:57] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 30.1s [19:04:59] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 32.1s [19:05:01] [进度] M1_PolygonToRaster - 正式 1/1 仍在运行... 已用时 34.1s [19:05:02] [OK] 耗时: 34.9376秒 [内存峰值: 1130.2MB] [19:05:02] 执行 teardown()... [19:05:03] [OK] teardown() 完成 [19:05:03] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\M1_PolygonToRaster_py3.json [19:05:03] [OK] M1_PolygonToRaster: mean=34.9376s std=0.0000s [19:05:03] ====================================================================== [19:05:03] Benchmark Summary [19:05:03] ====================================================================== [19:05:03] Total: 6 | Success: 6 | Failed: 0 [19:05:03] Successful: [19:05:03] V3_Buffer: 126.3275s (+-0.0000s) [19:05:03] V4_Intersect: 63.3319s (+-0.0000s) [19:05:03] V5_SpatialJoin: 10.8317s (+-0.0000s) [19:05:03] R2_Resample: 34.8661s (+-0.0000s) [19:05:03] R3_Clip: 32.1746s (+-0.0000s) [19:05:03] M1_PolygonToRaster: 34.9376s (+-0.0000s) [19:05:03] ====================================================================== [19:05:03] [Info] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard [19:05:03] [Info] Benchmark run log: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\benchmark_run.log [19:05:04] [standard:py3] Completed successfully [19:05:04] [standard:os] \"C:\\Program Files\\ArcGIS\\Pro\\bin\\Python\\envs\\arcgispro-py3\\python.exe\" -u D:\\arcgis_performance_benchmark\\run_benchmarks.py --category all --scale standard --runs 1 --warmup 0 --output-dir C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard --format SHP --complexity simple --matrix D:\\arcgis_performance_benchmark\\configs\\matrix.json --stack oss --multiprocess --mp-workers 4 [19:05:18] ====================================================================== [19:05:18] Benchmark Runner Engine [19:05:18] Stack: oss | Scale: standard | Format: SHP | Complexity: simple [19:05:18] ====================================================================== [19:05:20] Total benchmarks: 6 [19:05:20] Warmup runs: 0 | Test runs: 1 [19:05:20] ====================================================================== [19:05:20] ---------------------------------------------------------------------- [19:05:20] [1/6] Running: V3_Buffer_OS (category: vector_os) [19:05:20] ---------------------------------------------------------------------- [19:05:20] [Py3.13] 初始化测试: V3_Buffer_OS [19:05:20] 类别: vector_os [19:05:20] 执行 setup()... [19:05:20] [OK] setup() 完成 [19:05:20] 正式测试运行 (1 次)... [19:05:20] 运行 1/1... [19:05:22] [进度] V3_Buffer_OS - 正式 1/1 仍在运行... 已用时 2.0s [19:05:24] [进度] V3_Buffer_OS - 正式 1/1 仍在运行... 已用时 4.0s [19:05:29] [进度] V3_Buffer_OS - 正式 1/1 仍在运行... 已用时 9.2s [19:05:31] [OK] 耗时: 9.4402秒 [内存峰值: 918.0MB] [19:05:31] 执行 teardown()... [19:05:31] [OK] teardown() 完成 [19:05:31] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\V3_Buffer_os.json [19:05:31] [OK] V3_Buffer_OS: mean=9.4402s std=0.0000s [19:05:31] ---------------------------------------------------------------------- [19:05:31] [2/6] Running: V4_Intersect_OS (category: vector_os) [19:05:31] ---------------------------------------------------------------------- [19:05:31] [Py3.13] 初始化测试: V4_Intersect_OS [19:05:31] 类别: vector_os [19:05:31] 执行 setup()... [19:05:31] [OK] setup() 完成 [19:05:31] 正式测试运行 (1 次)... [19:05:31] 运行 1/1... [19:05:33] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 2.1s [19:05:35] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 4.1s [19:05:37] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 6.1s [19:05:39] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 8.1s [19:05:41] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 10.1s [19:05:43] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 12.1s [19:05:45] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 14.1s [19:05:47] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 16.1s [19:05:49] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 18.1s [19:05:51] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 20.1s [19:05:53] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 22.1s [19:05:55] D:\\arcgis_performance_benchmark\\benchmarks\\vector_benchmarks_os.py:264: UserWarning: Column names longer than 10 characters will be truncated when saved to ESRI Shapefile. [19:05:55] result.to_file(self.output_path, driver=driver) [19:05:56] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 24.9s [19:05:56] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'Shape_Leng_1' to 'Shape_Leng' [19:05:56] ogr_write( [19:05:56] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'Shape_Area_1' to 'Shape_Area' [19:05:56] ogr_write( [19:05:56] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'source_tag_1' to 'source_tag' [19:05:56] ogr_write( [19:05:56] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'osm_source_1' to 'osm_source' [19:05:56] ogr_write( [19:05:56] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'Shape_Leng_2' to 'Shape_Le_1' [19:05:56] ogr_write( [19:05:56] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'Shape_Area_2' to 'Shape_Ar_1' [19:05:56] ogr_write( [19:05:56] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'source_tag_2' to 'source_t_1' [19:05:56] ogr_write( [19:05:56] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'osm_source_2' to 'osm_sour_1' [19:05:56] ogr_write( [19:06:17] [进度] V4_Intersect_OS - 正式 1/1 仍在运行... 已用时 45.6s [19:06:17] [OK] 耗时: 46.0184秒 [内存峰值: 1460.8MB] [19:06:17] 执行 teardown()... [19:06:17] [OK] teardown() 完成 [19:06:17] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\V4_Intersect_os.json [19:06:17] [OK] V4_Intersect_OS: mean=46.0184s std=0.0000s [19:06:17] ---------------------------------------------------------------------- [19:06:17] [3/6] Running: V5_SpatialJoin_OS (category: vector_os) [19:06:17] ---------------------------------------------------------------------- [19:06:17] [Py3.13] 初始化测试: V5_SpatialJoin_OS [19:06:17] 类别: vector_os [19:06:17] 执行 setup()... [19:06:17] [OK] setup() 完成 [19:06:17] 正式测试运行 (1 次)... [19:06:17] 运行 1/1... [19:06:18] D:\\arcgis_performance_benchmark\\benchmarks\\vector_benchmarks_os.py:312: UserWarning: Column names longer than 10 characters will be truncated when saved to ESRI Shapefile. [19:06:18] result.to_file(self.output_path, driver=driver) [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'poly_id_left' to 'poly_id_le' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'group_id_left' to 'group_id_l' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'class_id_left' to 'class_id_l' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'priority_left' to 'priority_l' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'weight_left' to 'weight_lef' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'source_tag_left' to 'source_tag' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'osm_source_left' to 'osm_source' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'index_right' to 'index_righ' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'poly_id_right' to 'poly_id_ri' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'group_id_right' to 'group_id_r' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'class_id_right' to 'class_id_r' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'priority_right' to 'priority_r' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'weight_right' to 'weight_rig' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'source_tag_right' to 'source_t_1' [19:06:18] ogr_write( [19:06:18] C:\\Users\\13975\\AppData\\Roaming\\Python\\Python313\\site-packages\\pyogrio\\raw.py:733: RuntimeWarning: Normalized/laundered field name: 'osm_source_right' to 'osm_sour_1' [19:06:18] ogr_write( [19:06:20] [进度] V5_SpatialJoin_OS - 正式 1/1 仍在运行... 已用时 3.2s [19:06:21] [OK] 耗时: 3.2279秒 [内存峰值: 452.1MB] [19:06:21] 执行 teardown()... [19:06:21] [OK] teardown() 完成 [19:06:21] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\V5_SpatialJoin_os.json [19:06:21] [OK] V5_SpatialJoin_OS: mean=3.2279s std=0.0000s [19:06:21] ---------------------------------------------------------------------- [19:06:21] [4/6] Running: R2_Resample_OS (category: raster_os) [19:06:21] ---------------------------------------------------------------------- [19:06:21] [Py3.13] 初始化测试: R2_Resample_OS [19:06:21] 类别: raster_os [19:06:21] 执行 setup()... [19:06:21] [OK] setup() 完成 [19:06:21] 正式测试运行 (1 次)... [19:06:21] 运行 1/1... [19:06:23] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 2.0s [19:06:25] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 4.0s [19:06:27] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 6.0s [19:06:29] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 8.0s [19:06:31] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 10.0s [19:06:33] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 12.1s [19:06:35] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 14.1s [19:06:37] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 16.1s [19:06:39] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 18.1s [19:06:41] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 20.1s [19:06:43] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 22.1s [19:06:45] [进度] R2_Resample_OS - 正式 1/1 仍在运行... 已用时 24.4s [19:06:45] [OK] 耗时: 24.4082秒 [内存峰值: 7008.9MB] [19:06:45] 执行 teardown()... [19:06:45] [OK] teardown() 完成 [19:06:45] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\R2_Resample_os.json [19:06:45] [OK] R2_Resample_OS: mean=24.4082s std=0.0000s [19:06:45] ---------------------------------------------------------------------- [19:06:45] [5/6] Running: R3_Clip_OS (category: raster_os) [19:06:45] ---------------------------------------------------------------------- [19:06:45] [Py3.13] 初始化测试: R3_Clip_OS [19:06:45] 类别: raster_os [19:06:45] 执行 setup()... [19:06:45] [OK] setup() 完成 [19:06:45] 正式测试运行 (1 次)... [19:06:45] 运行 1/1... [19:06:47] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 2.0s [19:06:49] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 4.0s [19:06:51] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 6.0s [19:06:53] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 8.0s [19:06:55] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 10.0s [19:06:57] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 12.2s [19:07:00] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 14.3s [19:07:02] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 16.3s [19:07:04] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 18.3s [19:07:06] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 20.3s [19:07:08] [进度] R3_Clip_OS - 正式 1/1 仍在运行... 已用时 22.3s [19:07:08] [OK] 耗时: 22.5489秒 [内存峰值: 4165.5MB] [19:07:08] 执行 teardown()... [19:07:08] [OK] teardown() 完成 [19:07:08] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\R3_Clip_os.json [19:07:08] [OK] R3_Clip_OS: mean=22.5489s std=0.0000s [19:07:08] ---------------------------------------------------------------------- [19:07:08] [6/6] Running: M1_PolygonToRaster_OS (category: mixed_os) [19:07:08] ---------------------------------------------------------------------- [19:07:08] [Py3.13] 初始化测试: M1_PolygonToRaster_OS [19:07:08] 类别: mixed_os [19:07:08] 执行 setup()... [19:07:08] [OK] setup() 完成 [19:07:08] 正式测试运行 (1 次)... [19:07:08] 运行 1/1... [19:07:10] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 2.0s [19:07:12] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 4.1s [19:07:14] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 6.1s [19:07:16] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 8.1s [19:07:18] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 10.1s [19:07:21] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 13.2s [19:07:23] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 15.3s [19:07:25] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 17.3s [19:07:27] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 19.4s [19:07:29] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 21.4s [19:07:31] [进度] M1_PolygonToRaster_OS - 正式 1/1 仍在运行... 已用时 23.4s [19:07:33] [OK] 耗时: 24.5554秒 [内存峰值: 3145.1MB] [19:07:33] 执行 teardown()... [19:07:33] [OK] teardown() 完成 [19:07:33] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\data\\M1_PolygonToRaster_os.json [19:07:33] [OK] M1_PolygonToRaster_OS: mean=24.5554s std=0.0000s [19:07:33] ====================================================================== [19:07:33] Benchmark Summary [19:07:33] ====================================================================== [19:07:33] Total: 6 | Success: 6 | Failed: 0 [19:07:33] Successful: [19:07:33] V3_Buffer_OS: 9.4402s (+-0.0000s) [19:07:33] V4_Intersect_OS: 46.0184s (+-0.0000s) [19:07:33] V5_SpatialJoin_OS: 3.2279s (+-0.0000s) [19:07:33] R2_Resample_OS: 24.4082s (+-0.0000s) [19:07:33] R3_Clip_OS: 22.5489s (+-0.0000s) [19:07:33] M1_PolygonToRaster_OS: 24.5554s (+-0.0000s) [19:07:33] ====================================================================== [19:07:33] [Info] Results saved to: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard [19:07:33] [Info] Benchmark run log: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\benchmark_run.log [19:07:35] [standard:os] Completed successfully [19:07:35] [standard:analysis] \"C:\\Program Files\\ArcGIS\\Pro\\bin\\Python\\envs\\arcgispro-py3\\python.exe\" -u D:\\arcgis_performance_benchmark\\analyze_results.py --results-dir C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard --output-dir C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard [19:07:35] ====================================================================== [19:07:35] ArcGIS Python Benchmark Results Analyzer [19:07:35] ====================================================================== [19:07:35] Results directory: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard [19:07:35] Output directory: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard [19:07:35] Loaded Open-Source results from: benchmark_results_os.json [19:07:35] Loaded Python 2.7 results from: benchmark_results_py2.json [19:07:35] Loaded Python 3.x results from: benchmark_results_py3.json (6 tests) [19:07:35] [INFO] 检测到开源库测试结果，将生成三向对比报告 [19:07:35] Creating comparison... [19:07:35] ====================================================================== [19:07:35] Analysis Summary (3-way comparison) [19:07:35] ====================================================================== [19:07:35] Total tests: 6 [19:07:35] Python 3.x faster: 2 (33.3%) [19:07:35] Python 2.7 faster: 0 (0.0%) [19:07:35] Equal performance: 1 (16.7%) [19:07:35] Open-Source faster: 3 (50.0%) [19:07:35] OS vs Py2 avg speedup: 6.41x [19:07:35] OS vs Py3 avg speedup: 6.04x [19:07:35] Average speedup: 1.21x [19:07:35] ====================================================================== [19:07:35] Saving output files... [19:07:35] Markdown report saved: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_report.md [19:07:35] LaTeX table saved: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_table.tex [19:07:35] CSV data saved: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_data.csv [19:07:35] JSON data saved: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_data.json [19:07:35] ====================================================================== [19:07:35] Analysis Complete [19:07:35] ====================================================================== [19:07:35] Generated files: [19:07:35] - MARKDOWN: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_report.md [19:07:35] - LATEX: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_table.tex [19:07:35] - CSV: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_data.csv [19:07:35] - JSON: C:\\temp\\arcgis_benchmark_data\\20260412_184233\\standard\\comparison_data.json [19:07:35] [standard:analysis] Completed successfully [19:07:35] Scale standard passed validation [19:07:35] Verification job finished"

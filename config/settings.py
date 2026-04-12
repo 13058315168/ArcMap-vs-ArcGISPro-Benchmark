@@ -134,26 +134,26 @@ STANDARD_VECTOR_CONFIG_BY_TEST = {
 }
 
 STANDARD_RASTER_CONFIG_BY_TEST = {
-    # 控制组：偏轻
+    # 控制组：偏轻（已按 Py2 32-bit 内存安全上限收敛）
     'R1': {
-        'constant_raster_size': 32700,
+        'constant_raster_size': 8000,
     },
     # 重点提压项：优先通过像元规模与重采样比提时
     'R2': {
-        'resample_source_size': 30000,
-        'resample_target_size': 28000,
+        'resample_source_size': 7000,
+        'resample_target_size': 3500,
     },
     'R3': {
-        'analysis_raster_size': 32000,
+        'analysis_raster_size': 7000,
         'analysis_raster_clip_ratio': 0.98,
     },
     'R4': {
-        'analysis_raster_size': 32600,
-        'analysis_raster_target_size': 15000,
+        'analysis_raster_size': 8000,
+        'analysis_raster_target_size': 4000,
         'analysis_raster_clip_ratio': 0.95,
     },
     'M1': {
-        'analysis_raster_size': 18000,
+        'analysis_raster_size': 4000,
     },
     'M2': {
         'analysis_raster_size': 1500,
