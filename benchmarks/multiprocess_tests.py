@@ -21,6 +21,7 @@ except ImportError:
     arcpy = None
 from config import settings
 from benchmarks.base_benchmark import BaseBenchmark
+from utils.benchmark_inputs import get_benchmark_gdb_path
 from utils.gis_cleanup import clear_workspace_cache, remove_dataset_artifacts
 from utils.timer import ProgressHeartbeat
 from utils.raster_utils import create_constant_raster
@@ -107,10 +108,13 @@ class MultiprocessBenchmark(BaseBenchmark):
         with BenchmarkTimer(name=self.name, monitor_memory=settings.ENABLE_MEMORY_MONITORING) as bt:
             with ProgressHeartbeat(heartbeat_label):
                 try:
-                    if use_multiprocess:
-                        result = self.run_multiprocess(self.num_workers)
-                    else:
-                        result = self.run_single()
+                    repeat_count = int(getattr(self, 'repeat_count', 1) or 1)
+                    result = None
+                    for _ in range(max(1, repeat_count)):
+                        if use_multiprocess:
+                            result = self.run_multiprocess(self.num_workers)
+                        else:
+                            result = self.run_single()
                     result['success'] = True
                 except Exception as e:
                     import traceback
@@ -180,13 +184,18 @@ class MP_V1_CreateFishnet(MultiprocessBenchmark):
         cfg = settings.get_vector_config_for_test('V1')
         self.rows = cfg['fishnet_rows']
         self.cols = cfg['fishnet_cols']
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_V1', multiprocess=True)
         self.output_fc = None
         self.temp_dir = None
     
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
-        self.output_fc = os.path.join(settings.DATA_DIR, "MP_V1_fishnet_output.shp")
+        gdb_path = get_benchmark_gdb_path(settings.DATA_DIR)
+        if getattr(settings, 'ACTIVE_OUTPUT_FORMAT', 'SHP') == 'GDB':
+            self.output_fc = os.path.join(gdb_path, "MP_V1_fishnet_output")
+        else:
+            self.output_fc = os.path.join(settings.DATA_DIR, "MP_V1_fishnet_output.shp")
         self.temp_dir = tempfile.mkdtemp(prefix="mp_fishnet_")
     
     def teardown(self):
@@ -341,13 +350,18 @@ class MP_V2_CreateRandomPoints(MultiprocessBenchmark):
         super(MP_V2_CreateRandomPoints, self).__init__("MP_V2_CreateRandomPoints", "vector_multiprocess")
         cfg = settings.get_vector_config_for_test('V2')
         self.num_points = cfg['random_points']
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_V2', multiprocess=True)
         self.output_fc = None
         self.temp_dir = None
     
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
-        self.output_fc = os.path.join(settings.DATA_DIR, "MP_V2_random_points.shp")
+        gdb_path = get_benchmark_gdb_path(settings.DATA_DIR)
+        if getattr(settings, 'ACTIVE_OUTPUT_FORMAT', 'SHP') == 'GDB':
+            self.output_fc = os.path.join(gdb_path, "MP_V2_random_points")
+        else:
+            self.output_fc = os.path.join(settings.DATA_DIR, "MP_V2_random_points.shp")
         self.temp_dir = tempfile.mkdtemp(prefix="mp_randpts_")
     
     def teardown(self):
@@ -450,13 +464,17 @@ class MP_V3_Buffer(MultiprocessBenchmark):
         self.output_fc = None
         self.temp_dir = None
         self.buffer_distance = "1 Kilometer"
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_V3', multiprocess=True)
     
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
         gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
         self.input_fc = os.path.join(gdb_path, "buffer_points")
-        self.output_fc = os.path.join(settings.DATA_DIR, "MP_V3_buffer_output.shp")
+        if getattr(settings, 'ACTIVE_OUTPUT_FORMAT', 'SHP') == 'GDB':
+            self.output_fc = os.path.join(gdb_path, "MP_V3_buffer_output")
+        else:
+            self.output_fc = os.path.join(settings.DATA_DIR, "MP_V3_buffer_output.shp")
         self.temp_dir = tempfile.mkdtemp(prefix="mp_buffer_")
     
     def teardown(self):
@@ -578,6 +596,7 @@ class MP_V4_Intersect(MultiprocessBenchmark):
         self.input_b = None
         self.output_fc = None
         self.temp_dir = None
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_V4', multiprocess=True)
     
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
@@ -585,7 +604,10 @@ class MP_V4_Intersect(MultiprocessBenchmark):
         gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
         self.input_a = os.path.join(gdb_path, "test_polygons_a")
         self.input_b = os.path.join(gdb_path, "test_polygons_b")
-        self.output_fc = os.path.join(settings.DATA_DIR, "MP_V4_intersect_output.shp")
+        if getattr(settings, 'ACTIVE_OUTPUT_FORMAT', 'SHP') == 'GDB':
+            self.output_fc = os.path.join(gdb_path, "MP_V4_intersect_output")
+        else:
+            self.output_fc = os.path.join(settings.DATA_DIR, "MP_V4_intersect_output.shp")
         self.temp_dir = tempfile.mkdtemp(prefix="mp_intersect_")
     
     def teardown(self):
@@ -711,11 +733,16 @@ class MP_R1_CreateConstantRaster(MultiprocessBenchmark):
         self.size = cfg['constant_raster_size']
         self.output_raster = None
         self.temp_dir = None
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_R1', multiprocess=True)
     
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
-        self.output_raster = os.path.join(settings.DATA_DIR, "MP_R1_constant_raster.tif")
+        gdb_path = get_benchmark_gdb_path(settings.DATA_DIR)
+        if getattr(settings, 'ACTIVE_OUTPUT_FORMAT', 'SHP') == 'GDB':
+            self.output_raster = os.path.join(gdb_path, "MP_R1_constant_raster")
+        else:
+            self.output_raster = os.path.join(settings.DATA_DIR, "MP_R1_constant_raster.tif")
         self.temp_dir = tempfile.mkdtemp(prefix="mp_raster_")
     
     def teardown(self):
@@ -745,8 +772,6 @@ class MP_R1_CreateConstantRaster(MultiprocessBenchmark):
             pass
     
     def run_single(self):
-        remove_dataset_artifacts(self.output_raster)
-        
         cell_size = 360.0 / self.size
         extent = "-180 -90 180 90"
         create_constant_raster(self.output_raster, cell_size, extent, value=1, use_spatial_analyst=False)

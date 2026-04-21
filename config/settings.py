@@ -8,6 +8,8 @@ import os
 import sys
 import copy
 
+IS_PY2 = (sys.version_info[0] == 2)
+
 # ============================================================================
 # Test Configuration
 # ============================================================================
@@ -17,6 +19,9 @@ TEST_RUNS = 3
 
 # Warmup runs (not counted in results)
 WARMUP_RUNS = 1
+TARGET_RUNTIME_MIN_SECONDS = 120
+TARGET_RUNTIME_MAX_SECONDS = 300
+TARGET_RUNTIME_LABEL = '2-5 分钟'
 
 # ============================================================================
 # Data Scale Configuration
@@ -96,7 +101,7 @@ RASTER_CONFIG_STANDARD = {
 # ============================================================================
 #
 # standard 作为论文主尺度，允许每个测试项使用独立的输入规模参数，
-# 以便把 12 项尽量拉到 30-90s 的可比较区间。tiny/small 仍保持统一倍数尺度，
+# 以便把 6 项核心任务尽量拉到 30-90s 的可比较区间。tiny/small 仍保持统一倍数尺度，
 # 用于快速验证链路是否正常。
 #
 # 说明：
@@ -104,6 +109,9 @@ RASTER_CONFIG_STANDARD = {
 #   各测试项主要使用不同的输入图层，因此覆盖字段基本互不冲突。
 # - 若某项仍明显偏短，优先只调整对应测试项的覆盖参数，而不是叠加多步骤流程。
 #
+# Standard benchmark runs prefer public real geodata first.
+# The standard profile is judged by median / IQR with a 2-5 minute target band.
+# If a task drifts outside that band, recalibrate the task-specific scale.
 STANDARD_VECTOR_CONFIG_BY_TEST = {
     # 控制组：尽量保持偏轻
     'V1': {
@@ -160,6 +168,164 @@ STANDARD_RASTER_CONFIG_BY_TEST = {
     },
 }
 
+NATIONAL_VECTOR_CONFIG_BY_TEST = {
+    'V1': {
+        'fishnet_rows': 1600,
+        'fishnet_cols': 1600,
+    },
+    'V2': {
+        'random_points': 1000000,
+    },
+    'V3': {
+        'buffer_points': 600000,
+    },
+    'V4': {
+        'intersect_features_a': 600000,
+        'intersect_features_b': 600000,
+    },
+    'V5': {
+        'spatial_join_points': 500000,
+        'spatial_join_polygons': 50000,
+    },
+    'V6': {
+        'calculate_field_records': 1200000,
+    },
+}
+
+NATIONAL_RASTER_CONFIG_BY_TEST = {
+    'R1': {
+        'constant_raster_size': 9000,
+    },
+    'R2': {
+        'resample_source_size': 9000,
+        'resample_target_size': 4500,
+    },
+    'R3': {
+        'analysis_raster_size': 9000,
+        'analysis_raster_clip_ratio': 0.98,
+    },
+    'R4': {
+        'analysis_raster_size': 10000,
+        'analysis_raster_target_size': 5000,
+        'analysis_raster_clip_ratio': 0.95,
+    },
+    'M1': {
+        'analysis_raster_size': 5000,
+    },
+    'M2': {
+        'analysis_raster_size': 2500,
+    },
+}
+
+# Heavier national profile intended for long-form benchmark runs where
+# shorter tasks should stretch toward the same order of magnitude as the
+# slower vector overlays.
+NATIONAL_HEAVY_VECTOR_CONFIG_BY_TEST = {
+    'V1': {
+        'fishnet_rows': 1500,
+        'fishnet_cols': 1500,
+    },
+    'V2': {
+        'random_points': 1000000,
+    },
+    'V3': {
+        'buffer_points': 1000000,
+    },
+    'V4': {
+        'intersect_features_a': 300000,
+        'intersect_features_b': 300000,
+    },
+    'V5': {
+        'spatial_join_points': 700000,
+        'spatial_join_polygons': 70000,
+    },
+}
+
+# Py2 32-bit safe overrides for the heavy national profile.
+# These are intentionally lighter on raster and overlay-heavy conversions so
+# the long-form suite can complete without memory failures on ArcMap.
+NATIONAL_HEAVY_PY2_VECTOR_CONFIG_BY_TEST = {
+    'V4': {
+        'intersect_features_a': 100000,
+        'intersect_features_b': 100000,
+    },
+}
+
+NATIONAL_HEAVY_RASTER_CONFIG_BY_TEST = {
+    'R1': {
+        'constant_raster_size': 11000,
+    },
+    'R2': {
+        'resample_source_size': 8000,
+        'resample_target_size': 4000,
+    },
+    'R3': {
+        'analysis_raster_size': 8000,
+        'analysis_raster_clip_ratio': 0.985,
+    },
+    'R4': {
+        'analysis_raster_size': 8000,
+        'analysis_raster_target_size': 4000,
+        'analysis_raster_clip_ratio': 0.96,
+    },
+    'M1': {
+        'analysis_raster_size': 8000,
+    },
+    'M2': {
+        'analysis_raster_size': 1200,
+    },
+}
+
+NATIONAL_HEAVY_PY2_RASTER_CONFIG_BY_TEST = {
+    'R1': {
+        'constant_raster_size': 6000,
+    },
+    'R2': {
+        'resample_source_size': 5000,
+        'resample_target_size': 2500,
+    },
+    'R3': {
+        'analysis_raster_size': 5000,
+        'analysis_raster_clip_ratio': 0.985,
+    },
+    'M1': {
+        'analysis_raster_size': 3500,
+    },
+}
+
+# Long-form workload repeats for the national_heavy profile. These values
+# intentionally repeat the same logical operation inside a single benchmark
+# item so the benchmark remains comparable while taking longer to execute.
+NATIONAL_HEAVY_WORKLOAD_REPEAT_BY_TEST = {
+    'V1': 1,
+    'V2': 2,
+    'V3': 3,
+    'V4': 1,
+    'V5': 3,
+    'R1': 8,
+    'R2': 36,
+    'R3': 36,
+    'R4': 32,
+    'M1': 2,
+    'M2': 1,
+}
+
+NATIONAL_HEAVY_MP_WORKLOAD_REPEAT_BY_TEST = {
+    'MP_V1': 1,
+    'MP_V2': 2,
+    'MP_V3': 2,
+    'MP_V4': 1,
+    'MP_R1': 8,
+}
+
+NATIONAL_HEAVY_PY2_WORKLOAD_REPEAT_BY_TEST = {
+    'R1': 1,
+    'R2': 1,
+    'R3': 1,
+    'M1': 1,
+    'M2': 1,
+}
+
 # Medium Scale (heavier than standard but still intended to be runnable)
 VECTOR_CONFIG_MEDIUM = {
     'fishnet_rows': 375,
@@ -206,16 +372,38 @@ RASTER_CONFIG_LARGE = {
     'analysis_raster_clip_ratio': 0.5,
 }
 
+VECTOR_CONFIG_NATIONAL = {
+    'fishnet_rows': 1200,
+    'fishnet_cols': 1200,
+    'random_points': 750000,
+    'buffer_points': 500000,
+    'intersect_features_a': 500000,
+    'intersect_features_b': 500000,
+    'spatial_join_points': 400000,
+    'spatial_join_polygons': 40000,
+    'calculate_field_records': 1000000,
+}
+
+RASTER_CONFIG_NATIONAL = {
+    'constant_raster_size': 8000,
+    'resample_source_size': 8000,
+    'resample_target_size': 4000,
+    'clip_ratio': 0.5,
+    'analysis_raster_size': 8000,
+    'analysis_raster_target_size': 4000,
+    'analysis_raster_clip_ratio': 0.5,
+}
+
 # Active format and complexity for multi-matrix runs
 ACTIVE_OUTPUT_FORMAT = 'GDB'
 ACTIVE_COMPLEXITY = 'simple'
 
 # Select configuration to use
-# Options: 'tiny', 'small', 'standard', 'medium', 'large'
+# Options: 'tiny', 'small', 'standard', 'medium', 'large', 'national', 'national_heavy'
 DATA_SCALE = 'tiny'
 
 # All available scales
-ALL_SCALES = ['tiny', 'small', 'standard', 'medium', 'large']
+ALL_SCALES = ['tiny', 'small', 'standard', 'medium', 'large', 'national', 'national_heavy']
 
 if DATA_SCALE == 'tiny':
     VECTOR_CONFIG = VECTOR_CONFIG_TINY
@@ -229,6 +417,12 @@ elif DATA_SCALE == 'standard':
 elif DATA_SCALE == 'large':
     VECTOR_CONFIG = VECTOR_CONFIG_LARGE
     RASTER_CONFIG = RASTER_CONFIG_LARGE
+elif DATA_SCALE == 'national':
+    VECTOR_CONFIG = VECTOR_CONFIG_NATIONAL
+    RASTER_CONFIG = RASTER_CONFIG_NATIONAL
+elif DATA_SCALE == 'national_heavy':
+    VECTOR_CONFIG = copy.deepcopy(VECTOR_CONFIG_NATIONAL)
+    RASTER_CONFIG = copy.deepcopy(RASTER_CONFIG_NATIONAL)
 else:  # medium (default)
     VECTOR_CONFIG = VECTOR_CONFIG_MEDIUM
     RASTER_CONFIG = RASTER_CONFIG_MEDIUM
@@ -241,7 +435,7 @@ else:  # medium (default)
 MULTIPROCESS_CONFIG = {
     'enabled': False,  # Enable multiprocess benchmarks
     'num_workers': 4,  # Number of worker processes
-    'scales': ['tiny', 'small', 'standard', 'medium', 'large'],  # Scales to run multiprocess tests (all supported)
+    'scales': ['tiny', 'small', 'standard', 'medium', 'large', 'national', 'national_heavy'],  # Scales to run multiprocess tests (all supported)
 }
 
 # Get multiprocess settings with defaults
@@ -265,12 +459,36 @@ DATA_DIR = DATA_ROOT_DIR
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
+# Region configuration
+DATA_REGION = 'guangdong'
+ALL_REGIONS = ['guangdong', 'china']
+
+
+def _compose_default_gdb_name(region=None):
+    region = str(region or DATA_REGION or 'default').strip().lower()
+    if not region:
+        region = 'default'
+    return 'benchmark_data_{}.gdb'.format(region)
+
+
+def set_region(region):
+    """Set the active benchmark region."""
+    global DATA_REGION, DEFAULT_GDB_NAME
+    if region:
+        DATA_REGION = str(region).strip().lower()
+    DEFAULT_GDB_NAME = _compose_default_gdb_name(DATA_REGION)
+    return DATA_REGION
+
+
 # Shared cache / metadata paths
-OSM_CACHE_DIR = os.path.join(DATA_ROOT_DIR, '_osm_cache')
+OSM_CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'resources', 'osm_cache')
+NATIONAL_OSM_CACHE_DIR = os.path.join(DATA_ROOT_DIR, '_osm_cache')
 BENCHMARK_MANIFEST_NAME = 'benchmark_manifest.json'
 BENCHMARK_RUN_LOG_NAME = 'benchmark_run.log'
 if not os.path.exists(OSM_CACHE_DIR):
     os.makedirs(OSM_CACHE_DIR)
+if not os.path.exists(NATIONAL_OSM_CACHE_DIR):
+    os.makedirs(NATIONAL_OSM_CACHE_DIR)
 
 # Results directory - stored in project folder (small files)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -319,7 +537,7 @@ def set_timestamped_dirs(timestamp=None, base_data_dir=None):
     SCRATCH_WORKSPACE = DATA_DIR
 
     # 保持为文件名，避免 ArcPy 在 CreateFileGDB 时把完整路径当作名称
-    DEFAULT_GDB_NAME = 'benchmark_data_{}.gdb'.format(DATA_SCALE)
+    DEFAULT_GDB_NAME = _compose_default_gdb_name()
 
     # Create the root folder and the raw-data base folder.
     for dir_path in [DATA_DIR, RAW_RESULTS_DIR]:
@@ -342,7 +560,7 @@ def set_output_root(output_root):
     FIGURES_DIR = output_root
     DATA_DIR = output_root
     CURRENT_TIMESTAMP = os.path.basename(output_root)
-    DEFAULT_GDB_NAME = 'benchmark_data_{}.gdb'.format(DATA_SCALE)
+    DEFAULT_GDB_NAME = _compose_default_gdb_name()
     SCRATCH_WORKSPACE = os.path.join(output_root, 'scratch')
 
     for dir_path in [RESULTS_DIR, RAW_RESULTS_DIR, TABLES_DIR, FIGURES_DIR, DATA_DIR, SCRATCH_WORKSPACE]:
@@ -366,7 +584,7 @@ def reset_to_default_dirs():
     # Reset data directory
     DATA_DIR = r'C:\temp\arcgis_benchmark_data'
     SCRATCH_WORKSPACE = os.path.join(DATA_DIR, 'scratch')
-    DEFAULT_GDB_NAME = 'benchmark_data_{}.gdb'.format(DATA_SCALE)
+    DEFAULT_GDB_NAME = _compose_default_gdb_name()
 
     # Create directories if they don't exist
     for dir_path in [RESULTS_DIR, RAW_RESULTS_DIR, TABLES_DIR, FIGURES_DIR, DATA_DIR, SCRATCH_WORKSPACE]:
@@ -397,10 +615,8 @@ for dir_path in [RESULTS_DIR, RAW_RESULTS_DIR, TABLES_DIR, FIGURES_DIR]:
 # Spatial reference (WGS 84)
 SPATIAL_REFERENCE = 4326
 
-# Default geodatabase name - includes scale to avoid regeneration
-# Format: benchmark_data_{scale}.gdb (e.g., benchmark_data_tiny.gdb)
-# This allows reusing test data across runs if scale matches
-DEFAULT_GDB_NAME = 'benchmark_data_{}.gdb'.format(DATA_SCALE)
+# Default geodatabase name - includes region to avoid regeneration collisions
+DEFAULT_GDB_NAME = _compose_default_gdb_name()
 
 # Scratch workspace
 SCRATCH_WORKSPACE = os.path.join(DATA_DIR, 'scratch')
@@ -421,7 +637,7 @@ DEFAULT_OUTPUT_FORMAT = 'markdown'
 TIMING_PRECISION = 4
 
 # ============================================================================
-# Test Categories
+# Legacy Test Categories
 # ============================================================================
 
 TEST_CATEGORIES = {
@@ -445,7 +661,7 @@ TEST_CATEGORIES = {
     ],
 }
 
-# All tests
+# Legacy all tests
 ALL_TESTS = []
 for category in TEST_CATEGORIES.values():
     ALL_TESTS.extend(category)
@@ -512,6 +728,12 @@ def set_scale(scale, scale_overrides=None):
     elif scale == 'large':
         VECTOR_CONFIG = copy.deepcopy(VECTOR_CONFIG_LARGE)
         RASTER_CONFIG = copy.deepcopy(RASTER_CONFIG_LARGE)
+    elif scale == 'national':
+        VECTOR_CONFIG = copy.deepcopy(VECTOR_CONFIG_NATIONAL)
+        RASTER_CONFIG = copy.deepcopy(RASTER_CONFIG_NATIONAL)
+    elif scale == 'national_heavy':
+        VECTOR_CONFIG = copy.deepcopy(VECTOR_CONFIG_NATIONAL)
+        RASTER_CONFIG = copy.deepcopy(RASTER_CONFIG_NATIONAL)
 
     if isinstance(scale_overrides, dict) and scale_overrides:
         if 'vector' in scale_overrides or 'raster' in scale_overrides:
@@ -537,8 +759,9 @@ def set_scale(scale, scale_overrides=None):
         if isinstance(raster_overrides, dict):
             RASTER_CONFIG.update(raster_overrides)
     
-    # Update DEFAULT_GDB_NAME
-    DEFAULT_GDB_NAME = 'benchmark_data_{}.gdb'.format(DATA_SCALE)
+    # Keep the GDB name region-based so scale changes do not fragment the
+    # region benchmark contract.
+    DEFAULT_GDB_NAME = _compose_default_gdb_name()
 
 
 def _merge_config(base_config, override):
@@ -551,6 +774,17 @@ def _merge_config(base_config, override):
 def get_vector_config_for_test(test_id):
     """Return the active vector config, optionally overridden per test in standard scale."""
     base = VECTOR_CONFIG
+    if DATA_SCALE == 'national':
+        key = str(test_id or '').upper()
+        overrides = NATIONAL_VECTOR_CONFIG_BY_TEST.get(key) or {}
+        return _merge_config(base, overrides)
+    if DATA_SCALE == 'national_heavy':
+        key = str(test_id or '').upper()
+        overrides = NATIONAL_HEAVY_VECTOR_CONFIG_BY_TEST.get(key) or {}
+        if IS_PY2:
+            py2_overrides = NATIONAL_HEAVY_PY2_VECTOR_CONFIG_BY_TEST.get(key) or {}
+            overrides = _merge_config(overrides, py2_overrides)
+        return _merge_config(base, overrides)
     if DATA_SCALE != 'standard':
         return base
     key = str(test_id or '').upper()
@@ -561,11 +795,34 @@ def get_vector_config_for_test(test_id):
 def get_raster_config_for_test(test_id):
     """Return the active raster config, optionally overridden per test in standard scale."""
     base = RASTER_CONFIG
+    if DATA_SCALE == 'national':
+        key = str(test_id or '').upper()
+        overrides = NATIONAL_RASTER_CONFIG_BY_TEST.get(key) or {}
+        return _merge_config(base, overrides)
+    if DATA_SCALE == 'national_heavy':
+        key = str(test_id or '').upper()
+        overrides = NATIONAL_HEAVY_RASTER_CONFIG_BY_TEST.get(key) or {}
+        if IS_PY2:
+            py2_overrides = NATIONAL_HEAVY_PY2_RASTER_CONFIG_BY_TEST.get(key) or {}
+            overrides = _merge_config(overrides, py2_overrides)
+        return _merge_config(base, overrides)
     if DATA_SCALE != 'standard':
         return base
     key = str(test_id or '').upper()
     overrides = STANDARD_RASTER_CONFIG_BY_TEST.get(key) or {}
     return _merge_config(base, overrides)
+
+
+def get_workload_repeat_for_test(test_id, multiprocess=False):
+    """Return the repeat count used to stretch a benchmark item."""
+    key = str(test_id or '').upper()
+    if DATA_SCALE == 'national_heavy':
+        if IS_PY2:
+            return int(NATIONAL_HEAVY_PY2_WORKLOAD_REPEAT_BY_TEST.get(key, NATIONAL_HEAVY_WORKLOAD_REPEAT_BY_TEST.get(key, 1)))
+        if multiprocess:
+            return int(NATIONAL_HEAVY_MP_WORKLOAD_REPEAT_BY_TEST.get(key, 1))
+        return int(NATIONAL_HEAVY_WORKLOAD_REPEAT_BY_TEST.get(key, 1))
+    return 1
 
 
 def print_config():

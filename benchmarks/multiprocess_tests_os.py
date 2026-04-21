@@ -212,12 +212,15 @@ class MultiprocessBenchmarkOS(BaseBenchmark):
         with BenchmarkTimer(name=self.name, monitor_memory=settings.ENABLE_MEMORY_MONITORING) as bt:
             with ProgressHeartbeat(heartbeat_label):
                 try:
-                    if use_multiprocess:
-                        result = self.run_multiprocess(self.num_workers)
-                        result['mode'] = 'multiprocess'
-                    else:
-                        result = self.run_single()
-                        result['mode'] = 'single'
+                    repeat_count = int(getattr(self, 'repeat_count', 1) or 1)
+                    result = None
+                    for _ in range(max(1, repeat_count)):
+                        if use_multiprocess:
+                            result = self.run_multiprocess(self.num_workers)
+                            result['mode'] = 'multiprocess'
+                        else:
+                            result = self.run_single()
+                            result['mode'] = 'single'
                     result['success'] = True
                 except Exception as e:
                     import traceback
@@ -247,6 +250,7 @@ class MP_V1_CreateFishnet_OS(MultiprocessBenchmarkOS):
         cfg = settings.get_vector_config_for_test('V1')
         self.rows = cfg['fishnet_rows']
         self.cols = cfg['fishnet_cols']
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_V1', multiprocess=True)
         self.output_path = None
     
     def setup(self):
@@ -320,6 +324,7 @@ class MP_V2_CreateRandomPoints_OS(MultiprocessBenchmarkOS):
         super(MP_V2_CreateRandomPoints_OS, self).__init__("MP_V2_CreateRandomPoints_OS", "vector_multiprocess")
         cfg = settings.get_vector_config_for_test('V2')
         self.num_points = cfg['random_points']
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_V2', multiprocess=True)
         self.output_path = None
     
     def setup(self):
@@ -374,6 +379,7 @@ class MP_V3_Buffer_OS(MultiprocessBenchmarkOS):
         self.input_layer = None
         self.output_path = None
         self.buffer_distance = 1000.0
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_V3', multiprocess=True)
     
     def setup(self):
         self.gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
@@ -433,6 +439,7 @@ class MP_V4_Intersect_OS(MultiprocessBenchmarkOS):
         self.input_a_layer = None
         self.input_b_layer = None
         self.output_path = None
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_V4', multiprocess=True)
 
     def setup(self):
         self.gdb_path = os.path.join(settings.DATA_DIR, settings.DEFAULT_GDB_NAME)
@@ -509,6 +516,7 @@ class MP_R1_CreateConstantRaster_OS(MultiprocessBenchmarkOS):
         cfg = settings.get_raster_config_for_test('R1')
         self.size = cfg['constant_raster_size']
         self.output_path = None
+        self.repeat_count = settings.get_workload_repeat_for_test('MP_R1', multiprocess=True)
 
     def setup(self):
         self.output_path = os.path.join(settings.DATA_DIR, "MP_R1_constant_raster_os.tif")

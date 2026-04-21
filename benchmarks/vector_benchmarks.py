@@ -27,7 +27,7 @@ from utils.benchmark_inputs import (
     get_benchmark_gdb_path,
     get_input_feature_path,
 )
-from utils.benchmark_shapes import factor_grid_dimensions, expected_offset_grid_intersections
+from utils.benchmark_shapes import expected_offset_grid_intersections_from_counts
 
 
 def _validated_count_result(actual_count, expected_count, metric_name):
@@ -53,6 +53,17 @@ def _format_extent(extent, default_extent=(-500000.0, -500000.0, 500000.0, 50000
     return "{} {} {} {}".format(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
 
 
+def _run_repeated_operation(repeat_count, cleanup_fn, operation_fn):
+    """Run the same logical benchmark operation multiple times."""
+    repeat_count = max(1, int(repeat_count or 1))
+    result = None
+    for _ in range(repeat_count):
+        if cleanup_fn is not None:
+            cleanup_fn()
+        result = operation_fn()
+    return result
+
+
 class VectorBenchmarks(object):
     """Collection of vector data benchmarks"""
 
@@ -74,15 +85,17 @@ class VectorBenchmarks(object):
 class V1_CreateFishnet(BaseBenchmark):
     """Benchmark: Create Fishnet"""
     
-    def __init__(self):
+    def __init__(self, output_format='SHP'):
         super(V1_CreateFishnet, self).__init__("V1_CreateFishnet", "vector")
         cfg = settings.get_vector_config_for_test('V1')
         self.rows = cfg['fishnet_rows']
         self.cols = cfg['fishnet_cols']
+        self.repeat_count = settings.get_workload_repeat_for_test('V1')
         self.output_fc = None
         self.boundary_fc = None
         self.boundary_extent = None
         self.spatial_reference = None
+        self.output_format = output_format
     
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
@@ -90,10 +103,11 @@ class V1_CreateFishnet(BaseBenchmark):
         self.boundary_fc = get_analysis_boundary_path(settings.DATA_DIR)
         self.boundary_extent = get_analysis_boundary_extent(settings.DATA_DIR)
         self.spatial_reference = arcpy.SpatialReference(get_analysis_crs(settings.DATA_DIR))
-        self.output_fc = os.path.join(
-            settings.DATA_DIR,
-            "V1_fishnet_output.shp"
-        )
+        gdb_path = get_benchmark_gdb_path(settings.DATA_DIR)
+        if self.output_format == 'GDB':
+            self.output_fc = os.path.join(gdb_path, "V1_fishnet_output")
+        else:
+            self.output_fc = os.path.join(settings.DATA_DIR, "V1_fishnet_output.shp")
     
     def teardown(self):
         if self.output_fc and arcpy.Exists(self.output_fc):
@@ -103,53 +117,60 @@ class V1_CreateFishnet(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Delete if exists
-        if arcpy.Exists(self.output_fc):
-            arcpy.Delete_management(self.output_fc)
-        
-        # Create fishnet
-        extent_values = self.boundary_extent or (-500000.0, -500000.0, 500000.0, 500000.0)
-        arcpy.CreateFishnet_management(
-            out_feature_class=self.output_fc,
-            origin_coord="{} {}".format(extent_values[0], extent_values[1]),
-            y_axis_coord="{} {}".format(extent_values[0], extent_values[1] + 10.0),
-            cell_width=0,
-            cell_height=0,
-            number_rows=self.rows,
-            number_columns=self.cols,
-            corner_coord="{} {}".format(extent_values[2], extent_values[3]),
-            labels="NO_LABELS",
-            template="",
-            geometry_type="POLYGON"
-        )
-        
-        # Add spatial reference
-        arcpy.DefineProjection_management(self.output_fc, self.spatial_reference or arcpy.SpatialReference(get_analysis_crs(settings.DATA_DIR)))
-        
-        count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return _validated_count_result(count, self.rows * self.cols, "fishnet_feature_count")
+        def _cleanup():
+            if arcpy.Exists(self.output_fc):
+                arcpy.Delete_management(self.output_fc)
+
+        def _run_once():
+            extent_values = self.boundary_extent or (-500000.0, -500000.0, 500000.0, 500000.0)
+            arcpy.CreateFishnet_management(
+                out_feature_class=self.output_fc,
+                origin_coord="{} {}".format(extent_values[0], extent_values[1]),
+                y_axis_coord="{} {}".format(extent_values[0], extent_values[1] + 10.0),
+                cell_width=0,
+                cell_height=0,
+                number_rows=self.rows,
+                number_columns=self.cols,
+                corner_coord="{} {}".format(extent_values[2], extent_values[3]),
+                labels="NO_LABELS",
+                template="",
+                geometry_type="POLYGON"
+            )
+
+            arcpy.DefineProjection_management(
+                self.output_fc,
+                self.spatial_reference or arcpy.SpatialReference(get_analysis_crs(settings.DATA_DIR))
+            )
+
+            count = int(arcpy.GetCount_management(self.output_fc)[0])
+            return _validated_count_result(count, self.rows * self.cols, "fishnet_feature_count")
+
+        return _run_repeated_operation(self.repeat_count, _cleanup, _run_once)
 
 
 class V2_CreateRandomPoints(BaseBenchmark):
     """Benchmark: Create Random Points"""
     
-    def __init__(self):
+    def __init__(self, output_format='SHP'):
         super(V2_CreateRandomPoints, self).__init__("V2_CreateRandomPoints", "vector")
         cfg = settings.get_vector_config_for_test('V2')
         self.num_points = cfg['random_points']
+        self.repeat_count = settings.get_workload_repeat_for_test('V2')
         self.output_fc = None
         self.boundary_fc = None
         self.boundary_extent = None
+        self.output_format = output_format
     
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
         self.boundary_fc = get_analysis_boundary_path(settings.DATA_DIR)
         self.boundary_extent = get_analysis_boundary_extent(settings.DATA_DIR)
-        self.output_fc = os.path.join(
-            settings.DATA_DIR,
-            "V2_random_points.shp"
-        )
+        gdb_path = get_benchmark_gdb_path(settings.DATA_DIR)
+        if self.output_format == 'GDB':
+            self.output_fc = os.path.join(gdb_path, "V2_random_points")
+        else:
+            self.output_fc = os.path.join(settings.DATA_DIR, "V2_random_points.shp")
     
     def teardown(self):
         if self.output_fc and arcpy.Exists(self.output_fc):
@@ -159,25 +180,28 @@ class V2_CreateRandomPoints(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Delete if exists
-        if arcpy.Exists(self.output_fc):
-            arcpy.Delete_management(self.output_fc)
-        
-        # Create random points
-        create_kwargs = {
-            'out_path': settings.DATA_DIR,
-            'out_name': "V2_random_points",
-            'number_of_points_or_field': self.num_points,
-            'minimum_allowed_distance': "0 Meters",
-        }
-        if self.boundary_fc and arcpy.Exists(self.boundary_fc):
-            create_kwargs['constraining_feature_class'] = self.boundary_fc
-        else:
-            create_kwargs['constraining_extent'] = _format_extent(self.boundary_extent)
-        arcpy.CreateRandomPoints_management(**create_kwargs)
-        
-        count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return _validated_count_result(count, self.num_points, "random_point_count")
+        def _cleanup():
+            if arcpy.Exists(self.output_fc):
+                arcpy.Delete_management(self.output_fc)
+
+        def _run_once():
+            gdb_path = get_benchmark_gdb_path(settings.DATA_DIR)
+            create_kwargs = {
+                'out_path': gdb_path if self.output_format == 'GDB' else settings.DATA_DIR,
+                'out_name': "V2_random_points",
+                'number_of_points_or_field': self.num_points,
+                'minimum_allowed_distance': "0 Meters",
+            }
+            if self.boundary_fc and arcpy.Exists(self.boundary_fc):
+                create_kwargs['constraining_feature_class'] = self.boundary_fc
+            else:
+                create_kwargs['constraining_extent'] = _format_extent(self.boundary_extent)
+            arcpy.CreateRandomPoints_management(**create_kwargs)
+
+            count = int(arcpy.GetCount_management(self.output_fc)[0])
+            return _validated_count_result(count, self.num_points, "random_point_count")
+
+        return _run_repeated_operation(self.repeat_count, _cleanup, _run_once)
 
 
 class V3_Buffer(BaseBenchmark):
@@ -190,6 +214,7 @@ class V3_Buffer(BaseBenchmark):
         self.output_format = output_format
         cfg = settings.get_vector_config_for_test('V3')
         self.num_points = cfg['buffer_points']
+        self.repeat_count = settings.get_workload_repeat_for_test('V3')
 
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
@@ -221,23 +246,25 @@ class V3_Buffer(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Delete if exists
-        if arcpy.Exists(self.output_fc):
-            arcpy.Delete_management(self.output_fc)
-        
-        # Buffer analysis
-        arcpy.Buffer_analysis(
-            in_features=self.input_fc,
-            out_feature_class=self.output_fc,
-            buffer_distance_or_field="1000 Meters",
-            line_side="FULL",
-            line_end_type="ROUND",
-            dissolve_option="NONE"
-        )
-        
-        expected_count = int(arcpy.GetCount_management(self.input_fc)[0])
-        count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return _validated_count_result(count, expected_count, "buffer_feature_count")
+        def _cleanup():
+            if arcpy.Exists(self.output_fc):
+                arcpy.Delete_management(self.output_fc)
+
+        def _run_once():
+            arcpy.Buffer_analysis(
+                in_features=self.input_fc,
+                out_feature_class=self.output_fc,
+                buffer_distance_or_field="1000 Meters",
+                line_side="FULL",
+                line_end_type="ROUND",
+                dissolve_option="NONE"
+            )
+
+            expected_count = int(arcpy.GetCount_management(self.input_fc)[0])
+            count = int(arcpy.GetCount_management(self.output_fc)[0])
+            return _validated_count_result(count, expected_count, "buffer_feature_count")
+
+        return _run_repeated_operation(self.repeat_count, _cleanup, _run_once)
 
 
 class V4_Intersect(BaseBenchmark):
@@ -249,10 +276,8 @@ class V4_Intersect(BaseBenchmark):
         self.input_b = None
         self.output_fc = None
         self.output_format = output_format
-        cfg = settings.get_vector_config_for_test('V4')
-        rows_a, cols_a = factor_grid_dimensions(cfg['intersect_features_a'])
-        rows_b, cols_b = factor_grid_dimensions(cfg['intersect_features_b'])
-        self.expected_features = expected_offset_grid_intersections(rows_a, cols_a, rows_b, cols_b)
+        self.expected_features = None
+        self.repeat_count = settings.get_workload_repeat_for_test('V4')
 
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
@@ -261,6 +286,9 @@ class V4_Intersect(BaseBenchmark):
         gdb_path = get_benchmark_gdb_path(settings.DATA_DIR)
         self.input_a = get_input_feature_path("test_polygons_a", settings.DATA_DIR)
         self.input_b = get_input_feature_path("test_polygons_b", settings.DATA_DIR)
+        count_a = int(arcpy.GetCount_management(self.input_a)[0])
+        count_b = int(arcpy.GetCount_management(self.input_b)[0])
+        self.expected_features = expected_offset_grid_intersections_from_counts(count_a, count_b)
         if self.output_format == 'GPKG':
             self.output_fc = os.path.join(settings.DATA_DIR, "V4_intersect_output.gpkg")
         elif self.output_format == 'GDB':
@@ -276,21 +304,23 @@ class V4_Intersect(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Delete if exists
-        if arcpy.Exists(self.output_fc):
-            arcpy.Delete_management(self.output_fc)
-        
-        # Intersect analysis
-        arcpy.Intersect_analysis(
-            in_features=[self.input_a, self.input_b],
-            out_feature_class=self.output_fc,
-            join_attributes="ALL",
-            cluster_tolerance=None,
-            output_type="INPUT"
-        )
-        
-        count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return _validated_count_result(count, self.expected_features, "intersect_feature_count")
+        def _cleanup():
+            if arcpy.Exists(self.output_fc):
+                arcpy.Delete_management(self.output_fc)
+
+        def _run_once():
+            arcpy.Intersect_analysis(
+                in_features=[self.input_a, self.input_b],
+                out_feature_class=self.output_fc,
+                join_attributes="ALL",
+                cluster_tolerance=None,
+                output_type="INPUT"
+            )
+
+            count = int(arcpy.GetCount_management(self.output_fc)[0])
+            return _validated_count_result(count, self.expected_features, "intersect_feature_count")
+
+        return _run_repeated_operation(self.repeat_count, _cleanup, _run_once)
 
 
 class V5_SpatialJoin(BaseBenchmark):
@@ -302,6 +332,7 @@ class V5_SpatialJoin(BaseBenchmark):
         self.join_features = None
         self.output_fc = None
         self.output_format = output_format
+        self.repeat_count = settings.get_workload_repeat_for_test('V5')
 
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
@@ -327,38 +358,45 @@ class V5_SpatialJoin(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Delete if exists
-        if arcpy.Exists(self.output_fc):
-            arcpy.Delete_management(self.output_fc)
-        
-        # Spatial join
-        arcpy.SpatialJoin_analysis(
-            target_features=self.target_features,
-            join_features=self.join_features,
-            out_feature_class=self.output_fc,
-            join_operation="JOIN_ONE_TO_ONE",
-            join_type="KEEP_ALL"
-        )
-        
-        expected_count = int(arcpy.GetCount_management(self.target_features)[0])
-        count = int(arcpy.GetCount_management(self.output_fc)[0])
-        return _validated_count_result(count, expected_count, "spatial_join_feature_count")
+        def _cleanup():
+            if arcpy.Exists(self.output_fc):
+                arcpy.Delete_management(self.output_fc)
+
+        def _run_once():
+            arcpy.SpatialJoin_analysis(
+                target_features=self.target_features,
+                join_features=self.join_features,
+                out_feature_class=self.output_fc,
+                join_operation="JOIN_ONE_TO_ONE",
+                join_type="KEEP_ALL"
+            )
+
+            expected_count = int(arcpy.GetCount_management(self.target_features)[0])
+            count = int(arcpy.GetCount_management(self.output_fc)[0])
+            return _validated_count_result(count, expected_count, "spatial_join_feature_count")
+
+        return _run_repeated_operation(self.repeat_count, _cleanup, _run_once)
 
 
 class V6_CalculateField(BaseBenchmark):
     """Benchmark: Calculate Field"""
     
-    def __init__(self):
+    def __init__(self, output_format='SHP'):
         super(V6_CalculateField, self).__init__("V6_CalculateField", "vector")
         self.input_fc = None
         self.working_fc = None
+        self.output_format = output_format
     
     def setup(self):
         arcpy.env.workspace = settings.DATA_DIR
         arcpy.env.overwriteOutput = True
 
         self.input_fc = get_input_feature_path("calculate_field_fc", settings.DATA_DIR)
-        self.working_fc = os.path.join(settings.DATA_DIR, "V6_calculate_field.shp")
+        gdb_path = get_benchmark_gdb_path(settings.DATA_DIR)
+        if self.output_format == 'GDB':
+            self.working_fc = os.path.join(gdb_path, "V6_calculate_field")
+        else:
+            self.working_fc = os.path.join(settings.DATA_DIR, "V6_calculate_field.shp")
         
         # Add field if not exists
         if arcpy.Exists(self.input_fc):

@@ -17,7 +17,7 @@ from datetime import datetime
 from config import settings
 from utils.benchmark_manifest import load_manifest, save_manifest
 from utils.benchmark_shapes import factor_grid_dimensions, derive_block_size, build_block_pattern_array
-from utils.gis_cleanup import clear_workspace_cache, remove_dataset_artifacts
+from utils.gis_cleanup import clear_workspace_cache, remove_dataset_artifacts, ensure_file_gdb, is_file_gdb_workspace
 from utils.raster_utils import create_constant_raster, create_block_pattern_raster
 
 try:
@@ -28,7 +28,7 @@ except ImportError:
     arcpy = None
 
 
-MANIFEST_VERSION = 3
+MANIFEST_VERSION = 4
 PROJECTED_WKID = 3857
 COMMON_ID_FIELDS = [
     ('poly_id', 'LONG'),
@@ -88,6 +88,16 @@ def _delete_path(path):
         remove_dataset_artifacts(path)
     except Exception:
         pass
+
+
+def _is_valid_file_gdb(path):
+    """Return True when *path* points to a real FileGDB workspace."""
+    if not path or not os.path.isdir(path):
+        return False
+    try:
+        return is_file_gdb_workspace(path)
+    except Exception:
+        return False
     try:
         if os.path.isdir(path):
             import shutil
@@ -521,21 +531,25 @@ def _create_random_points(feature_class, target_count, extent, source_mode, sour
     return feature_class
 
 
-def _create_rasters(root_dir, extent, source_mode, source_label, raster_config):
+def _create_rasters(root_dir, extent, source_mode, source_label, raster_config, gdb_path=None, output_format='GDB'):
     """Create the baseline and analysis rasters."""
     side_extent = extent
     sr = _projected_spatial_reference()
     constant_size = int(raster_config['constant_raster_size'])
     analysis_size = int(raster_config['analysis_raster_size'])
-    constant_path = os.path.join(root_dir, "constant_raster.tif")
-    analysis_path = os.path.join(root_dir, "analysis_raster.tif")
+    staging_dir = os.path.join(root_dir, "staging")
+    _ensure_dir(staging_dir)
+    constant_staging_path = os.path.join(staging_dir, "constant_raster.tif")
+    analysis_staging_path = os.path.join(staging_dir, "analysis_raster.tif")
+    constant_path = constant_staging_path
+    analysis_path = analysis_staging_path
 
     if not side_extent:
         half = float(max(constant_size, analysis_size) * 1000.0) / 2.0
         side_extent = (-half, -half, half, half)
 
     create_constant_raster(
-        constant_path,
+        constant_staging_path,
         cell_size=max(1.0, float(side_extent[2] - side_extent[0]) / float(constant_size)),
         extent=side_extent,
         value=1,
@@ -545,7 +559,7 @@ def _create_rasters(root_dir, extent, source_mode, source_label, raster_config):
 
     block_size = derive_block_size(analysis_size, target_blocks_per_side=60, min_block_size=8)
     create_block_pattern_raster(
-        analysis_path,
+        analysis_staging_path,
         cell_size=max(1.0, float(side_extent[2] - side_extent[0]) / float(analysis_size)),
         extent=side_extent,
         block_size=block_size,
@@ -553,7 +567,20 @@ def _create_rasters(root_dir, extent, source_mode, source_label, raster_config):
         spatial_reference=sr
     )
 
-    return constant_path, analysis_path, block_size
+    if str(output_format).upper() == 'GDB' and gdb_path:
+        constant_contract_path = os.path.join(gdb_path, 'constant_raster')
+        analysis_contract_path = os.path.join(gdb_path, 'analysis_raster')
+        try:
+            _delete_path(constant_contract_path)
+            _delete_path(analysis_contract_path)
+            arcpy.CopyRaster_management(constant_staging_path, constant_contract_path)
+            arcpy.CopyRaster_management(analysis_staging_path, analysis_contract_path)
+            constant_path = constant_contract_path
+            analysis_path = analysis_contract_path
+        except Exception as exc:
+            raise RuntimeError("Failed to copy raster staging outputs into GDB: {}".format(exc))
+
+    return constant_path, analysis_path, block_size, constant_staging_path, analysis_staging_path
 
 
 def _load_geometry_samples(feature_class, limit=None):
@@ -561,12 +588,15 @@ def _load_geometry_samples(feature_class, limit=None):
     if not feature_class or not arcpy.Exists(feature_class):
         return geometries
     fields = ['SHAPE@']
-    with arcpy.da.SearchCursor(feature_class, fields) as cursor:
-        for index, row in enumerate(cursor):
-            if limit is not None and index >= int(limit):
-                break
-            if row and row[0] is not None:
-                geometries.append(row[0])
+    try:
+        with arcpy.da.SearchCursor(feature_class, fields) as cursor:
+            for index, row in enumerate(cursor):
+                if limit is not None and index >= int(limit):
+                    break
+                if row and row[0] is not None:
+                    geometries.append(row[0])
+    except Exception as exc:
+        print("  [Warning] Failed to read geometry samples from {}: {}".format(feature_class, exc))
     return geometries
 
 
@@ -632,8 +662,9 @@ def _densify_feature_class(source_fc, output_fc, interval_meters=20.0):
 class TestDataGenerator(object):
     """Generate benchmark input data and cache metadata."""
 
-    def __init__(self, output_format=None, complexity=None):
+    def __init__(self, output_format=None, complexity=None, region=None):
         self.scale = settings.DATA_SCALE
+        self.region = str(region or getattr(settings, 'DATA_REGION', 'guangdong')).lower()
         self.vector_config = copy.deepcopy(settings.VECTOR_CONFIG)
         self.raster_config = copy.deepcopy(settings.RASTER_CONFIG)
         self.output_format = str(output_format or 'GDB').upper()
@@ -669,8 +700,10 @@ class TestDataGenerator(object):
         return [
             self.gdb_path,
             os.path.join(self.gdb_path, 'analysis_boundary'),
-            os.path.join(self.root_dir, 'constant_raster.tif'),
-            os.path.join(self.root_dir, 'analysis_raster.tif'),
+            os.path.join(self.gdb_path, 'constant_raster'),
+            os.path.join(self.gdb_path, 'analysis_raster'),
+            os.path.join(self.root_dir, 'staging', 'constant_raster.tif'),
+            os.path.join(self.root_dir, 'staging', 'analysis_raster.tif'),
         ]
 
     def _generated_dataset_paths(self):
@@ -708,6 +741,8 @@ class TestDataGenerator(object):
             return False
         if str(manifest.get('schema_version')) != str(MANIFEST_VERSION):
             return False
+        if str(manifest.get('region', '')).lower() != self.region:
+            return False
         if str(manifest.get('scale', '')).lower() != str(self.scale).lower():
             return False
         if str(manifest.get('output_format', '')).upper() != self.output_format:
@@ -722,13 +757,13 @@ class TestDataGenerator(object):
             if not os.path.exists(self.gpkg_path):
                 return False
         else:
-            if not os.path.isdir(self.gdb_path):
+            if not _is_valid_file_gdb(self.gdb_path):
                 return False
             if not os.path.exists(os.path.join(self.gdb_path, 'analysis_boundary')):
                 return False
 
-        constant_size = _raster_size(os.path.join(self.root_dir, 'constant_raster.tif'))
-        analysis_size = _raster_size(os.path.join(self.root_dir, 'analysis_raster.tif'))
+        constant_size = _raster_size(manifest.get('constant_raster_path') or os.path.join(self.root_dir, 'constant_raster.tif'))
+        analysis_size = _raster_size(manifest.get('analysis_raster_path') or os.path.join(self.root_dir, 'analysis_raster.tif'))
         if constant_size is None or analysis_size is None:
             return False
         if constant_size != (int(self.raster_config['constant_raster_size']), int(self.raster_config['constant_raster_size'])):
@@ -757,6 +792,7 @@ class TestDataGenerator(object):
     def _build_manifest(self, source_mode, source_info, analysis_extent, block_size, dataset_counts):
         manifest = {
             'schema_version': MANIFEST_VERSION,
+            'region': self.region,
             'scale': self.scale,
             'output_format': self.output_format,
             'complexity': self.complexity,
@@ -766,12 +802,15 @@ class TestDataGenerator(object):
             'gpkg_path': self.gpkg_path,
             'analysis_crs': PROJECTED_WKID,
             'source_mode': source_mode,
-            'source_region': source_info.get('label') if source_info else 'Synthetic',
+            'source_region': (source_info.get('label') if source_info and source_info.get('label') else source_info.get('source', {}).get('label') if source_info else 'Synthetic'),
             'osm_source': source_info or {},
+            'package_type': 'china_osm' if str(self.region).lower() == 'china' else 'regional_osm',
             'analysis_boundary_path': os.path.join(self.gdb_path, 'analysis_boundary'),
             'analysis_boundary_extent': _extent_dict(analysis_extent),
-            'analysis_raster_path': os.path.join(self.root_dir, 'analysis_raster.tif'),
-            'constant_raster_path': os.path.join(self.root_dir, 'constant_raster.tif'),
+            'analysis_raster_path': os.path.join(self.gdb_path, 'analysis_raster') if self.output_format == 'GDB' else os.path.join(self.root_dir, 'analysis_raster.tif'),
+            'analysis_raster_staging_path': os.path.join(self.root_dir, 'staging', 'analysis_raster.tif'),
+            'constant_raster_path': os.path.join(self.gdb_path, 'constant_raster') if self.output_format == 'GDB' else os.path.join(self.root_dir, 'constant_raster.tif'),
+            'constant_raster_staging_path': os.path.join(self.root_dir, 'staging', 'constant_raster.tif'),
             'analysis_raster_block_size': int(block_size),
             'vector_config': copy.deepcopy(self.vector_config),
             'raster_config': copy.deepcopy(self.raster_config),
@@ -847,12 +886,14 @@ class TestDataGenerator(object):
                     arcpy.Delete_management(src)
                     arcpy.Rename_management(tmp, fc_name)
 
-        constant_raster_path, analysis_raster_path, block_size = _create_rasters(
+        constant_raster_path, analysis_raster_path, block_size, constant_staging_path, analysis_staging_path = _create_rasters(
             self.root_dir,
             analysis_extent,
             'osm',
             source_info.get('label', 'OSM'),
-            self.raster_config
+            self.raster_config,
+            gdb_path=self.gdb_path,
+            output_format=self.output_format
         )
 
         dataset_counts = {
@@ -873,6 +914,107 @@ class TestDataGenerator(object):
         manifest = self._build_manifest('osm', source_info, analysis_extent, block_size, dataset_counts)
         manifest['constant_raster_path'] = constant_raster_path
         manifest['analysis_raster_path'] = analysis_raster_path
+        manifest['constant_raster_staging_path'] = constant_staging_path
+        manifest['analysis_raster_staging_path'] = analysis_staging_path
+        return manifest
+
+    def _build_from_china_package(self, source_info):
+        source_label = source_info.get('source', {}).get('label', 'China')
+        print("  [OSM] Using China PBF package cache: {}".format(source_label))
+        theme_layers = source_info.get('theme_packages') or {}
+        source_layers = {}
+        for theme_name in ['roads', 'buildings', 'landuse', 'pois', 'places']:
+            source_path = theme_layers.get(theme_name)
+            if not source_path or not arcpy.Exists(source_path):
+                continue
+            source_layers[theme_name] = source_path
+            print("    using cached theme {} -> {}".format(theme_name, source_path))
+
+        extents = _collect_extents(source_layers.values())
+        analysis_extent = _square_extent_from_extents(extents, margin_ratio=0.12, default_side=1500000.0)
+        boundary_fc = os.path.join(self.gdb_path, 'analysis_boundary')
+        _create_boundary(boundary_fc, analysis_extent, 'osm_pbf', source_label)
+
+        roads_fc = source_layers.get('roads')
+        buildings_fc = source_layers.get('buildings')
+        landuse_fc = source_layers.get('landuse')
+        pois_fc = source_layers.get('pois')
+        places_fc = source_layers.get('places')
+
+        buffer_points_fc = os.path.join(self.gdb_path, 'buffer_points')
+        spatial_join_points_fc = os.path.join(self.gdb_path, 'spatial_join_points')
+        spatial_join_polygons_fc = os.path.join(self.gdb_path, 'spatial_join_polygons')
+        calculate_field_fc = os.path.join(self.gdb_path, 'calculate_field_fc')
+        test_polygons_a_fc = os.path.join(self.gdb_path, 'test_polygons_a')
+        test_polygons_b_fc = os.path.join(self.gdb_path, 'test_polygons_b')
+
+        point_seed_limit = min(max(int(self.vector_config['buffer_points']), int(self.vector_config['spatial_join_points'])), 10000)
+        polygon_seed_limit = min(int(self.vector_config['spatial_join_polygons']), 10000)
+        building_seed_limit = min(int(self.vector_config['calculate_field_records']), 10000)
+        print("    loading OSM geometry seeds: points={}, polygons={}, buildings={}".format(point_seed_limit, polygon_seed_limit, building_seed_limit))
+        poi_geoms = _load_geometry_samples(pois_fc, limit=point_seed_limit)
+        place_geoms = _load_geometry_samples(places_fc, limit=point_seed_limit)
+        building_geoms = _load_geometry_samples(buildings_fc, limit=building_seed_limit)
+        landuse_geoms = _load_geometry_samples(landuse_fc, limit=polygon_seed_limit)
+        road_geoms = _load_geometry_samples(roads_fc, limit=polygon_seed_limit)
+
+        _create_point_sample(buffer_points_fc, poi_geoms or place_geoms, int(self.vector_config['buffer_points']), analysis_extent, 'china_osm_buffer_points', source_label)
+        _create_point_sample(spatial_join_points_fc, place_geoms or poi_geoms, int(self.vector_config['spatial_join_points']), analysis_extent, 'china_osm_spatial_join_points', source_label)
+        if landuse_geoms:
+            _create_polygon_sample(spatial_join_polygons_fc, landuse_geoms, int(self.vector_config['spatial_join_polygons']), analysis_extent, 'china_osm_join_zones', source_label)
+        elif road_geoms:
+            rows, cols = factor_grid_dimensions(int(self.vector_config['spatial_join_polygons']))
+            _create_fishnet(spatial_join_polygons_fc, analysis_extent, rows, cols, 'china_osm_join_zones', source_label)
+        else:
+            rows, cols = factor_grid_dimensions(int(self.vector_config['spatial_join_polygons']))
+            _create_fishnet(spatial_join_polygons_fc, analysis_extent, rows, cols, 'china_osm_join_zones', source_label)
+        _create_polygon_sample(calculate_field_fc, building_geoms or landuse_geoms or road_geoms, int(self.vector_config['calculate_field_records']), analysis_extent, 'china_osm_calculate_field', source_label)
+
+        rows_a, cols_a = factor_grid_dimensions(int(self.vector_config['intersect_features_a']))
+        rows_b, cols_b = factor_grid_dimensions(int(self.vector_config['intersect_features_b']))
+        _create_fishnet(test_polygons_a_fc, analysis_extent, rows_a, cols_a, 'china_osm_intersect_a', source_label, offset=False)
+        _create_fishnet(test_polygons_b_fc, analysis_extent, rows_b, cols_b, 'china_osm_intersect_b', source_label, offset=True)
+
+        if self.complexity == 'complex':
+            print("  [Complex] Densifying polygon geometries")
+            for fc_name in ['spatial_join_polygons', 'calculate_field_fc', 'test_polygons_a', 'test_polygons_b']:
+                src = os.path.join(self.gdb_path, fc_name)
+                tmp = os.path.join(self.gdb_path, fc_name + '_tmp')
+                if arcpy.Exists(src):
+                    _densify_feature_class(src, tmp, interval_meters=20.0)
+                    arcpy.Delete_management(src)
+                    arcpy.Rename_management(tmp, fc_name)
+
+        constant_raster_path, analysis_raster_path, block_size, constant_staging_path, analysis_staging_path = _create_rasters(
+            self.root_dir,
+            analysis_extent,
+            'osm_pbf',
+            source_label,
+            self.raster_config,
+            gdb_path=self.gdb_path,
+            output_format=self.output_format
+        )
+
+        dataset_counts = {
+            'analysis_boundary': _feature_count(boundary_fc),
+            'buffer_points': _feature_count(buffer_points_fc),
+            'spatial_join_points': _feature_count(spatial_join_points_fc),
+            'spatial_join_polygons': _feature_count(spatial_join_polygons_fc),
+            'calculate_field_fc': _feature_count(calculate_field_fc),
+            'test_polygons_a': _feature_count(test_polygons_a_fc),
+            'test_polygons_b': _feature_count(test_polygons_b_fc),
+            'osm_roads': _feature_count(roads_fc),
+            'osm_buildings': _feature_count(buildings_fc),
+            'osm_landuse': _feature_count(landuse_fc),
+            'osm_pois': _feature_count(pois_fc),
+            'osm_places': _feature_count(places_fc),
+        }
+
+        manifest = self._build_manifest('osm_pbf', source_info, analysis_extent, block_size, dataset_counts)
+        manifest['constant_raster_path'] = constant_raster_path
+        manifest['analysis_raster_path'] = analysis_raster_path
+        manifest['constant_raster_staging_path'] = constant_staging_path
+        manifest['analysis_raster_staging_path'] = analysis_staging_path
         return manifest
 
     def _build_synthetic(self):
@@ -915,12 +1057,14 @@ class TestDataGenerator(object):
                 arcpy.Delete_management(src)
                 arcpy.Rename_management(tmp, fc_name)
 
-        constant_raster_path, analysis_raster_path, block_size = _create_rasters(
+        constant_raster_path, analysis_raster_path, block_size, constant_staging_path, analysis_staging_path = _create_rasters(
             self.root_dir,
             analysis_extent,
             'synthetic',
             'Synthetic',
-            self.raster_config
+            self.raster_config,
+            gdb_path=self.gdb_path,
+            output_format=self.output_format
         )
 
         dataset_counts = {
@@ -941,6 +1085,8 @@ class TestDataGenerator(object):
         manifest = self._build_manifest('synthetic', {}, analysis_extent, block_size, dataset_counts)
         manifest['constant_raster_path'] = constant_raster_path
         manifest['analysis_raster_path'] = analysis_raster_path
+        manifest['constant_raster_staging_path'] = constant_staging_path
+        manifest['analysis_raster_staging_path'] = analysis_staging_path
         manifest['analysis_crs'] = 3857
         return manifest
 
@@ -974,31 +1120,33 @@ class TestDataGenerator(object):
                     self.root_dir, self.output_format, self.complexity))
                 return existing_manifest
 
-        print("  Preparing benchmark inputs for scale: {} | format: {} | complexity: {}".format(
-            self.scale, self.output_format, self.complexity))
+        print("  Preparing benchmark inputs for region: {} | scale: {} | format: {} | complexity: {}".format(
+            self.region, self.scale, self.output_format, self.complexity))
         _delete_path(self.gdb_path)
         _delete_path(self.gpkg_path)
         for name in ALL_INPUT_DATASETS:
             _delete_path(os.path.join(self.root_dir, '{}.shp'.format(name)))
 
         try:
-            arcpy.CreateFileGDB_management(self.root_dir, self.gdb_name)
+            ensure_file_gdb(self.gdb_path)
         except Exception as exc:
             raise RuntimeError("Failed to create benchmark geodatabase: {}".format(exc))
 
         manifest = None
         source_info = None
         try:
-            if self.complexity == 'medium' or self.complexity == 'complex':
+            if str(self.region).lower() == 'china':
+                from utils.china_osm_package import ensure_china_osm_package
+                source_info = ensure_china_osm_package(getattr(settings, 'NATIONAL_OSM_CACHE_DIR', None), force=force)
+                manifest = self._build_from_china_package(source_info)
+            else:
                 try:
                     from utils.osm_samples import ensure_osm_sample_cache
-                    source_info = ensure_osm_sample_cache(getattr(settings, 'OSM_CACHE_DIR', None), preferred_source='hong-kong')
+                    source_info = ensure_osm_sample_cache(getattr(settings, 'OSM_CACHE_DIR', None), preferred_source=self.region)
                     manifest = self._build_from_source_layers(source_info)
                 except Exception as osm_exc:
                     print("  [OSM] {}. Falling back to synthetic data.".format(osm_exc))
                     manifest = self._build_synthetic()
-            else:
-                manifest = self._build_synthetic()
 
             self._export_format()
             save_manifest(self.root_dir, manifest)

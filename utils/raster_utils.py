@@ -5,6 +5,8 @@ Compatible with Python 2.7 and 3.x.
 """
 from __future__ import print_function, division, absolute_import
 import os
+import tempfile
+import shutil
 
 try:
     import numpy as np
@@ -18,7 +20,7 @@ except ImportError:
     HAS_ARCPY = False
     arcpy = None
 
-from utils.gis_cleanup import remove_dataset_artifacts
+from utils.gis_cleanup import remove_dataset_artifacts, ensure_file_gdb
 from utils.benchmark_shapes import build_block_pattern_array
 
 
@@ -44,6 +46,82 @@ def _ensure_parent_dir(path):
         os.makedirs(parent)
 
 
+def _ensure_output_workspace(output_path):
+    """Ensure the target workspace exists before writing a raster."""
+    if not output_path:
+        return
+    parent = os.path.dirname(output_path)
+    if parent and parent.lower().endswith('.gdb'):
+        ensure_file_gdb(parent)
+    else:
+        _ensure_parent_dir(output_path)
+
+
+def _save_constant_raster_chunk(output_dir, chunk_name, array, lower_left, cell_size, spatial_reference=None):
+    """Save a small constant raster chunk to a temporary dataset."""
+    chunk_path = os.path.join(output_dir, chunk_name)
+    remove_dataset_artifacts(chunk_path)
+    raster = arcpy.NumPyArrayToRaster(
+        array,
+        lower_left,
+        float(cell_size),
+        float(cell_size)
+    )
+    raster.save(chunk_path)
+    if spatial_reference is not None:
+        try:
+            arcpy.DefineProjection_management(chunk_path, spatial_reference)
+        except Exception:
+            pass
+    return chunk_path
+
+
+def _chunked_constant_raster(output_path, cell_size, extent, value=1, spatial_reference=None, chunk_rows=512):
+    """Create a constant raster via smaller mosaic chunks.
+
+    This path keeps memory usage bounded on 32-bit ArcGIS Python 2.7 where a
+    full-width NumPy allocation for large national rasters can fail.
+    """
+    if np is None:
+        raise RuntimeError("NumPy is required for the raster fallback")
+
+    x_min, y_min, x_max, y_max = _parse_extent(extent)
+    width = max(1, int(round((x_max - x_min) / float(cell_size))))
+    height = max(1, int(round((y_max - y_min) / float(cell_size))))
+
+    parent = os.path.dirname(output_path) or os.getcwd()
+    temp_dir = tempfile.mkdtemp(prefix='const_raster_', dir=parent)
+    chunk_paths = []
+    try:
+        chunk_rows = max(1, int(chunk_rows))
+        for index, row_start in enumerate(range(0, height, chunk_rows)):
+            rows = min(chunk_rows, height - row_start)
+            array = np.full((rows, width), int(value), dtype=np.uint8)
+            lower_left = arcpy.Point(x_min, y_min + (row_start * float(cell_size)))
+            chunk_name = 'chunk_{:04d}.tif'.format(index)
+            chunk_paths.append(_save_constant_raster_chunk(temp_dir, chunk_name, array, lower_left, cell_size, spatial_reference))
+
+        arcpy.MosaicToNewRaster_management(
+            input_rasters=';'.join(chunk_paths),
+            output_location=os.path.dirname(output_path) or parent,
+            raster_dataset_name_with_extension=os.path.basename(output_path),
+            pixel_type='8_BIT_UNSIGNED',
+            cellsize=float(cell_size),
+            number_of_bands=1
+        )
+        if spatial_reference is not None:
+            try:
+                arcpy.DefineProjection_management(output_path, spatial_reference)
+            except Exception:
+                pass
+        return output_path
+    finally:
+        try:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        except Exception:
+            pass
+
+
 def spatial_analyst_available():
     """Return True when the Spatial Analyst extension is available."""
     if not HAS_ARCPY:
@@ -66,7 +144,7 @@ def create_constant_raster(output_path, cell_size, extent, value=1, spatial_refe
     if not HAS_ARCPY:
         raise RuntimeError("ArcPy is required to create benchmark rasters")
 
-    _ensure_parent_dir(output_path)
+    _ensure_output_workspace(output_path)
     remove_dataset_artifacts(output_path)
 
     x_min, y_min, x_max, y_max = _parse_extent(extent)
@@ -98,7 +176,11 @@ def create_constant_raster(output_path, cell_size, extent, value=1, spatial_refe
 
     width = max(1, int(round((x_max - x_min) / float(cell_size))))
     height = max(1, int(round((y_max - y_min) / float(cell_size))))
-    array = np.ones((height, width), dtype=np.uint8) * int(value)
+    try:
+        array = np.full((height, width), int(value), dtype=np.uint8)
+    except MemoryError:
+        return _chunked_constant_raster(output_path, cell_size, extent, value=value, spatial_reference=spatial_reference)
+
     lower_left = arcpy.Point(x_min, y_min)
     raster = arcpy.NumPyArrayToRaster(
         array,
@@ -106,6 +188,7 @@ def create_constant_raster(output_path, cell_size, extent, value=1, spatial_refe
         float(cell_size),
         float(cell_size)
     )
+
     raster.save(output_path)
     if spatial_reference is not None:
         arcpy.DefineProjection_management(output_path, spatial_reference)
@@ -122,7 +205,7 @@ def double_raster(input_raster, output_raster, use_spatial_analyst=False):
     if not HAS_ARCPY:
         raise RuntimeError("ArcPy is required to process benchmark rasters")
 
-    _ensure_parent_dir(output_raster)
+    _ensure_output_workspace(output_raster)
     remove_dataset_artifacts(output_raster)
 
     if use_spatial_analyst and spatial_analyst_available():
@@ -168,7 +251,7 @@ def create_block_pattern_raster(output_path, cell_size, extent, block_size, leve
     if not HAS_ARCPY:
         raise RuntimeError("ArcPy is required to create benchmark rasters")
 
-    _ensure_parent_dir(output_path)
+    _ensure_output_workspace(output_path)
     remove_dataset_artifacts(output_path)
 
     x_min, y_min, x_max, y_max = _parse_extent(extent)

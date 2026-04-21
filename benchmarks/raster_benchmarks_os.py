@@ -29,6 +29,7 @@ from utils.benchmark_inputs import (
     get_analysis_boundary_extent,
     get_analysis_crs,
     get_analysis_raster_path,
+    get_benchmark_gdb_path,
 )
 from utils.benchmark_shapes import derive_block_size
 from utils.raster_utils import expected_clip_dimension
@@ -70,6 +71,42 @@ def _create_analysis_raster_fallback(output_path, raster_size):
     with rasterio.open(output_path, 'w', **profile) as dst:
         dst.write(data, 1)
     return output_path
+
+
+def _run_repeated_operation(repeat_count, cleanup_fn, operation_fn):
+    """Run the same logical benchmark operation multiple times."""
+    repeat_count = max(1, int(repeat_count or 1))
+    result = None
+    for _ in range(repeat_count):
+        if cleanup_fn is not None:
+            cleanup_fn()
+        result = operation_fn()
+    return result
+
+
+def _heavy_raster_profile(height, width, transform, crs):
+    """Return a heavier write profile for the national_heavy tier."""
+    if settings.DATA_SCALE == 'national_heavy':
+        return {
+            'driver': 'GTiff',
+            'height': height,
+            'width': width,
+            'count': 1,
+            'dtype': np.float32,
+            'crs': crs,
+            'transform': transform,
+            'compress': None
+        }
+    return {
+        'driver': 'GTiff',
+        'height': height,
+        'width': width,
+        'count': 1,
+        'dtype': np.uint8,
+        'crs': crs,
+        'transform': transform,
+        'compress': 'lzw'
+    }
 
 
 def _validated_raster_result(array, expected_width, expected_height, metric_name, expected_min=None, expected_max=None):
@@ -130,14 +167,22 @@ class RasterBenchmarksOS(object):
 class R1_CreateConstantRaster_OS(BaseBenchmark):
     """Benchmark: Create Constant Raster using Rasterio"""
     
-    def __init__(self):
+    def __init__(self, output_format='GPKG'):
         super(R1_CreateConstantRaster_OS, self).__init__("R1_CreateConstantRaster_OS", "raster_os")
         cfg = settings.get_raster_config_for_test('R1')
         self.size = cfg['constant_raster_size']
         self.output_path = None
+        self.output_format = output_format
+        self.repeat_count = settings.get_workload_repeat_for_test('R1')
     
     def setup(self):
-        self.output_path = os.path.join(settings.DATA_DIR, "R1_constant_raster_os.tif")
+        if self.output_format == 'GDB':
+            self.output_path = os.path.join(settings.DATA_DIR, "staging", "R1_constant_raster_os.tif")
+        else:
+            self.output_path = os.path.join(settings.DATA_DIR, "R1_constant_raster_os.tif")
+        output_dir = os.path.dirname(self.output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
     
     def teardown(self):
         if self.output_path and os.path.exists(self.output_path):
@@ -147,39 +192,34 @@ class R1_CreateConstantRaster_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Create constant raster using NumPy and Rasterio
-        height = self.size
-        width = self.size
-        
-        # Create transform (georeferencing)
-        transform = from_bounds(*_constant_raster_bounds(self.size), width, height)
-        
-        # Create constant data
-        data = np.ones((height, width), dtype=np.uint8)
-        
-        # Write to GeoTIFF
-        profile = {
-            'driver': 'GTiff',
-            'height': height,
-            'width': width,
-            'count': 1,
-            'dtype': data.dtype,
-            'crs': 'EPSG:4326',
-            'transform': transform,
-            'compress': 'lzw'
-        }
-        
-        with rasterio.open(self.output_path, 'w', **profile) as dst:
-            dst.write(data, 1)
-        
-        return _validated_raster_result(
-            data,
-            width,
-            height,
-            "constant_raster_dimensions",
-            expected_min=1,
-            expected_max=1
-        )
+        def _cleanup():
+            if self.output_path and os.path.exists(self.output_path):
+                try:
+                    os.remove(self.output_path)
+                except:
+                    pass
+
+        def _run_once():
+            height = self.size
+            width = self.size
+
+            bounds = _constant_raster_bounds(self.size)
+            transform = from_bounds(bounds[0], bounds[1], bounds[2], bounds[3], width, height)
+            data = np.ones((height, width), dtype=np.float32 if settings.DATA_SCALE == 'national_heavy' else np.uint8)
+            profile = _heavy_raster_profile(height, width, transform, 'EPSG:4326')
+            with rasterio.open(self.output_path, 'w', **profile) as dst:
+                dst.write(data, 1)
+
+            return _validated_raster_result(
+                data,
+                width,
+                height,
+                "constant_raster_dimensions",
+                expected_min=1,
+                expected_max=1
+            )
+
+        return _run_repeated_operation(self.repeat_count, _cleanup, _run_once)
 
 
 class R2_Resample_OS(BaseBenchmark):
@@ -193,11 +233,19 @@ class R2_Resample_OS(BaseBenchmark):
         self.target_size = cfg.get('resample_target_size', cfg.get('analysis_raster_target_size'))
         self.input_path = None
         self.output_path = None
+        self.repeat_count = settings.get_workload_repeat_for_test('R2')
     
     def setup(self):
         # Use a dedicated source raster so standard can tune R2 without affecting other tests.
-        self.input_path = os.path.join(settings.DATA_DIR, "analysis_raster_R2.tif")
-        self.output_path = os.path.join(settings.DATA_DIR, "R2_resample_output_os.tif")
+        self.input_path = os.path.join(settings.DATA_DIR, "staging", "R2_resample_source_os.tif")
+        if self.output_format == 'GDB':
+            self.output_path = os.path.join(settings.DATA_DIR, "staging", "R2_resample_output_os.tif")
+        else:
+            self.output_path = os.path.join(settings.DATA_DIR, "R2_resample_output_os.tif")
+        for path in (self.input_path, self.output_path):
+            output_dir = os.path.dirname(path)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
         
         if not os.path.exists(self.input_path):
             _create_analysis_raster_fallback(self.input_path, self.source_size)
@@ -210,55 +258,58 @@ class R2_Resample_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Read input raster
-        with rasterio.open(self.input_path) as src:
-            data = src.read(1)
-            src_crs = src.crs
-            src_transform = src.transform
-            
-            # Calculate new transform
-            dst_transform = from_bounds(*src.bounds, self.target_size, self.target_size)
-            
-            # Create output array
-            dst_data = np.empty((self.target_size, self.target_size), dtype=data.dtype)
-            
-            # Reproject/resample
-            reproject(
-                source=data,
-                destination=dst_data,
-                src_transform=src_transform,
-                src_crs=src_crs,
-                dst_transform=dst_transform,
-                dst_crs=src_crs,
-                resampling=Resampling.nearest
-            )
-        
-        # Write output
-        profile = {
-            'driver': 'GTiff',
-            'height': self.target_size,
-            'width': self.target_size,
-            'count': 1,
-            'dtype': dst_data.dtype,
-            'crs': src_crs,
-            'transform': dst_transform,
-            'compress': 'lzw'
-        }
-        
-        with rasterio.open(self.output_path, 'w', **profile) as dst:
-            dst.write(dst_data, 1)
-        
-        input_min = float(np.min(data))
-        input_max = float(np.max(data))
+        def _cleanup():
+            if self.output_path and os.path.exists(self.output_path):
+                try:
+                    os.remove(self.output_path)
+                except:
+                    pass
 
-        return _validated_raster_result(
-            dst_data,
-            self.target_size,
-            self.target_size,
-            "resample_raster_dimensions",
-            expected_min=input_min,
-            expected_max=input_max
-        )
+        def _run_once():
+            with rasterio.open(self.input_path) as src:
+                data = src.read(1).astype(np.float32 if settings.DATA_SCALE == 'national_heavy' else src.dtypes[0])
+                src_crs = src.crs
+                src_transform = src.transform
+                dst_transform = from_bounds(src.bounds[0], src.bounds[1], src.bounds[2], src.bounds[3], self.target_size, self.target_size)
+                dst_data = np.empty((self.target_size, self.target_size), dtype=data.dtype)
+
+                reproject(
+                    source=data,
+                    destination=dst_data,
+                    src_transform=src_transform,
+                    src_crs=src_crs,
+                    dst_transform=dst_transform,
+                    dst_crs=src_crs,
+                    resampling=Resampling.nearest
+                )
+
+            profile = {
+                'driver': 'GTiff',
+                'height': self.target_size,
+                'width': self.target_size,
+                'count': 1,
+                'dtype': dst_data.dtype,
+                'crs': src_crs,
+                'transform': dst_transform,
+                'compress': None if settings.DATA_SCALE == 'national_heavy' else 'lzw'
+            }
+
+            with rasterio.open(self.output_path, 'w', **profile) as dst:
+                dst.write(dst_data, 1)
+
+            input_min = float(np.min(data))
+            input_max = float(np.max(data))
+
+            return _validated_raster_result(
+                dst_data,
+                self.target_size,
+                self.target_size,
+                "resample_raster_dimensions",
+                expected_min=input_min,
+                expected_max=input_max
+            )
+
+        return _run_repeated_operation(self.repeat_count, _cleanup, _run_once)
 
 
 class R3_Clip_OS(BaseBenchmark):
@@ -271,11 +322,18 @@ class R3_Clip_OS(BaseBenchmark):
         self.clip_ratio = cfg.get('analysis_raster_clip_ratio', cfg.get('clip_ratio'))
         self.input_path = None
         self.output_path = None
+        self.repeat_count = settings.get_workload_repeat_for_test('R3')
     
     def setup(self):
         # Use a dedicated source raster so standard can tune R3 without affecting other tests.
-        self.input_path = os.path.join(settings.DATA_DIR, "analysis_raster_R3.tif")
-        self.output_path = os.path.join(settings.DATA_DIR, "R3_clip_output_os.tif")
+        self.input_path = get_analysis_raster_path(settings.DATA_DIR, prefer_staging=True)
+        if self.output_format == 'GDB':
+            self.output_path = os.path.join(settings.DATA_DIR, "staging", "R3_clip_output_os.tif")
+        else:
+            self.output_path = os.path.join(settings.DATA_DIR, "R3_clip_output_os.tif")
+        output_dir = os.path.dirname(self.output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         
         if not os.path.exists(self.input_path):
             cfg = settings.get_raster_config_for_test('R3')
@@ -289,46 +347,55 @@ class R3_Clip_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Clip raster by taking a centered window instead of using a geometry
-        # mask. The previous mask-based path could introduce nodata pixels on
-        # the boundary, which made the validation min/max check fail even when
-        # the raster dimensions were correct.
-        with rasterio.open(self.input_path) as src:
-            input_width = int(src.width)
-            input_height = int(src.height)
-            input_min = float(np.min(src.read(1)))
-            input_max = float(np.max(src.read(1)))
-            expected_size = expected_clip_dimension(input_width, self.clip_ratio)
-            start_x = max(0, int(round((input_width - expected_size) / 2.0)))
-            start_y = max(0, int(round((input_height - expected_size) / 2.0)))
-            window = Window(start_x, start_y, expected_size, expected_size)
-            out_image = src.read(1, window=window)
-            out_transform = src.window_transform(window)
-            out_meta = src.meta.copy()
+        def _cleanup():
+            if self.output_path and os.path.exists(self.output_path):
+                try:
+                    os.remove(self.output_path)
+                except:
+                    pass
 
-            # Update metadata
-            out_meta.pop('nodata', None)
-            out_meta.update({
-                'driver': 'GTiff',
-                'height': out_image.shape[0],
-                'width': out_image.shape[1],
-                'transform': out_transform,
-                'compress': 'lzw'
-            })
-        
-        # Write output
-        with rasterio.open(self.output_path, 'w', **out_meta) as dst:
-            dst.write(out_image, 1)
+        def _run_once():
+            with rasterio.open(self.input_path) as src:
+                input_width = int(src.width)
+                input_height = int(src.height)
+                src_data = src.read(1)
+                if settings.DATA_SCALE == 'national_heavy':
+                    src_data = src_data.astype(np.float32)
+                input_min = float(np.min(src_data))
+                input_max = float(np.max(src_data))
+                expected_size = expected_clip_dimension(input_width, self.clip_ratio)
+                start_x = max(0, int(round((input_width - expected_size) / 2.0)))
+                start_y = max(0, int(round((input_height - expected_size) / 2.0)))
+                window = Window(start_x, start_y, expected_size, expected_size)
+                out_image = src.read(1, window=window)
+                if settings.DATA_SCALE == 'national_heavy':
+                    out_image = out_image.astype(np.float32)
+                out_transform = src.window_transform(window)
+                out_meta = src.meta.copy()
 
-        clipped = out_image
-        return _validated_raster_result(
-            clipped,
-            expected_size,
-            expected_size,
-            "clip_raster_dimensions",
-            expected_min=input_min,
-            expected_max=input_max
-        )
+                out_meta.pop('nodata', None)
+                out_meta.update({
+                    'driver': 'GTiff',
+                    'height': out_image.shape[0],
+                    'width': out_image.shape[1],
+                    'transform': out_transform,
+                    'compress': None if settings.DATA_SCALE == 'national_heavy' else 'lzw'
+                })
+
+            with rasterio.open(self.output_path, 'w', **out_meta) as dst:
+                dst.write(out_image, 1)
+
+            clipped = out_image
+            return _validated_raster_result(
+                clipped,
+                expected_size,
+                expected_size,
+                "clip_raster_dimensions",
+                expected_min=input_min,
+                expected_max=input_max
+            )
+
+        return _run_repeated_operation(self.repeat_count, _cleanup, _run_once)
 
 
 class R4_RasterCalculator_OS(BaseBenchmark):
@@ -336,13 +403,21 @@ class R4_RasterCalculator_OS(BaseBenchmark):
     
     def __init__(self):
         super(R4_RasterCalculator_OS, self).__init__("R4_RasterCalculator_OS", "raster_os")
+        self.output_format = 'GPKG'
         self.input_path = None
         self.output_path = None
+        self.repeat_count = settings.get_workload_repeat_for_test('R4')
     
     def setup(self):
         # Use a dedicated source raster so standard can tune R4 without affecting other tests.
-        self.input_path = os.path.join(settings.DATA_DIR, "analysis_raster_R4.tif")
-        self.output_path = os.path.join(settings.DATA_DIR, "R4_calc_output_os.tif")
+        self.input_path = get_analysis_raster_path(settings.DATA_DIR, prefer_staging=True)
+        if self.output_format == 'GDB':
+            self.output_path = os.path.join(settings.DATA_DIR, "staging", "R4_calc_output_os.tif")
+        else:
+            self.output_path = os.path.join(settings.DATA_DIR, "R4_calc_output_os.tif")
+        output_dir = os.path.dirname(self.output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         
         if not os.path.exists(self.input_path):
             cfg = settings.get_raster_config_for_test('R4')
@@ -356,39 +431,43 @@ class R4_RasterCalculator_OS(BaseBenchmark):
                 pass
     
     def run_single(self):
-        # Read input
-        with rasterio.open(self.input_path) as src:
-            data = src.read(1).astype(np.float32)
-            meta = src.meta.copy()
-            input_width = int(src.width)
-            input_height = int(src.height)
-            input_min = float(np.min(data))
-            input_max = float(np.max(data))
+        def _cleanup():
+            if self.output_path and os.path.exists(self.output_path):
+                try:
+                    os.remove(self.output_path)
+                except:
+                    pass
 
-            # Perform calculation: Int(raster * 2)
-            result = (data * 2).astype(np.uint8)
+        def _run_once():
+            with rasterio.open(self.input_path) as src:
+                data = src.read(1).astype(np.float32)
+                meta = src.meta.copy()
+                input_width = int(src.width)
+                input_height = int(src.height)
+                input_min = float(np.min(data))
+                input_max = float(np.max(data))
 
-            # Update metadata
-            # Rasterio rejects the inherited nodata value from the source raster
-            # when we change the output dtype to uint8, so drop it explicitly.
-            meta.pop('nodata', None)
-            meta.update({
-                'dtype': result.dtype,
-                'compress': 'lzw'
-            })
-        
-        # Write output
-        with rasterio.open(self.output_path, 'w', **meta) as dst:
-            dst.write(result, 1)
-        
-        return _validated_raster_result(
-            result,
-            input_width,
-            input_height,
-            "raster_calculator_dimensions",
-            expected_min=input_min * 2.0,
-            expected_max=input_max * 2.0
-        )
+                result = (data * 2).astype(np.float32 if settings.DATA_SCALE == 'national_heavy' else np.uint8)
+
+                meta.pop('nodata', None)
+                meta.update({
+                    'dtype': result.dtype,
+                    'compress': None if settings.DATA_SCALE == 'national_heavy' else 'lzw'
+                })
+
+            with rasterio.open(self.output_path, 'w', **meta) as dst:
+                dst.write(result, 1)
+
+            return _validated_raster_result(
+                result,
+                input_width,
+                input_height,
+                "raster_calculator_dimensions",
+                expected_min=input_min * 2.0,
+                expected_max=input_max * 2.0
+            )
+
+        return _run_repeated_operation(self.repeat_count, _cleanup, _run_once)
 
 
 if __name__ == '__main__':

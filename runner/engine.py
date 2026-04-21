@@ -23,16 +23,38 @@ from utils.result_exporter import ResultExporter
 from utils.benchmark_manifest import load_manifest, manifest_summary, save_manifest
 
 
+def _safe_text(value):
+    """Return printable text that survives Py2 Unicode errors."""
+    try:
+        if sys.version_info[0] < 3:
+            try:
+                unicode_type = unicode  # noqa: F821
+            except Exception:
+                unicode_type = str
+            if isinstance(value, unicode_type):
+                return value
+            if isinstance(value, bytes):
+                return value.decode('utf-8', 'replace')
+            return unicode_type(value)
+        return str(value)
+    except Exception:
+        try:
+            return repr(value)
+        except Exception:
+            return 'Unknown error'
+
+
 class RunnerEngine(object):
     """
     Execute a benchmark suite for a given stack, scale, format, and complexity.
     """
 
-    def __init__(self, stack_name, matrix_path=None, scale=None, output_format="SHP",
+    def __init__(self, stack_name, matrix_path=None, scale=None, region=None, output_format="SHP",
                  complexity="simple", num_runs=None, warmup_runs=None,
                  output_dir=None, generate_data=False, run_log_path=None):
         self.stack_name = stack_name
         self.scale = scale or settings.DATA_SCALE
+        self.region = region or getattr(settings, 'DATA_REGION', 'guangdong')
         self.output_format = output_format
         self.complexity = complexity
         self.num_runs = num_runs if num_runs is not None else settings.TEST_RUNS
@@ -40,6 +62,7 @@ class RunnerEngine(object):
         self.output_dir = output_dir
         self.generate_data = generate_data
         self.run_log_path = run_log_path
+        self.multiprocess = False
         self.matrix = self._load_matrix(matrix_path)
         self.benchmarks = []
         self.results = []
@@ -47,7 +70,15 @@ class RunnerEngine(object):
     def _load_matrix(self, matrix_path):
         """Load matrix JSON. Fallback to minimal inline matrix."""
         if matrix_path is None:
-            matrix_path = os.path.join(PROJECT_DIR, "configs", "matrix.json")
+            china_matrix_path = os.path.join(PROJECT_DIR, "configs", "china_osm_matrix.json")
+            region_matrix_path = os.path.join(PROJECT_DIR, "configs", "region_matrix.json")
+            legacy_matrix_path = os.path.join(PROJECT_DIR, "configs", "matrix.json")
+            if str(self.region).lower() == 'china' and os.path.exists(china_matrix_path):
+                matrix_path = china_matrix_path
+            elif os.path.exists(region_matrix_path):
+                matrix_path = region_matrix_path
+            else:
+                matrix_path = legacy_matrix_path
         try:
             with io.open(matrix_path, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -83,6 +114,16 @@ class RunnerEngine(object):
 
     def _get_benchmarks(self):
         """Import and instantiate benchmarks for this stack and format."""
+        if self.multiprocess:
+            try:
+                if self.stack_name == "oss":
+                    from benchmarks.multiprocess_tests_os import get_multiprocess_benchmarks
+                else:
+                    from benchmarks.multiprocess_tests import get_multiprocess_benchmarks
+                return get_multiprocess_benchmarks()
+            except Exception as exc:
+                print("[Warning] Failed to load multiprocess benchmarks: {}".format(exc))
+
         from tasks.task_interface import get_benchmark_class
 
         benchmarks = []
@@ -111,7 +152,7 @@ class RunnerEngine(object):
             if script_dir not in sys.path:
                 sys.path.insert(0, script_dir)
             from data.generate_test_data import TestDataGenerator
-            generator = TestDataGenerator(output_format=self.output_format, complexity=self.complexity)
+            generator = TestDataGenerator(output_format=self.output_format, complexity=self.complexity, region=self.region)
             datasets = generator.generate_all()
             if not datasets:
                 clear_workspace_cache(settings.DATA_DIR)
@@ -179,9 +220,11 @@ class RunnerEngine(object):
         manifest = {
             "version": "1.0",
             "stack": self.stack_name,
+            "region": self.region,
             "scale": self.scale,
             "output_format": self.output_format,
             "complexity": self.complexity,
+            "multiprocess": bool(self.multiprocess),
             "num_runs": self.num_runs,
             "warmup_runs": self.warmup_runs,
             "matrix": self.matrix.get("version", "1.0"),
@@ -221,13 +264,16 @@ class RunnerEngine(object):
         if self.run_log_path:
             self._start_run_logging(self.run_log_path)
 
+        settings.set_region(self.region)
+        if str(self.region).lower() == 'china' and str(self.scale).lower() not in ('national', 'national_heavy'):
+            self.scale = 'national'
         settings.set_scale(self.scale)
         settings.ACTIVE_OUTPUT_FORMAT = self.output_format
         settings.ACTIVE_COMPLEXITY = self.complexity
         print("=" * 70)
         print("Benchmark Runner Engine")
-        print("Stack: {} | Scale: {} | Format: {} | Complexity: {}".format(
-            self.stack_name, self.scale, self.output_format, self.complexity
+        print("Stack: {} | Region: {} | Scale: {} | Format: {} | Complexity: {}".format(
+            self.stack_name, self.region, self.scale, self.output_format, self.complexity
         ))
         print("=" * 70)
 
@@ -252,7 +298,10 @@ class RunnerEngine(object):
             ))
             print("-" * 70)
             try:
-                stats = benchmark.run(num_runs=self.num_runs, warmup_runs=self.warmup_runs)
+                if self.multiprocess:
+                    stats = benchmark.run(num_runs=self.num_runs, warmup_runs=self.warmup_runs, use_multiprocess=True)
+                else:
+                    stats = benchmark.run(num_runs=self.num_runs, warmup_runs=self.warmup_runs)
                 self.results.append(stats)
                 benchmark.save_results(settings.RAW_RESULTS_DIR)
                 if stats.get("success"):
@@ -262,7 +311,7 @@ class RunnerEngine(object):
                 else:
                     print("\n  [FAILED] {}: {}".format(benchmark.name, stats.get("error", "Unknown")))
             except Exception as e:
-                error_msg = str(e) or type(e).__name__
+                error_msg = _safe_text(e) or type(e).__name__
                 print("\n  [ERROR] {}: {}".format(benchmark.name, error_msg))
                 import traceback
                 traceback.print_exc()
@@ -288,7 +337,9 @@ class RunnerEngine(object):
         exporter = ResultExporter(self.output_dir)
         metadata = {
             "result_tag": tag,
+            "region": self.region,
             "data_scale": self.scale,
+            "multiprocess": bool(self.multiprocess),
             "test_runs": self.num_runs,
             "warmup_runs": self.warmup_runs,
             "stack": self.stack_name,
@@ -312,6 +363,7 @@ class RunnerEngine(object):
         print("\n" + "=" * 70)
         print("Benchmark Summary")
         print("=" * 70)
+        print("Region: {}".format(self.region))
         successful = [r for r in self.results if r.get("success")]
         failed = [r for r in self.results if not r.get("success")]
         print("Total: {} | Success: {} | Failed: {}".format(len(self.results), len(successful), len(failed)))
@@ -377,6 +429,7 @@ def run_from_args(args):
         stack_name=args.stack,
         matrix_path=args.matrix,
         scale=args.scale,
+        region=getattr(args, "region", None),
         output_format=args.format,
         complexity=args.complexity,
         num_runs=args.runs,
@@ -385,4 +438,5 @@ def run_from_args(args):
         generate_data=args.generate_data,
         run_log_path=getattr(args, "run_log_path", None),
     )
+    engine.multiprocess = bool(getattr(args, "multiprocess", False))
     return engine.run()

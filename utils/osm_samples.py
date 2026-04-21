@@ -20,9 +20,9 @@ from config import settings
 
 
 PRIMARY_SOURCE = {
-    'slug': 'hong-kong',
-    'label': 'Hong Kong',
-    'url': 'https://download.geofabrik.de/asia/china/hong-kong-latest-free.shp.zip',
+    'slug': 'guangdong',
+    'label': 'Guangdong',
+    'url': 'https://download.geofabrik.de/asia/china/guangdong-latest-free.shp.zip',
 }
 
 FALLBACK_SOURCE = {
@@ -212,4 +212,3 @@ def list_cached_regions(cache_root=None):
     if not os.path.isdir(cache_root):
         return []
     return sorted([name for name in os.listdir(cache_root) if os.path.isdir(os.path.join(cache_root, name))])
-

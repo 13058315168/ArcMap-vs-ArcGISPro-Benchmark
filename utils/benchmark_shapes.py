@@ -46,6 +46,20 @@ def expected_offset_grid_intersections(rows_a, cols_a, rows_b, cols_b):
     return (rows_a + rows_b - 1) * (cols_a + cols_b - 1)
 
 
+def expected_offset_grid_intersections_from_counts(total_count_a, total_count_b):
+    """Return expected intersect output count from two feature totals.
+
+    The benchmark-generated intersect inputs are deterministic fishnets whose
+    shapes are derived from the requested feature counts. Using the actual
+    counts keeps validation aligned with the data that was generated for the
+    current run, even when a scale/profile override changes the per-test input
+    size without updating the static benchmark expectation.
+    """
+    rows_a, cols_a = factor_grid_dimensions(total_count_a)
+    rows_b, cols_b = factor_grid_dimensions(total_count_b)
+    return expected_offset_grid_intersections(rows_a, cols_a, rows_b, cols_b)
+
+
 def derive_group_count(total_count, divisor=2500, min_groups=4, max_groups=64):
     """Return a deterministic grouping count for large synthetic datasets.
 

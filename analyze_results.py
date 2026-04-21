@@ -127,6 +127,13 @@ def _build_report_context(results_dir, metadata_groups, results_py2, results_py3
         _infer_scale_from_results_dir(results_dir) or
         settings.DATA_SCALE
     )
+    region = (
+        py3_meta.get('region') or
+        py2_meta.get('region') or
+        os_meta.get('region') or
+        manifest.get('region') or
+        getattr(settings, 'DATA_REGION', 'guangdong')
+    )
     vector_config = py3_meta.get('vector_config') or py2_meta.get('vector_config') or os_meta.get('vector_config')
     raster_config = py3_meta.get('raster_config') or py2_meta.get('raster_config') or os_meta.get('raster_config')
 
@@ -158,6 +165,7 @@ def _build_report_context(results_dir, metadata_groups, results_py2, results_py3
 
     return {
         'data_scale': str(data_scale).lower(),
+        'region': str(region).lower(),
         'vector_config': vector_config,
         'raster_config': raster_config,
         'py2_runs': py2_runs,
@@ -251,6 +259,78 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import settings
 from utils.benchmark_manifest import load_manifest, manifest_summary
 from utils.result_exporter import ResultExporter
+
+
+def _median(values):
+    values = sorted(values or [])
+    if not values:
+        return 0
+    mid = len(values) // 2
+    if len(values) % 2:
+        return values[mid]
+    return (values[mid - 1] + values[mid]) / 2.0
+
+
+def _normalize_statistics_to_median_iqr(results):
+    if not results:
+        return results
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        stats = item.get('statistics')
+        if isinstance(stats, dict):
+            target = stats
+        else:
+            target = item
+        if not isinstance(target, dict):
+            continue
+        if 'mean_time_raw' not in target and 'mean_time' in target:
+            target['mean_time_raw'] = target.get('mean_time', 0)
+        if 'std_time_raw' not in target and 'std_time' in target:
+            target['std_time_raw'] = target.get('std_time', 0)
+        median_time = target.get('median_time', target.get('mean_time', 0))
+        iqr_time = target.get('iqr_time', target.get('std_time', 0))
+        target['mean_time'] = median_time
+        target['std_time'] = iqr_time
+        target['median_time'] = median_time
+        target['iqr_time'] = iqr_time
+        target['time_metric'] = 'median'
+        target['spread_metric'] = 'iqr'
+        if target is not item:
+            item['statistics'] = target
+            for key in ('mean_time', 'std_time', 'mean_time_raw', 'std_time_raw', 'median_time', 'iqr_time', 'time_metric', 'spread_metric'):
+                item[key] = target.get(key)
+    return results
+
+
+def _summarize_target_band(comparison):
+    target_min = getattr(settings, 'TARGET_RUNTIME_MIN_SECONDS', 120)
+    target_max = getattr(settings, 'TARGET_RUNTIME_MAX_SECONDS', 300)
+    details = []
+    for item in comparison or []:
+        times = [item.get('py2_time'), item.get('py3_time'), item.get('os_time')]
+        times = [value for value in times if value is not None and value > 0]
+        if not times:
+            continue
+        task_median = _median(times)
+        in_band = target_min <= task_median <= target_max
+        details.append({
+            'test_name': item.get('test_name', ''),
+            'task_median_time': task_median,
+            'in_target_band': in_band,
+        })
+    hits = len([item for item in details if item['in_target_band']])
+    misses = len(details) - hits
+    return {
+        'target_band_basis': 'row_median_across_platforms',
+        'target_band_min_seconds': target_min,
+        'target_band_max_seconds': target_max,
+        'target_band_label': "{}-{} 分钟".format(int(target_min / 60), int(target_max / 60)),
+        'target_band_hits': hits,
+        'target_band_misses': misses,
+        'target_band_total': len(details),
+        'target_band_details': details,
+    }
 
 
 def parse_args():
@@ -424,6 +504,7 @@ def create_comparison(results_py2, results_py3, results_os=None):
     """Create side-by-side comparison (2-way or 3-way)"""
     comparison = []
     has_os = results_os is not None and len(results_os) > 0
+    report_context = _build_report_context(args.results_dir, metadata_groups, results_py2, results_py3, results_os)
     
     # Create lookup dictionaries
     py2_lookup = {r['test_name']: r for r in (results_py2 or []) if r.get('success')}
@@ -832,6 +913,11 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     lines = []
     report_context = report_context or {}
     data_scale = str(report_context.get('data_scale') or settings.DATA_SCALE).upper()
+    region = str(
+        report_context.get('region')
+        or (report_context.get('manifest') or {}).get('region')
+        or getattr(settings, 'DATA_REGION', 'guangdong')
+    ).upper()
     vector_config = report_context.get('vector_config') or settings.VECTOR_CONFIG
     raster_config = report_context.get('raster_config') or settings.RASTER_CONFIG
     py2_runs = report_context.get('py2_runs', settings.TEST_RUNS)
@@ -896,7 +982,15 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     lines.append("")
     lines.append("| 项目 | 内容 |")
     lines.append("|------|------|")
+    lines.append("| 数据区域 | {} |".format(region))
     lines.append("| 数据规模 | {} |".format(data_scale))
+    source_mode = (report_context or {}).get('source_mode', 'synthetic')
+    source_label = "公开真实地理数据包" if source_mode != 'synthetic' else "合成数据 / 回退"
+    lines.append("| 数据来源 | {} |".format(source_label))
+    lines.append("| 统计口径 | 预热 {} 次 + 正式 {} 次，中位数 / IQR |".format(getattr(settings, 'WARMUP_RUNS', 1), getattr(settings, 'TEST_RUNS', 3)))
+    lines.append("| 目标带 | {} |".format(getattr(settings, 'TARGET_RUNTIME_LABEL', '2-5 分钟')))
+    lines.append("| 命中目标带 | {}/{} |".format(stats.get('target_band_hits', 0), stats.get('target_band_total', 0)))
+    lines.append("| 需重新定标 | {} |".format(stats.get('target_band_misses', 0)))
     lines.append("| 来源模式 | {} |".format("OSM 真实样例" if source_mode == "osm" else "合成数据（降级）"))
     lines.append("| OSM 区域 | {} |".format(osm_source.get('label', 'N/A')))
     lines.append("| OSM 缓存版本 | {} |".format(osm_source.get('cache_version', 'N/A')))
@@ -947,6 +1041,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
             stats.get('valid_three_way_tests', 0) if has_py2 else stats.get('valid_two_way_tests', 0),
             stats['total_tests']
         ))
+        lines.append("| 数据区域 | {} |".format(region))
         lines.append("| 数据规模 | {} |".format(data_scale))
         lines.append("")
         
@@ -1005,6 +1100,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("| **总体优胜者** | **{}** |".format(winner))
         lines.append("| 性能优势 | {:.1f}% |".format((winner_speed - 1) * 100))
         lines.append("| 有效双向对比 | {}/{} |".format(stats.get('valid_two_way_tests', 0), stats['total_tests']))
+        lines.append("| 数据区域 | {} |".format(region))
         lines.append("| 数据规模 | {} |".format(data_scale))
         lines.append("")
         
@@ -1088,6 +1184,7 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("| Python版本 | {} | {} | {} |".format(py2_python, py3_python, os_python))
         lines.append("| 核心库 | arcpy | arcpy | GeoPandas + Rasterio |")
         lines.append("| 测试循环次数 | {} | {} | {} |".format(py2_runs, py3_runs, os_runs))
+        lines.append("| 预热次数 | {} | {} | {} |".format(getattr(settings, 'WARMUP_RUNS', 1), getattr(settings, 'WARMUP_RUNS', 1), getattr(settings, 'WARMUP_RUNS', 1)))
     else:
         lines.append("| 组件 | Python 2.7 | Python 3.x |")
         lines.append("|------|------------|------------|")
@@ -1112,7 +1209,8 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("| ArcGIS版本 | {} | {} |".format(py2_arcgis, py3_arcgis))
         lines.append("| Python版本 | {} | {} |".format(py2_python, py3_python))
         lines.append("| 测试循环次数 | {} | {} |".format(py2_runs, py3_runs))
-    lines.append("")
+        lines.append("| 预热次数 | {} | {} |".format(getattr(settings, 'WARMUP_RUNS', 1), getattr(settings, 'WARMUP_RUNS', 1)))
+        lines.append("")
     
     lines.append("## 2.3 测试数据规模")
     lines.append("")
@@ -1153,29 +1251,29 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     lines.append("# 三、单线程性能报告")
     lines.append("")
     if has_os and has_py2:
-        lines.append("> 说明：三向对比 - Python 2.7 vs Python 3.x vs 开源库 (GeoPandas/Rasterio)")
-        lines.append("> 加速比 = Python 2.7 时间 / 当前方案时间，>1 表示更快。")
+        lines.append("> 说明：三向对比 - Python 2.7 vs Python 3.x vs 开源库 (GeoPandas/Rasterio)；表内数值为 warmup 1 + 正式 3 次的中位数 / IQR。")
+        lines.append("> 加速比 = Python 2.7 中位数 / 当前方案中位数，>1 表示更快。")
     elif has_os and not has_py2:
-        lines.append("> 说明：两向对比 - Python 3.x vs 开源库 (GeoPandas/Rasterio)")
-        lines.append("> OS加速 = Python 3.x 时间 / 开源库时间，>1 表示 OS 更快。")
+        lines.append("> 说明：两向对比 - Python 3.x vs 开源库 (GeoPandas/Rasterio)；表内数值为 warmup 1 + 正式 3 次的中位数 / IQR。")
+        lines.append("> OS加速 = Python 3.x 中位数 / 开源库中位数，>1 表示 OS 更快。")
     else:
-        lines.append("> 说明：以下测试使用单进程执行，对比 Python 2.7 与 Python 3.x 的基础性能差异。")
-        lines.append("> 加速比 = Python 2.7 时间 / Python 3.x 时间，>1 表示 Py3 更快，<1 表示 Py2 更快。")
+        lines.append("> 说明：以下测试使用单进程执行，对比 Python 2.7 与 Python 3.x 的基础性能差异；表内数值为 warmup 1 + 正式 3 次的中位数 / IQR。")
+        lines.append("> 加速比 = Python 2.7 中位数 / Python 3.x 中位数，>1 表示 Py3 更快，<1 表示 Py2 更快。")
     lines.append("")
     
     # Helper function to format test row
     def format_test_row(test, has_os=False, has_py2=True):
-        py2_str = "{:.4f}±{:.4f}".format(test['py2_time'], test['py2_std']) if test['py2_time'] > 0 else "N/A"
-        py3_str = "{:.4f}±{:.4f}".format(test['py3_time'], test['py3_std']) if test['py3_time'] > 0 else "N/A"
+        py2_str = "{:.4f} (IQR {:.4f})".format(test['py2_time'], test['py2_std']) if test['py2_time'] > 0 else "N/A"
+        py3_str = "{:.4f} (IQR {:.4f})".format(test['py3_time'], test['py3_std']) if test['py3_time'] > 0 else "N/A"
 
         if has_os:
-            os_str = "{:.4f}±{:.4f}".format(test['os_time'], test['os_std']) if test['os_time'] > 0 else "N/A"
+            os_str = "{:.4f} (IQR {:.4f})".format(test['os_time'], test['os_std']) if test['os_time'] > 0 else "N/A"
             if has_py2:
                 speedup_py3_str = "{:.2f}x".format(test['speedup']) if test['speedup'] > 0 else "N/A"
                 speedup_os_str = "{:.2f}x".format(test['py2_time'] / test['os_time']) if test['py2_time'] > 0 and test['os_time'] > 0 else "N/A"
             else:
                 speedup_py3_str = "N/A"
-                speedup_os_str = "{:.2f}x".format(test['os_vs_py3_speedup']) if test.get('os_vs_py3_speedup', 0) > 0 else "N/A"
+                speedup_os_str = "{:.2f}x".format(test.get('os_vs_py3_speedup', 0)) if test.get('os_vs_py3_speedup', 0) > 0 else "N/A"
             winner = test.get('fastest', 'N/A')
             if winner == 'Python 2.7':
                 winner_str = 'Py2'
@@ -1200,10 +1298,10 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("## 3.1 矢量数据处理性能")
         lines.append("")
         if has_os:
-            lines.append("| 测试项目 | Py2.7 (秒) | Py3.x (秒) | 开源库 (秒) | Py3加速 | OS加速 | 优胜 |")
+            lines.append("| 测试项目 | Py2.7 中位数 / IQR (秒) | Py3.x 中位数 / IQR (秒) | 开源库 中位数 / IQR (秒) | Py3加速 | OS加速 | 优胜 |")
             lines.append("|----------|-----------|-----------|------------|---------|--------|------|")
         else:
-            lines.append("| 测试项目 | Py2.7 (秒) | Py3.x (秒) | 加速比 | 优胜者 | 性能差异 |")
+            lines.append("| 测试项目 | Py2.7 中位数 / IQR (秒) | Py3.x 中位数 / IQR (秒) | 加速比 | 优胜者 | 性能差异 |")
             lines.append("|----------|-----------|-----------|--------|--------|----------|")
         
         for test in sorted(vector_tests, key=lambda x: x['test_name']):
@@ -1215,10 +1313,10 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("## 3.2 栅格数据处理性能")
         lines.append("")
         if has_os:
-            lines.append("| 测试项目 | Py2.7 (秒) | Py3.x (秒) | 开源库 (秒) | Py3加速 | OS加速 | 优胜 |")
+            lines.append("| 测试项目 | Py2.7 中位数 / IQR (秒) | Py3.x 中位数 / IQR (秒) | 开源库 中位数 / IQR (秒) | Py3加速 | OS加速 | 优胜 |")
             lines.append("|----------|-----------|-----------|------------|---------|--------|------|")
         else:
-            lines.append("| 测试项目 | Py2.7 (秒) | Py3.x (秒) | 加速比 | 优胜者 | 性能差异 |")
+            lines.append("| 测试项目 | Py2.7 中位数 / IQR (秒) | Py3.x 中位数 / IQR (秒) | 加速比 | 优胜者 | 性能差异 |")
             lines.append("|----------|-----------|-----------|--------|--------|----------|")
         
         for test in sorted(raster_tests, key=lambda x: x['test_name']):
@@ -1230,10 +1328,10 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
         lines.append("## 3.3 混合数据处理性能（矢栅互转）")
         lines.append("")
         if has_os:
-            lines.append("| 测试项目 | Py2.7 (秒) | Py3.x (秒) | 开源库 (秒) | Py3加速 | OS加速 | 优胜 |")
+            lines.append("| 测试项目 | Py2.7 中位数 / IQR (秒) | Py3.x 中位数 / IQR (秒) | 开源库 中位数 / IQR (秒) | Py3加速 | OS加速 | 优胜 |")
             lines.append("|----------|-----------|-----------|------------|---------|--------|------|")
         else:
-            lines.append("| 测试项目 | Py2.7 (秒) | Py3.x (秒) | 加速比 | 优胜者 | 性能差异 |")
+            lines.append("| 测试项目 | Py2.7 中位数 / IQR (秒) | Py3.x 中位数 / IQR (秒) | 加速比 | 优胜者 | 性能差异 |")
             lines.append("|----------|-----------|-----------|--------|--------|----------|")
         
         for test in sorted(mixed_tests, key=lambda x: x['test_name']):
@@ -1778,6 +1876,8 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     lines.append("")
     
     lines.append("## {}.1 核心结论".format(conclusion_section_num))
+    lines.append("- **评测口径**：warmup 1 + 正式 3，报告采用中位数 / IQR。")
+    lines.append("- **目标带命中**：{} / {} 个任务的中位数落在 {}，{} 个任务建议重新定标。".format( stats.get('target_band_hits', 0), stats.get('target_band_total', 0), stats.get('target_band_label', getattr(settings, 'TARGET_RUNTIME_LABEL', '2-5 分钟')), stats.get('target_band_misses', 0) ))
     lines.append("")
     
     # 自动生成结论
@@ -1900,9 +2000,9 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
     
     if has_os:
         if has_py2:
-            lines.append("## A.1 常规测试完整数据（6项）- 三向对比")
+            lines.append("## A.1 常规测试完整数据（6项，中位数/IQR）- 三向对比")
             lines.append("")
-            lines.append("| 测试项目 | 类别 | Py2.7 (秒) | Py3.x (秒) | 开源库 (秒) | Py3加速 | OS加速 | 优胜 |")
+            lines.append("| 测试项目 | 类别 | Py2.7 中位数 / IQR (秒) | Py3.x 中位数 / IQR (秒) | 开源库 中位数 / IQR (秒) | Py3加速 | OS加速 | 优胜 |")
             lines.append("|----------|------|-----------|-----------|------------|---------|--------|------|")
             for item in sorted(regular_comparison, key=lambda x: (x['category'], x['test_name'])):
                 py2_str = format_time(item['py2_time'], item['py2_std'])
@@ -1924,9 +2024,9 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
                     speedup_py3, speedup_os, winner_str
                 ))
         else:
-            lines.append("## A.1 常规测试完整数据（6项）- Py3.x vs 开源库")
+            lines.append("## A.1 常规测试完整数据（6项，中位数/IQR）- Py3.x vs 开源库")
             lines.append("")
-            lines.append("| 测试项目 | 类别 | Py3.x (秒) | 开源库 (秒) | OS加速 | 优胜 |")
+            lines.append("| 测试项目 | 类别 | Py3.x 中位数 / IQR (秒) | 开源库 中位数 / IQR (秒) | OS加速 | 优胜 |")
             lines.append("|----------|------|-----------|------------|--------|------|")
             for item in sorted(regular_comparison, key=lambda x: (x['category'], x['test_name'])):
                 py3_str = format_time(item['py3_time'], item['py3_std'])
@@ -1944,9 +2044,9 @@ def generate_markdown_table(comparison, stats, results_py2=None, results_py3=Non
                     speedup_os, winner_str
                 ))
     else:
-        lines.append("## A.1 常规测试完整数据（6项）")
+        lines.append("## A.1 常规测试完整数据（6项，中位数/IQR）")
         lines.append("")
-        lines.append("| 测试项目 | 类别 | Py2.7 (秒) | Py3.x (秒) | 加速比 | 更快 |")
+        lines.append("| 测试项目 | 类别 | Py2.7 中位数 / IQR (秒) | Py3.x 中位数 / IQR (秒) | 加速比 | 更快 |")
         lines.append("|----------|------|-----------|-----------|--------|------|")
         for item in sorted(regular_comparison, key=lambda x: (x['category'], x['test_name'])):
             lines.append("| {} | {} | {} | {} | {} | {} |".format(
@@ -1975,11 +2075,11 @@ def generate_latex_table(comparison, stats):
     lines.append("% ArcGIS Python Performance Comparison")
     lines.append("% Generated on {}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     lines.append("")
-    
+
     # Summary table
     lines.append("\\begin{table}[htbp]")
     lines.append("\\centering")
-    lines.append("\\caption{Summary Statistics}")
+    lines.append("\\caption{Summary Statistics (Median/IQR)}")
     lines.append("\\begin{tabular}{lc}")
     lines.append("\\hline")
     lines.append("\\textbf{Metric} & \\textbf{Value} \\\\")
@@ -1999,14 +2099,14 @@ def generate_latex_table(comparison, stats):
     lines.append("\\label{tab:summary_stats}")
     lines.append("\\end{table}")
     lines.append("")
-    
+
     # Detailed results table
     lines.append("\\begin{table}[htbp]")
     lines.append("\\centering")
-    lines.append("\\caption{Detailed Benchmark Results}")
+    lines.append("\\caption{Detailed Benchmark Results (Median/IQR)}")
     lines.append("\\begin{tabular}{llcccc}")
     lines.append("\\hline")
-    lines.append("\\textbf{Test} & \\textbf{Category} & \\textbf{Py2.7 (s)} & \\textbf{Py3.x (s)} & \\textbf{Speedup} & \\textbf{Faster} \\\\")
+    lines.append("\\textbf{Test} & \\textbf{Category} & \\textbf{Py2.7 中位数/IQR (s)} & \\textbf{Py3.x 中位数/IQR (s)} & \\textbf{Speedup} & \\textbf{Faster} \\\\")
     lines.append("\\hline")
     
     for item in comparison:
@@ -2128,6 +2228,9 @@ def main():
     
     # Load results (including open-source)
     results_py2, results_py3, results_os, metadata_groups = load_results(args.results_dir)
+    results_py2 = _normalize_statistics_to_median_iqr(results_py2)
+    results_py3 = _normalize_statistics_to_median_iqr(results_py3)
+    results_os = _normalize_statistics_to_median_iqr(results_os)
     
     # Check if we have open-source results
     has_os = results_os is not None and len(results_os) > 0
@@ -2165,6 +2268,9 @@ def main():
     has_py2 = results_py2 is not None and len(results_py2) > 0
     # Calculate statistics
     stats = calculate_statistics(comparison, has_os, has_py2)
+    target_band_summary = _summarize_target_band(comparison)
+    stats.update(target_band_summary)
+    stats['measurement_method'] = 'warmup_1_plus_3_median_iqr'
     
     # Print summary
     print("\n" + "=" * 70)
@@ -2194,6 +2300,13 @@ def main():
         print("OS vs Py2 avg speedup: {:.2f}x".format(stats.get('os_vs_py2_avg', 0)))
         print("OS vs Py3 avg speedup: {:.2f}x".format(stats.get('os_vs_py3_avg', 0)))
     print("Average speedup: {:.2f}x".format(stats['average_speedup']))
+    print("目标带命中: {}/{} 个任务 ({})".format(
+        stats.get('target_band_hits', 0),
+        stats.get('target_band_total', 0),
+        stats.get('target_band_label', getattr(settings, 'TARGET_RUNTIME_LABEL', '2-5 分钟')),
+    ))
+    print("需要重新定标: {}".format(stats.get('target_band_misses', 0)))
+    print("评测口径: warmup 1 + 正式 3, 中位数/IQR")
     print("=" * 70)
     
     # Save outputs

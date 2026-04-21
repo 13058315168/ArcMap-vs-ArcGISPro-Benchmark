@@ -66,6 +66,17 @@ def _create_analysis_raster_fallback(output_path, raster_size):
     return output_path
 
 
+def _run_repeated_operation(repeat_count, cleanup_fn, operation_fn):
+    """Run the same logical benchmark operation multiple times."""
+    repeat_count = max(1, int(repeat_count or 1))
+    result = None
+    for _ in range(repeat_count):
+        if cleanup_fn is not None:
+            cleanup_fn()
+        result = operation_fn()
+    return result
+
+
 class MixedBenchmarksOS(object):
     """Collection of mixed vector-raster benchmarks using open-source libraries"""
 
@@ -90,10 +101,18 @@ class M1_PolygonToRaster_OS(BaseBenchmark):
         self.output_path = None
         self.cell_size = None
         self.output_format = output_format
+        self.repeat_count = settings.get_workload_repeat_for_test('M1')
+        self.enable_repeat_count = True
 
     def setup(self):
         self.input_path, self.input_layer = get_input_feature_path_os("test_polygons_a", settings.DATA_DIR)
-        self.output_path = os.path.join(settings.DATA_DIR, "M1_poly_to_ras_os.tif")
+        if self.output_format == 'GDB':
+            self.output_path = os.path.join(settings.DATA_DIR, "staging", "M1_poly_to_ras_os.tif")
+        else:
+            self.output_path = os.path.join(settings.DATA_DIR, "M1_poly_to_ras_os.tif")
+        output_dir = os.path.dirname(self.output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         cfg = settings.get_raster_config_for_test('M1')
         raster_size = cfg.get('analysis_raster_size', settings.RASTER_CONFIG.get('analysis_raster_size'))
@@ -172,14 +191,24 @@ class M1_PolygonToRaster_OS(BaseBenchmark):
 class M2_RasterToPoint_OS(BaseBenchmark):
     """Benchmark: Raster to Points using Rasterio and GeoPandas"""
 
-    def __init__(self):
+    def __init__(self, output_format='GPKG'):
         super(M2_RasterToPoint_OS, self).__init__("M2_RasterToPoint_OS", "mixed_os")
         self.input_path = None
         self.output_path = None
+        self.output_format = output_format
+        self.repeat_count = settings.get_workload_repeat_for_test('M2')
+        self.enable_repeat_count = True
 
     def setup(self):
-        self.input_path = get_analysis_raster_path(settings.DATA_DIR)
-        self.output_path = os.path.join(settings.DATA_DIR, "M2_raster_to_point_os.gpkg")
+        self.input_path = get_analysis_raster_path(settings.DATA_DIR, prefer_staging=True)
+        gdb_path = get_benchmark_gdb_path(settings.DATA_DIR)
+        if self.output_format == 'GDB':
+            self.output_path = os.path.join(gdb_path, "M2_raster_to_point_os")
+        else:
+            self.output_path = os.path.join(settings.DATA_DIR, "M2_raster_to_point_os.gpkg")
+        output_dir = os.path.dirname(self.output_path)
+        if output_dir and not os.path.exists(output_dir) and self.output_format != 'GDB':
+            os.makedirs(output_dir)
 
         cfg = settings.get_raster_config_for_test('M2')
         expected_size = int(cfg.get('analysis_raster_size', settings.RASTER_CONFIG.get('analysis_raster_size')))
@@ -269,11 +298,12 @@ class M2_RasterToPoint_OS(BaseBenchmark):
 
                     geoms = shapely.points(xs, ys)
                     chunk_gdf = gpd.GeoDataFrame({'value': values}, geometry=geoms, crs=crs)
+                    driver = "OpenFileGDB" if self.output_format == "GDB" else "GPKG"
                     pyogrio.write_dataframe(
                         chunk_gdf,
                         self.output_path,
                         layer=layer_name,
-                        driver="GPKG",
+                        driver=driver,
                         append=(not first_write),
                     )
                     total_written += int(len(chunk_gdf))
@@ -298,11 +328,12 @@ class M2_RasterToPoint_OS(BaseBenchmark):
 
                     geoms = shapely.points(xs, ys)
                     chunk_gdf = gpd.GeoDataFrame({'value': values}, geometry=geoms, crs=crs)
+                    driver = "OpenFileGDB" if self.output_format == "GDB" else "GPKG"
                     pyogrio.write_dataframe(
                         chunk_gdf,
                         self.output_path,
                         layer=layer_name,
-                        driver="GPKG",
+                        driver=driver,
                         append=(not first_write),
                     )
                     total_written += int(len(chunk_gdf))

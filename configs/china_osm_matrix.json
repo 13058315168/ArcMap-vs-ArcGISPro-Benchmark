@@ -1,0 +1,98 @@
+{
+  "version": "1.0",
+  "description": "China OSM national benchmark matrix with 5 vector + 3 raster + 2 mixed tasks",
+  "region": "china",
+  "suite": "china-osm",
+  "tasks": [
+    {
+      "id": "V1_CreateFishnet",
+      "name": "Create Fishnet",
+      "category": "vector",
+      "description": "National preprocessing: build a large regular grid",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "V2_CreateRandomPoints",
+      "name": "Create Random Points",
+      "category": "vector",
+      "description": "National preprocessing: generate random point samples",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "Buffer",
+      "name": "Vector Buffer",
+      "category": "vector",
+      "description": "National vector analysis: buffer point features",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "Intersect",
+      "name": "Overlay Intersect",
+      "category": "vector",
+      "description": "National vector analysis: intersect large polygon grids",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "SpatialJoin",
+      "name": "Spatial Join",
+      "category": "vector",
+      "description": "National vector analysis: spatial join points to polygons",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "R1_CreateConstantRaster",
+      "name": "Create Constant Raster",
+      "category": "raster",
+      "description": "National raster baseline: create a uniform raster",
+      "input_type": "raster",
+      "output_type": "raster",
+      "validates_by": "raster_dimensions"
+    },
+    {
+      "id": "Resample",
+      "name": "Raster Resample",
+      "category": "raster",
+      "description": "National raster analysis: resample to a new cell size",
+      "input_type": "raster",
+      "output_type": "raster",
+      "validates_by": "raster_dimensions"
+    },
+    {
+      "id": "Clip",
+      "name": "Raster Clip/Mask",
+      "category": "raster",
+      "description": "National raster analysis: clip the large raster window",
+      "input_type": "raster",
+      "output_type": "raster",
+      "validates_by": "raster_dimensions"
+    },
+    {
+      "id": "PolygonToRaster",
+      "name": "Polygon to Raster",
+      "category": "mixed",
+      "description": "National mixed analysis: convert polygons to raster",
+      "input_type": "vector",
+      "output_type": "raster",
+      "validates_by": "raster_dimensions_and_max_value"
+    },
+    {
+      "id": "M2_RasterToPoint",
+      "name": "Raster to Point",
+      "category": "mixed",
+      "description": "National mixed analysis: convert raster cells to points",
+      "input_type": "raster",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    }
+  ]
+}

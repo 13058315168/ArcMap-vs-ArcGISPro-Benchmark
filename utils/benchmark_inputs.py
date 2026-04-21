@@ -116,24 +116,61 @@ def get_analysis_crs(root_dir=None):
         return 3857
 
 
-def get_analysis_raster_path(root_dir=None):
+def get_analysis_raster_path(root_dir=None, prefer_staging=False):
     """Return the analysis raster path used by the benchmarks."""
     root_dir = get_benchmark_root(root_dir)
     manifest = get_manifest(root_dir, default={})
+    if prefer_staging and manifest.get('analysis_raster_staging_path'):
+        return manifest.get('analysis_raster_staging_path')
     path = manifest.get('analysis_raster_path')
     if path:
         return path
+    if prefer_staging and manifest.get('analysis_raster_path'):
+        return manifest.get('analysis_raster_path')
     return os.path.join(root_dir, 'analysis_raster.tif')
 
 
-def get_constant_raster_path(root_dir=None):
+def get_analysis_raster_staging_path(root_dir=None):
+    """Return the analysis raster staging path used by open-source benchmarks."""
+    root_dir = get_benchmark_root(root_dir)
+    manifest = get_manifest(root_dir, default={})
+    path = manifest.get('analysis_raster_staging_path')
+    if path:
+        return path
+    return os.path.join(root_dir, 'staging', 'analysis_raster.tif')
+
+
+def get_constant_raster_path(root_dir=None, prefer_staging=False):
     """Return the baseline constant raster path used by the benchmarks."""
     root_dir = get_benchmark_root(root_dir)
     manifest = get_manifest(root_dir, default={})
+    if prefer_staging and manifest.get('constant_raster_staging_path'):
+        return manifest.get('constant_raster_staging_path')
     path = manifest.get('constant_raster_path')
     if path:
         return path
+    if prefer_staging and manifest.get('constant_raster_path'):
+        return manifest.get('constant_raster_path')
     return os.path.join(root_dir, 'constant_raster.tif')
+
+
+def get_constant_raster_staging_path(root_dir=None):
+    """Return the constant raster staging path used by open-source benchmarks."""
+    root_dir = get_benchmark_root(root_dir)
+    manifest = get_manifest(root_dir, default={})
+    path = manifest.get('constant_raster_staging_path')
+    if path:
+        return path
+    return os.path.join(root_dir, 'staging', 'constant_raster.tif')
+
+
+def get_region(root_dir=None):
+    """Return the active region name."""
+    manifest = get_manifest(root_dir, default={})
+    region = manifest.get('region')
+    if region:
+        return str(region)
+    return getattr(settings, 'DATA_REGION', 'guangdong')
 
 
 def get_source_mode(root_dir=None):

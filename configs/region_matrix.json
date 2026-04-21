@@ -1,0 +1,115 @@
+{
+  "version": "1.0",
+  "description": "Region-oriented benchmark matrix for Guangdong OSM + raster analysis",
+  "region": "guangdong",
+  "tasks": [
+    {
+      "id": "V1_CreateFishnet",
+      "name": "Create Fishnet",
+      "category": "vector",
+      "description": "Preprocess: build a regular grid for region-based benchmarking",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "V2_CreateRandomPoints",
+      "name": "Create Random Points",
+      "category": "vector",
+      "description": "Preprocess: generate random point sample within the region extent",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "Buffer",
+      "name": "Vector Buffer",
+      "category": "vector",
+      "description": "Core vector analysis: buffer point features",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "Intersect",
+      "name": "Overlay Intersect",
+      "category": "vector",
+      "description": "Core vector analysis: intersect offset polygon grids",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "SpatialJoin",
+      "name": "Spatial Join",
+      "category": "vector",
+      "description": "Core vector analysis: spatial join points to polygons",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "V6_CalculateField",
+      "name": "Calculate Field",
+      "category": "vector",
+      "description": "Attribute analysis: calculate derived values over region data",
+      "input_type": "vector",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    },
+    {
+      "id": "R1_CreateConstantRaster",
+      "name": "Create Constant Raster",
+      "category": "raster",
+      "description": "Raster baseline: create a uniform constant raster",
+      "input_type": "raster",
+      "output_type": "raster",
+      "validates_by": "raster_dimensions"
+    },
+    {
+      "id": "Resample",
+      "name": "Raster Resample",
+      "category": "raster",
+      "description": "Raster analysis: resample analysis raster to a new cell size",
+      "input_type": "raster",
+      "output_type": "raster",
+      "validates_by": "raster_dimensions"
+    },
+    {
+      "id": "Clip",
+      "name": "Raster Clip/Mask",
+      "category": "raster",
+      "description": "Raster analysis: clip the analysis raster by a centered window",
+      "input_type": "raster",
+      "output_type": "raster",
+      "validates_by": "raster_dimensions"
+    },
+    {
+      "id": "R4_RasterCalculator",
+      "name": "Raster Calculator",
+      "category": "raster",
+      "description": "Raster analysis: apply a simple raster arithmetic operation",
+      "input_type": "raster",
+      "output_type": "raster",
+      "validates_by": "raster_dimensions"
+    },
+    {
+      "id": "PolygonToRaster",
+      "name": "Polygon to Raster",
+      "category": "mixed",
+      "description": "Mixed analysis: convert polygons to raster",
+      "input_type": "vector",
+      "output_type": "raster",
+      "validates_by": "raster_dimensions_and_max_value"
+    },
+    {
+      "id": "M2_RasterToPoint",
+      "name": "Raster to Point",
+      "category": "mixed",
+      "description": "Mixed analysis: convert raster cells to points",
+      "input_type": "raster",
+      "output_type": "vector",
+      "validates_by": "feature_count"
+    }
+  ]
+}

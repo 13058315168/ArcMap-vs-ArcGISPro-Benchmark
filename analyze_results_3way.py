@@ -33,6 +33,16 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import settings
 
 
+def _normalize_test_name(name):
+    """Normalize benchmark names across legacy OS prefix/suffix variants."""
+    name = str(name or '')
+    if name.startswith('OS_'):
+        return name[3:]
+    if name.endswith('_OS'):
+        return name[:-3]
+    return name
+
+
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
@@ -86,15 +96,19 @@ def load_results(results_dir):
             results = data.get('results', [])
             
             # Determine Python version from filename or content
-            if 'py2' in filename.lower():
+            lower_name = filename.lower()
+            if 'py2' in lower_name:
                 results_py2 = results
                 print("Loaded Python 2.7 results from: {}".format(filename))
-            elif 'py3' in filename.lower() and 'os_' not in filename.lower():
-                results_py3 = results
-                print("Loaded Python 3.x results from: {}".format(filename))
-            elif 'os_' in filename.lower() or 'opensource' in filename.lower():
+            elif ('benchmark_results_os' in lower_name or
+                  lower_name.endswith('_os.json') or
+                  'os_' in lower_name or
+                  'opensource' in lower_name):
                 results_os = results
                 print("Loaded Open-Source results from: {}".format(filename))
+            elif 'py3' in lower_name:
+                results_py3 = results
+                print("Loaded Python 3.x results from: {}".format(filename))
             else:
                 # Try to detect from content
                 if results and 'python_version' in results[0]:
@@ -117,9 +131,9 @@ def create_3way_comparison(results_py2, results_py3, results_os):
     comparison = []
     
     # Create lookup dictionaries
-    py2_lookup = {r['test_name']: r for r in (results_py2 or []) if r.get('success')}
-    py3_lookup = {r['test_name']: r for r in (results_py3 or []) if r.get('success')}
-    os_lookup = {r['test_name']: r for r in (results_os or []) if r.get('success')}
+    py2_lookup = {_normalize_test_name(r['test_name']): r for r in (results_py2 or []) if r.get('success')}
+    py3_lookup = {_normalize_test_name(r['test_name']): r for r in (results_py3 or []) if r.get('success')}
+    os_lookup = {_normalize_test_name(r['test_name']): r for r in (results_os or []) if r.get('success')}
     
     # Get all base test names (without OS_ prefix)
     all_tests = set()
@@ -133,7 +147,7 @@ def create_3way_comparison(results_py2, results_py3, results_os):
     for test_name in sorted(all_tests):
         py2_result = py2_lookup.get(test_name, {})
         py3_result = py3_lookup.get(test_name, {})
-        os_result = os_lookup.get('OS_' + test_name, {})
+        os_result = os_lookup.get(test_name, {})
         
         py2_time = py2_result.get('mean_time', 0)
         py3_time = py3_result.get('mean_time', 0)
@@ -177,7 +191,7 @@ def create_3way_comparison(results_py2, results_py3, results_os):
             'fastest': fastest,
             'py2_success': test_name in py2_lookup,
             'py3_success': test_name in py3_lookup,
-            'os_success': 'OS_' + test_name in os_lookup
+            'os_success': test_name in os_lookup
         })
     
     return comparison

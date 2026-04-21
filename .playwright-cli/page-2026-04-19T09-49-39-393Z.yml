@@ -1,0 +1,156 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - paragraph [ref=e5]: Benchmark Report / China OSM
+      - heading "中国 OSM 全国包三方性能报告" [level=1] [ref=e6]
+      - paragraph [ref=e7]: Py2、Py3、Open-Source 统一跑法的正式结果页。页面会直接读取三方对比 JSON，可筛选、可点选任务、可查看单项细节。
+      - generic [ref=e8]:
+        - link "打开 Markdown 报告" [ref=e9] [cursor=pointer]:
+          - /url: /results/tables/comparison_report_3way.md
+        - link "查看原始 JSON" [ref=e10] [cursor=pointer]:
+          - /url: /results/tables/comparison_data_3way.json
+    - complementary [ref=e11]:
+      - generic [ref=e12]: 报告状态
+      - generic [ref=e13]: 10/10 全绿
+      - generic [ref=e14]:
+        - generic [ref=e15]: 正式任务
+        - strong [ref=e16]: "10"
+      - generic [ref=e17]:
+        - generic [ref=e18]: 全绿率
+        - strong [ref=e19]: 100%
+      - generic [ref=e20]:
+        - generic [ref=e21]: 生成时间
+        - strong [ref=e22]: 2026/4/18 23:21:31
+  - region "概要指标" [ref=e23]:
+    - generic [ref=e24]:
+      - text: Py2 最快
+      - strong [ref=e25]: 1 项
+    - generic [ref=e26]:
+      - text: Py3 最快
+      - strong [ref=e27]: 0 项
+    - generic [ref=e28]:
+      - text: OSS 最快
+      - strong [ref=e29]: 9 项
+    - generic [ref=e30]:
+      - text: Py3 vs Py2
+      - strong [ref=e31]: 2.40x
+    - generic [ref=e32]:
+      - text: OSS vs Py2
+      - strong [ref=e33]: 14.80x
+  - main [ref=e34]:
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - heading "任务对比" [level=2] [ref=e38]
+          - paragraph [ref=e39]: 点击任务行可查看详情。使用筛选器快速切换类别，或者搜索任务名。
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - button "全部" [ref=e252] [cursor=pointer]
+            - button "矢量" [ref=e253] [cursor=pointer]
+            - button "栅格" [ref=e254] [cursor=pointer]
+            - button "混合" [ref=e255] [cursor=pointer]
+          - generic [ref=e46]:
+            - button "全部库" [ref=e256] [cursor=pointer]
+            - button "Py2" [ref=e257] [cursor=pointer]
+            - button "Py3" [ref=e258] [cursor=pointer]
+            - button "OSS" [ref=e259] [cursor=pointer]
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]: 搜索任务
+          - searchbox "搜索任务" [ref=e54]
+        - generic [ref=e55]:
+          - generic [ref=e56]: Py2
+          - generic [ref=e58]: Py3
+          - generic [ref=e60]: Open-Source
+      - table [ref=e63]:
+        - rowgroup [ref=e64]:
+          - row "任务 类别 Py2(s) Py3(s) OSS(s) 最快 Py3/Py2 OSS/Py2" [ref=e65]:
+            - columnheader "任务" [ref=e66]
+            - columnheader "类别" [ref=e67]
+            - columnheader "Py2(s)" [ref=e68]
+            - columnheader "Py3(s)" [ref=e69]
+            - columnheader "OSS(s)" [ref=e70]
+            - columnheader "最快" [ref=e71]
+            - columnheader "Py3/Py2" [ref=e72]
+            - columnheader "OSS/Py2" [ref=e73]
+        - rowgroup [ref=e74]:
+          - row "R1_CreateConstantRaster 栅格 栅格 27.14 s 4.53 s 0.25 s Open-Source 5.99x 107.99x" [ref=e260] [cursor=pointer]:
+            - cell "R1_CreateConstantRaster 栅格" [ref=e261]:
+              - generic [ref=e262]:
+                - strong [ref=e263]: R1_CreateConstantRaster
+                - generic [ref=e264]: 栅格
+            - cell "栅格" [ref=e265]
+            - cell "27.14 s" [ref=e266]
+            - cell "4.53 s" [ref=e267]
+            - cell "0.25 s" [ref=e268]
+            - cell "Open-Source" [ref=e269]:
+              - generic [ref=e270]: Open-Source
+            - cell "5.99x" [ref=e271]
+            - cell "107.99x" [ref=e272]
+          - row "R2_Resample 栅格 栅格 2.84 s 2.74 s 0.35 s Open-Source 1.03x 8.14x" [ref=e273] [cursor=pointer]:
+            - cell "R2_Resample 栅格" [ref=e274]:
+              - generic [ref=e275]:
+                - strong [ref=e276]: R2_Resample
+                - generic [ref=e277]: 栅格
+            - cell "栅格" [ref=e278]
+            - cell "2.84 s" [ref=e279]
+            - cell "2.74 s" [ref=e280]
+            - cell "0.35 s" [ref=e281]
+            - cell "Open-Source" [ref=e282]:
+              - generic [ref=e283]: Open-Source
+            - cell "1.03x" [ref=e284]
+            - cell "8.14x" [ref=e285]
+          - row "R3_Clip 栅格 栅格 1.67 s 4.03 s 0.33 s Open-Source 0.41x 5.02x" [ref=e286] [cursor=pointer]:
+            - cell "R3_Clip 栅格" [ref=e287]:
+              - generic [ref=e288]:
+                - strong [ref=e289]: R3_Clip
+                - generic [ref=e290]: 栅格
+            - cell "栅格" [ref=e291]
+            - cell "1.67 s" [ref=e292]
+            - cell "4.03 s" [ref=e293]
+            - cell "0.33 s" [ref=e294]
+            - cell "Open-Source" [ref=e295]:
+              - generic [ref=e296]: Open-Source
+            - cell "0.41x" [ref=e297]
+            - cell "5.02x" [ref=e298]
+    - complementary [ref=e205]:
+      - generic [ref=e207]:
+        - heading "任务详情" [level=2] [ref=e208]
+        - paragraph [ref=e209]: 展示当前选中任务的原始时长、标准差、验证状态和加速比。
+      - generic [ref=e210]:
+        - generic [ref=e211]: R1_CreateConstantRaster
+        - generic [ref=e212]: "栅格 · 通过: 3/3 · Py2 27.14 s / Py3 4.53 s / OSS 0.25 s · Py3 vs Py2 5.99x · OSS vs Py2 107.99x"
+        - generic [ref=e213]:
+          - generic [ref=e214]:
+            - text: Py2
+            - strong [ref=e215]: 27.14 s / σ 0.00 s
+          - generic [ref=e216]:
+            - text: Py3
+            - strong [ref=e217]: 4.53 s / σ 0.10 s
+          - generic [ref=e218]:
+            - text: OSS
+            - strong [ref=e219]: 0.25 s / σ 0.00 s
+          - generic [ref=e220]:
+            - text: 最快
+            - strong [ref=e221]: Open-Source
+      - generic [ref=e222]:
+        - generic [ref=e223]: 本次结论
+        - paragraph [ref=e224]: Open-Source 在这个任务里最快，用时 0.25 s。Py3 相比 Py2 是 5.99x，OSS 相比 Py2 是 107.99x。
+      - generic [ref=e225]:
+        - generic [ref=e226]: 最快分布
+        - generic [ref=e227]:
+          - generic [ref=e300]:
+            - generic [ref=e301]: Py2
+            - strong [ref=e302]: 1/10
+          - generic [ref=e306]:
+            - generic [ref=e307]: Py3
+            - strong [ref=e308]: 0/10
+          - generic [ref=e312]:
+            - generic [ref=e313]: Open-Source
+            - strong [ref=e314]: 9/10
+      - generic [ref=e243]:
+        - generic [ref=e244]: 运行说明
+        - list [ref=e245]:
+          - listitem [ref=e246]: 正式口径：1 warmup + 3 runs
+          - listitem [ref=e247]: 输入：中国 OSM 全国包
+          - listitem [ref=e248]: 输出：ArcGIS 侧使用 GDB，开源侧以报告中记录的结果为准

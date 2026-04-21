@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>中国 OSM 全国包三方性能报告</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/report.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Benchmark Report / China OSM</p>
+        <h1>中国 OSM 全国包三方性能报告</h1>
+        <p class="lede">
+          Py2、Py3、Open-Source 统一跑法的正式结果页。页面会直接读取三方对比 JSON，可筛选、可点选任务、可查看单项细节。
+        </p>
+        <div class="hero-actions">
+          <a class="link-button" href="/results/tables/comparison_report_3way.md" target="_blank" rel="noreferrer">打开 Markdown 报告</a>
+          <a class="link-button ghost" href="/results/tables/comparison_data_3way.json" target="_blank" rel="noreferrer">查看原始 JSON</a>
+        </div>
+      </div>
+      <aside class="hero-aside">
+        <div class="summary-kicker">报告状态</div>
+        <div id="status-pill" class="status-pill">加载中</div>
+        <div class="hero-stat">
+          <span class="hero-stat-label">正式任务</span>
+          <strong id="hero-total-tests">-</strong>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-label">全绿率</span>
+          <strong id="hero-pass-rate">-</strong>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-label">生成时间</span>
+          <strong id="hero-generated">-</strong>
+        </div>
+      </aside>
+    </header>
+
+    <section class="stats-strip" aria-label="概要指标">
+      <div class="stat-block">
+        <span class="stat-label">Py2 最快</span>
+        <strong id="stat-py2-fast">-</strong>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Py3 最快</span>
+        <strong id="stat-py3-fast">-</strong>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">OSS 最快</span>
+        <strong id="stat-os-fast">-</strong>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Py3 vs Py2</span>
+        <strong id="stat-py3-vs-py2">-</strong>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">OSS vs Py2</span>
+        <strong id="stat-os-vs-py2">-</strong>
+      </div>
+    </section>
+
+    <main class="layout">
+      <section class="panel main-panel">
+        <div class="panel-head">
+          <div>
+            <h2>任务对比</h2>
+            <p>点击任务行可查看详情。使用筛选器快速切换类别，或者搜索任务名。</p>
+          </div>
+          <div class="toolbar">
+            <div class="filter-group" id="category-filters"></div>
+            <div class="stack-focus" id="stack-focus"></div>
+          </div>
+        </div>
+
+        <div class="table-tools">
+          <label class="search">
+            <span>搜索任务</span>
+            <input id="task-search" type="search" placeholder="输入 V1、Buffer、Raster...">
+          </label>
+          <div class="legend">
+            <span><i class="dot dot-py2"></i>Py2</span>
+            <span><i class="dot dot-py3"></i>Py3</span>
+            <span><i class="dot dot-os"></i>Open-Source</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>任务</th>
+                <th>类别</th>
+                <th class="num">Py2(s)</th>
+                <th class="num">Py3(s)</th>
+                <th class="num">OSS(s)</th>
+                <th>最快</th>
+                <th class="num">Py3/Py2</th>
+                <th class="num">OSS/Py2</th>
+              </tr>
+            </thead>
+            <tbody id="task-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="panel detail-panel">
+        <div class="panel-head">
+          <div>
+            <h2>任务详情</h2>
+            <p>展示当前选中任务的原始时长、标准差、验证状态和加速比。</p>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-title" id="detail-title">-</div>
+          <div class="detail-meta" id="detail-meta">-</div>
+          <div class="detail-grid">
+            <div>
+              <span class="detail-label">Py2</span>
+              <strong id="detail-py2">-</strong>
+            </div>
+            <div>
+              <span class="detail-label">Py3</span>
+              <strong id="detail-py3">-</strong>
+            </div>
+            <div>
+              <span class="detail-label">OSS</span>
+              <strong id="detail-os">-</strong>
+            </div>
+            <div>
+              <span class="detail-label">最快</span>
+              <strong id="detail-fastest">-</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-card detail-note">
+          <div class="detail-title small">本次结论</div>
+          <p id="detail-conclusion">-</p>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-title small">最快分布</div>
+          <div class="bar-list" id="fastest-bars"></div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-title small">运行说明</div>
+          <ul class="notes">
+            <li>正式口径：1 warmup + 3 runs</li>
+            <li>输入：中国 OSM 全国包</li>
+            <li>输出：ArcGIS 侧使用 GDB，开源侧以报告中记录的结果为准</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+  </div>
+  <script src="/static/report.js"></script>
+</body>
+</html>

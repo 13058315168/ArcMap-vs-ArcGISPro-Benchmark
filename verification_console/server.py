@@ -17,6 +17,10 @@ from .scheduler import VerificationScheduler
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(PACKAGE_DIR, "static")
 INDEX_HTML = os.path.join(STATIC_DIR, "index.html")
+REPORT_HTML = os.path.join(STATIC_DIR, "report.html")
+REPO_ROOT = os.path.dirname(PACKAGE_DIR)
+REPORT_DATA_JSON = os.path.join(REPO_ROOT, "results", "tables", "comparison_data_3way.json")
+REPORT_MARKDOWN = os.path.join(REPO_ROOT, "results", "tables", "comparison_report_3way.md")
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 
@@ -47,6 +51,27 @@ def _text_response(handler, text, content_type="text/plain; charset=utf-8", stat
 def _guess_mime(path):
     mime, _ = mimetypes.guess_type(path)
     return mime or "application/octet-stream"
+
+
+def _candidate_report_paths():
+    return [
+        REPORT_DATA_JSON,
+        os.path.join("C:\\temp\\arcgis_benchmark_data\\china_fullfix_compare", "comparison_data_3way.json"),
+        os.path.join("C:\\temp\\arcgis_benchmark_data\\china_fullfix_shared", "comparison_data_3way.json"),
+    ]
+
+
+def _load_report_payload():
+    for path in _candidate_report_paths():
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            payload["meta"] = {
+                "json_path": path,
+                "markdown_path": REPORT_MARKDOWN if os.path.exists(REPORT_MARKDOWN) else "",
+            }
+            return payload
+    raise FileNotFoundError("comparison_data_3way.json not found")
 
 
 def _build_handler(scheduler):
@@ -81,6 +106,19 @@ def _build_handler(scheduler):
 
             _text_response(self, "Not found", status=404)
 
+        def _serve_repo_file(self, path):
+            local_path = os.path.join(REPO_ROOT, path.lstrip("/"))
+            if not os.path.exists(local_path) or not os.path.isfile(local_path):
+                _text_response(self, "Not found", status=404)
+                return
+            with open(local_path, "rb") as handle:
+                data = handle.read()
+            self.send_response(200)
+            self.send_header("Content-Type", _guess_mime(local_path))
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
         def _read_json_body(self):
             length = int(self.headers.get("Content-Length", "0") or 0)
             if length <= 0:
@@ -97,6 +135,11 @@ def _build_handler(scheduler):
             if parsed.path in ("/", "/index.html"):
                 return self._serve_static("/")
 
+            if parsed.path in ("/report", "/report.html"):
+                if os.path.exists(REPORT_HTML):
+                    return _text_response(self, _read_file(REPORT_HTML), content_type="text/html; charset=utf-8")
+                return _text_response(self, "report.html is missing", status=500)
+
             if parsed.path == "/favicon.ico":
                 handler = self
                 handler.send_response(204)
@@ -106,6 +149,9 @@ def _build_handler(scheduler):
 
             if parsed.path.startswith("/static/"):
                 return self._serve_static(parsed.path)
+
+            if parsed.path.startswith("/results/"):
+                return self._serve_repo_file(parsed.path)
 
             if parsed.path == "/api/state":
                 return _json_response(self, scheduler.snapshot())
@@ -129,6 +175,13 @@ def _build_handler(scheduler):
             if parsed.path == "/api/logs":
                 state = scheduler.snapshot()
                 return _json_response(self, {"logs": state.get("logs", [])})
+
+            if parsed.path == "/api/report":
+                try:
+                    payload = _load_report_payload()
+                except Exception as exc:
+                    return _json_response(self, {"ok": False, "error": str(exc)}, status=500)
+                return _json_response(self, {"ok": True, "report": payload})
 
             if parsed.path == "/api/result":
                 query = parse_qs(parsed.query or "")

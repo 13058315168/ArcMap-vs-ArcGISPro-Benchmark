@@ -113,6 +113,8 @@ def parse_args():
         help='Benchmark category (legacy; ignored in core-6 mode)'
     )
     parser.add_argument('--scale', default=None, help='Data scale')
+    parser.add_argument('--region', default=None, choices=getattr(settings, 'ALL_REGIONS', ['guangdong']),
+                        help='Benchmark region package')
     parser.add_argument('--runs', type=int, default=None, help='Number of runs')
     parser.add_argument('--warmup', type=int, default=None, help='Warmup runs')
     parser.add_argument('--output-dir', type=str, default=None, help='Output directory')
@@ -144,6 +146,15 @@ def parse_args():
 def main():
     args = parse_args()
 
+    stack = _detect_stack(args)
+    active_region = args.region or getattr(settings, 'DATA_REGION', 'guangdong')
+    settings.set_region(active_region)
+    if str(active_region).lower() == 'china' and str(args.scale or '').lower() not in ('national', 'national_heavy'):
+        args.scale = 'national'
+        if args.format == 'SHP':
+            args.format = 'GPKG' if stack == 'oss' else 'GDB'
+        print("[Info] China package selected; using national scale profile and {} output.".format(args.format))
+
     # Apply legacy scale overrides if provided
     if args.scale_config_json:
         try:
@@ -154,8 +165,6 @@ def main():
         except Exception as e:
             print("ERROR: Failed to parse --scale-config-json: {}".format(e))
             return 1
-
-    stack = _detect_stack(args)
 
     # Set up output directory for logging
     output_dir = args.output_dir
@@ -184,6 +193,7 @@ def main():
         stack_name=stack,
         matrix_path=args.matrix,
         scale=args.scale or settings.DATA_SCALE,
+        region=active_region,
         output_format=args.format,
         complexity=args.complexity,
         num_runs=args.runs,
@@ -192,6 +202,7 @@ def main():
         generate_data=args.generate_data,
         run_log_path=run_log_path,
     )
+    engine.multiprocess = bool(args.multiprocess)
 
     try:
         results = engine.run()

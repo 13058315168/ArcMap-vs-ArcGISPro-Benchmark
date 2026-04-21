@@ -3,6 +3,8 @@ __pycache__/
 *.pyo
 *.log
 results/
+resources/osm_cache/
+temparcgis_benchmark_datatest_auto/
 
 # Generated test data and run artifacts
 direct_test_*/

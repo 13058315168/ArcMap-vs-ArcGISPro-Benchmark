@@ -70,6 +70,8 @@ def manifest_summary(manifest):
     manifest = manifest or {}
     source = manifest.get('osm_source') or {}
     parts = []
+    if manifest.get('region'):
+        parts.append(str(manifest['region']))
     if source.get('label'):
         parts.append(source['label'])
     if manifest.get('source_mode'):
